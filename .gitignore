@@ -1,4 +1,5 @@
 libs/sfml
+*~
 # Compiled Object files
 *.slo
 *.lo
