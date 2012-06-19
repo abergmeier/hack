@@ -8,6 +8,11 @@
 #ifndef _OBJECT_HPP_
 #define _OBJECT_HPP_
 
+#include <istream>
+#include <ostream>
+#include <array>
+#include <string>
+
 namespace hack {
 namespace logic {
 
