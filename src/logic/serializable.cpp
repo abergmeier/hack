@@ -9,6 +9,9 @@
 
 using namespace hack::state;
 
+Serializable::Serializable() {
+}
+
 void Serializable::Serialize( std::ostream& stream ) const {
 	stream << '{' << SerializeContent(stream) << '}';
 }

@@ -24,6 +24,9 @@ Object::Object(std::istream& stream) :
 	Set(stream);
 }
 
+Object::~Object() {
+}
+
 void Object::Set(std::istream& stream) {
 	stream >> _position;
 }

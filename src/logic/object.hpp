@@ -23,7 +23,7 @@ public:
 	// Use a class so we can have working operator deduction
 	class Position : public std::array<size_t, 2> {
 	};
-	virtual ~Object() noexcept = default;
+	virtual ~Object();
 	virtual Object& operator = (std::istream& stream);
 
 	// This has to be implemented in order to easily serialize an object
