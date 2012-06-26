@@ -39,6 +39,7 @@ std::string hack::UUID::Generate() {
 		uuid_generate_random(reinterpret_cast<unsigned char*>(uuidBuffer.data()));
 		std::string uuid(uuidBuffer.data(), uuidBuffer.size());
 #endif // _MSC_VER
+		return uuid;
 }
 
 
