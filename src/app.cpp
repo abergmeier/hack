@@ -53,7 +53,7 @@ int main( int argc, char** args ) {
 
 		auto& states = hack::state::States::Get();
 		for( auto& otherPlayer : _players ) {
-			states.CommitTo( otherPlayer, *shared );
+			states.CommitTo( *otherPlayer, *shared );
 		}
 
 		_players.insert(shared);
