@@ -24,7 +24,7 @@ States::States() :
 void States::Commit( const Serializable& object ) {
 	std::stringstream stream;
 	object.Serialize( stream );
-	auto& data = stream.str();
+	auto data = stream.str();
 
 	if( _network )
 		PassToNetwork( data );
