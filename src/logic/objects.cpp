@@ -20,9 +20,6 @@ typename
 #endif
 	Objects::class_map_type Objects::CLASS_MAP;
 
-Object::~Object() {
-}
-
 std::shared_ptr<Object> Objects::Deserialize(std::istream& stream) {
 	std::string className;
 	stream >> className;
