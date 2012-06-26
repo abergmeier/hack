@@ -17,6 +17,15 @@ std::istream& hack::logic::operator >>(std::istream& stream, Object::Position& p
 	return _right_shift_operator(stream, position);
 }
 
+size_t Object::NEXT_ID = 1;
+
+Object::Object() :
+	entity(),
+	hack::state::Serializable(),
+	id("", NEXT_ID)
+{
+	++NEXT_ID;
+}
 
 Object::Object(std::istream& stream) :
 	id(stream)

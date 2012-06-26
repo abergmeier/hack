@@ -37,6 +37,7 @@ public:
 	size_t getWidth() const;
 
 private:
+	static size_t NEXT_ID;
 	id_type id;
 	Position _position;
 	int x;
@@ -53,6 +54,7 @@ private:
 	void setHeight(size_t value);
 
 protected:
+	Object();
 	// Use this constructor to deserialize object
 	Object(std::istream& stream);
 	virtual std::ostream& SerializeContent(const std::string& className, std::ostream& stream) const;
