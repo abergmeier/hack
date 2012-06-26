@@ -1,3 +1,5 @@
+
+#include <istream>
 #include "entity.hpp"
 
 using namespace hack::logic;
