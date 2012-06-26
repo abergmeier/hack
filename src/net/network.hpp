@@ -21,7 +21,13 @@
 #include <ostream>
 #include <mutex>
 //#include <Poco/Net/SocketAddress.h>
+// Undef because defines on Windows fuck up seriously
+#undef noexcept
 #include <enet/enet.h>
+#ifdef _MSC_VER
+#define noexcept
+#endif //_MSC_VER
+
 #include <future>
 #include "../subsystem.hpp"
 
