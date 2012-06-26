@@ -10,7 +10,9 @@
 //#include <Poco/Base64Encoder.h>
 #include <sstream>
 #ifdef _MSC_VER
-	#include <rpc.h>
+	#define _WINSOCKAPI_
+	#include <windows.h>
+	#include <Rpc.h>
 #else
 	#include <uuid/uuid.h>
 #endif // DEBUG
