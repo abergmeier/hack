@@ -5,6 +5,7 @@
  *      Author: andreas
  */
 
+#include <sstream>
 #include "states.hpp"
 
 using namespace hack::state;
