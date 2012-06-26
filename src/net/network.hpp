@@ -25,8 +25,8 @@
 #ifndef WIN32
 #define WIN32
 #endif
+#endif
 #include <enet/enet.h>
-#endif 
 #include <future>
 #include "../subsystem.hpp"
 
