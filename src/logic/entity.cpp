@@ -7,6 +7,12 @@ using namespace hack::logic;
 entity::entity() {
 }
 
+id_type::id_type(std::string global, size_t local) :
+	global_id(global),
+	local_id(local)
+{
+}
+
 id_type::id_type(std::istream& stream) {
 	stream >> *this;
 }

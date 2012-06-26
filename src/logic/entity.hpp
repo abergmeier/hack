@@ -13,6 +13,7 @@ namespace logic {
 
 
 struct id_type {
+	id_type(std::string global, size_t local);
 	id_type(std::istream& stream );
 	id_type(const id_type& other);
 	id_type(id_type&& other      );
