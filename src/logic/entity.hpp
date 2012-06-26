@@ -10,17 +10,21 @@
 namespace hack {
 namespace logic {
 
+
+
 struct id_type {
 	id_type(std::istream& stream );
-	id_type(const id_type& other) = default;
-	id_type(id_type&& other      ) = default;
-	id_type& operator=(const id_type& other) = default;
-	id_type& operator=(id_type&& other      ) = default;
+	id_type(const id_type& other);
+	id_type(id_type&& other      );
+	id_type& operator=(const id_type& other);
+	id_type& operator=(id_type&& other      );
 	bool operator <(const id_type& other) const;
 	std::string global_id;
 	size_t local_id;
 };
 
+std::ostream& operator <<(std::ostream& stream, const id_type& id);
+std::istream& operator >>(std::istream& stream, id_type& id);
 
 class entity {
 

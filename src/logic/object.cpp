@@ -10,39 +10,11 @@
 
 using namespace hack::logic;
 
-std::ostream& hack::logic::operator <<(std::ostream& stream, const id_type& id) {
-	return stream << '{'
-	               << id.global_id << ','
-	               << id.local_id
-	               << '}';
-}
-
-std::istream& hack::logic::operator >>(std::istream& stream, id_type& id) {
-	char term;
-	stream .get(term); //{
-	stream >> id.global_id;
-	stream .get(term); //,
-	stream >> id.local_id;
-	stream .get(term); //}
-	return stream;
-}
-
 std::ostream& hack::logic::operator <<(std::ostream& stream, const Object::Position& position) {
 	return _left_shift_operator(stream, position);
 }
 std::istream& hack::logic::operator >>(std::istream& stream, Object::Position& position) {
 	return _right_shift_operator(stream, position);
-}
-
-id_type::id_type(std::istream& stream) {
-	stream >> *this;
-}
-
-bool id_type::operator <(const id_type& other) const {
-	if( global_id == other.global_id )
-		return local_id < other.local_id;
-
-	return global_id < other.global_id;
 }
 
 

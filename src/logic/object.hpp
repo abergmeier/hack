@@ -18,10 +18,6 @@
 namespace hack {
 namespace logic {
 
-
-extern std::ostream& operator <<(std::ostream& stream, const id_type& id);
-extern std::istream& operator >>(std::istream& stream, id_type& id);
-
 class Object : public entity, public hack::state::Serializable {
 public:
 	// Use a class so we can have working operator deduction
