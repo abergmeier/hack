@@ -14,6 +14,7 @@
 	#include <windows.h>
 	#include <Rpc.h>
 #else
+	#include <array>
 	#include <uuid/uuid.h>
 #endif // DEBUG
 #include "uuid.hpp"
