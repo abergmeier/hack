@@ -6,16 +6,54 @@
  */
 
 #include "object.hpp"
+#include "../include.hpp"
 
 using namespace hack::logic;
 
-Object::Object(std::istream& stream) {
-	stream >> id;
+std::ostream& hack::logic::operator <<(std::ostream& stream, const id_type& id) {
+	return stream << '{'
+	               << id.global_id << ','
+	               << id.local_id
+	               << '}';
+}
+
+std::istream& hack::logic::operator >>(std::istream& stream, id_type& id) {
+	char term;
+	stream .get(term); //{
+	stream >> id.global_id;
+	stream .get(term); //,
+	stream >> id.local_id;
+	stream .get(term); //}
+	return stream;
+}
+
+std::ostream& hack::logic::operator <<(std::ostream& stream, const Object::Position& position) {
+	return _left_shift_operator(stream, position);
+}
+std::istream& hack::logic::operator >>(std::istream& stream, Object::Position& position) {
+	return _right_shift_operator(stream, position);
+}
+
+id_type::id_type(std::istream& stream) {
+	stream >> *this;
+}
+
+bool id_type::operator <(const id_type& other) const {
+	if( global_id == other.global_id )
+		return local_id < other.local_id;
+
+	return global_id < other.global_id;
+}
+
+
+Object::Object(std::istream& stream) :
+	id(stream)
+{
 	Set(stream);
 }
 
 void Object::Set(std::istream& stream) {
-	stream >> position;
+	stream >> _position;
 }
 
 Object& Object::operator = (std::istream& stream) {
@@ -23,10 +61,9 @@ Object& Object::operator = (std::istream& stream) {
 	return *this;
 }
 
-void Object::Serialize(const std::string& className, std::ostream& stream) const {
-	stream << className;
-	stream << id;
-	stream << position;
+std::ostream& Object::SerializeContent(const std::string& className, std::ostream& stream) const {
+	return Serializable::SerializeContent( className, stream )
+	<< ',' << id << ',' << _position;
 }
 
 int Object::getX() const {

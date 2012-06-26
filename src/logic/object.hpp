@@ -13,12 +13,33 @@
 #include <array>
 #include <string>
 #include "entity.hpp"
+#include "serializable.hpp"
 
 namespace hack {
 namespace logic {
 
-class Object : public entity {
+struct id_type {
+	id_type(std::istream& stream );
+	id_type(const id_type& other) = default;
+	id_type(id_type&& other      ) = default;
+	id_type& operator=(const id_type& other) = default;
+	id_type& operator=(id_type&& other      ) = default;
+	bool operator <(const id_type& other) const;
+	std::string global_id;
+	size_t local_id;
+};
+
+extern std::ostream& operator <<(std::ostream& stream, const id_type& id);
+extern std::istream& operator >>(std::istream& stream, id_type& id);
+
+class Object : public entity, public hack::state::Serializable {
 public:
+	// Use a class so we can have working operator deduction
+	class Position : public std::array<size_t, 2> {
+	};
+	virtual ~Object() noexcept = default;
+	virtual Object& operator = (std::istream& stream);
+
 	// This has to be implemented in order to easily serialize an object
 	// Most times should just call the Serialize overload and pass the class name
 	virtual void Serialize(std::ostream& stream) const = 0;
@@ -31,7 +52,7 @@ public:
 
 private:
 	id_type id;
-	std::array<size_t, 2> position;
+	Position _position;
 	int x;
 	int y;
 	float angle;
@@ -46,11 +67,13 @@ private:
 	void setHeight(size_t value);
 
 protected:
+	// Use this constructor to deserialize object
 	Object(std::istream& stream);
-	virtual ~Object();
-	virtual Object& operator = (std::istream& stream);
-	virtual void Serialize(const std::string& className, std::ostream& stream) const;
+	virtual std::ostream& SerializeContent(const std::string& className, std::ostream& stream) const;
 };
+
+std::ostream& operator <<(std::ostream& stream, const Object::Position& id);
+std::istream& operator >>(std::istream& stream, Object::Position& id);
 
 } }
 
