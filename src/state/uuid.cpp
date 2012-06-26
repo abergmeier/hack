@@ -20,9 +20,9 @@
 
 using namespace hack;
 
-std::string UUID::Generate() {
+std::string hack::UUID::Generate() {
 #ifdef _MSC_VER
-		UUID id;
+		::UUID id;
 		RPC_CSTR cstr;
 		UuidCreate(&id);
 		UuidToStringA(&id,&cstr);
