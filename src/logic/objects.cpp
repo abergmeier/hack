@@ -11,8 +11,14 @@
 
 using namespace hack::logic;
 
-typename Objects::object_map_type Objects::OBJECTS;
-typename Objects::class_map_type Objects::CLASS_MAP;
+#ifndef _MSC_VER
+typename 
+#endif
+	Objects::object_map_type Objects::OBJECTS;
+#ifndef _MSC_VER
+typename 
+#endif
+	Objects::class_map_type Objects::CLASS_MAP;
 
 Object::~Object() {
 }
