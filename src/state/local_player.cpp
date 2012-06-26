@@ -9,45 +9,10 @@
 #include <queue>
 //#include <Poco/Base64Encoder.h>
 #include <sstream>
-#ifdef _MSC_VER
-	#define _WINSOCKAPI_
-	#include <windows.h>
-	#include <Rpc.h>
-#else
-	#include <uuid/uuid.h>
-#endif // DEBUG
 #include "local_player.hpp"
 #include "../include.hpp"
 #include "../logic/states.hpp"
-
-
-namespace {
-	std::string generateUUID() {
-
-		
-#ifdef _MSC_VER
-		UUID id;
-		RPC_CSTR cstr;
-		UuidCreate(&id);
-		UuidToStringA(&id,&cstr);
-		std::string uuid(reinterpret_cast<char*>(cstr));
-		RpcStringFreeA(&cstr);
-#else
-		// We have to use array here because
-		// std::string does not provide access to
-		// internal char array
-		std::array<char, 16> uuidBuffer;
-		
-		// Generate function wants buffer unsigned but string does only accept signed.
-		// Since sizes are the same - cast to unsigned for function.
-		uuid_generate_random(reinterpret_cast<unsigned char*>(uuidBuffer.data()));
-		std::string uuid(uuidBuffer.data(), uuidBuffer.size());
-#endif // _MSC_VER
-
-
-		return std::move(uuid);
-	}
-}
+#include "uuid.hpp"
 
 using namespace hack::state;
 
@@ -55,7 +20,7 @@ const std::string LocalPlayer::NAME("LocalPlayer");
 
 LocalPlayer::LocalPlayer() :
 	hack::logic::Player("Unnamed"),
-	_uuid(::generateUUID())
+	_uuid(UUID::Generate())
 {
 }
 
