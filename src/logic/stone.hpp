@@ -18,6 +18,7 @@ namespace logic {
 
 class Stone : public Object {
 public:
+	Stone() : Object() {};
 	Stone(std::istream& stream);
 	static const std::string NAME;
 	std::ostream& SerializeContent(std::ostream& stream) const override;
