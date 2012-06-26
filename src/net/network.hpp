@@ -21,7 +21,12 @@
 #include <ostream>
 #include <mutex>
 //#include <Poco/Net/SocketAddress.h>
+#ifdef _MSC_VER 
+#ifndef WIN32
+#define WIN32
+#endif
 #include <enet/enet.h>
+#endif 
 #include <future>
 #include "../subsystem.hpp"
 
