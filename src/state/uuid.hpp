@@ -8,6 +8,8 @@
 #ifndef UUID_HPP_
 #define UUID_HPP_
 
+#include <string>
+
 namespace hack {
 
 struct UUID {
