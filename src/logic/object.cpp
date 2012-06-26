@@ -29,4 +29,43 @@ void Object::Serialize(const std::string& className, std::ostream& stream) const
 	stream << position;
 }
 
+int Object::getX() const {
+	return x;
+}
 
+float Object::getAngle() const {
+	return angle;
+}
+
+size_t Object::getHeight() const {
+	return height;
+}
+
+size_t Object::getWidth() const {
+	return width;
+}
+
+
+void Object::setX(int value) {
+		x = value;
+}
+
+void Object::setY(int value){
+	y = value;
+}
+
+void Object::setAngle(float value){
+	angle = value;
+}
+
+void Object::setWidth(size_t value){
+	width = value;
+}
+
+void Object::setHeight(size_t value){
+	height = value;
+}
+
+const id_type& Object::getid() const {
+	return id;
+}
