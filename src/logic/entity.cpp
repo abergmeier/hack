@@ -16,9 +16,6 @@ bool id_type::operator <(const id_type& other) const {
 	return global_id < other.global_id;
 }
 
-id_type::id_type(std::istream& stream ) {
-}
-
 id_type::id_type(const id_type& other) :
 	global_id(other.global_id),
 	local_id(other.local_id)
