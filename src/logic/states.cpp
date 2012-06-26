@@ -32,6 +32,14 @@ void States::Commit( const Serializable& object ) {
 		_queue.push_back( data );
 }
 
+void States::CommitTo( const Serializable& object, hack::logic::Player& player) {
+	std::stringstream stream;
+	object.Serialize( stream );
+	auto data = stream.str();
+
+	//TODO: IMPLEMENT
+}
+
 //void CommitTo( const Serializable& object, Player& player);
 
 void States::PassToNetwork( const std::string& data ) {

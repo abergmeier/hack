@@ -16,10 +16,10 @@ namespace state {
 
 class Serializable {
 public:
-	virtual ~Serializable();
+	virtual ~Serializable(){};
 	void Serialize(std::ostream& stream) const;
 protected:
-	Serializable();
+	Serializable(){};
 	// This has to be implemented in order to easily serialize an object
 	// Most times should just call the SerializeContent overload and pass the non abstract class name
 	virtual std::ostream& SerializeContent(std::ostream& stream) const = 0;

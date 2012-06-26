@@ -54,6 +54,10 @@ int Object::getX() const {
 	return x;
 }
 
+int Object::getY() const {
+	return y;
+}
+
 float Object::getAngle() const {
 	return angle;
 }
