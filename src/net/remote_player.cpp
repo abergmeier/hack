@@ -61,7 +61,7 @@ std::queue<RemotePlayer::buffer_type> RemotePlayer::GetFrom() {
 }
 
 void RemotePlayer::Deserialize(std::istream& stream) {
-	Poco::Base64Decoder decoder(stream);
+//	Poco::Base64Decoder decoder(stream);
 }
 
 void RemotePlayer::Commit() {
