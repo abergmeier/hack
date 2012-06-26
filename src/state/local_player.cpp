@@ -34,9 +34,7 @@ std::ostream& LocalPlayer::SerializeContent(std::ostream& stream) const {
 }
 
 void LocalPlayer::Commit() {
-	std::ostringstream stream;
-	Serialize(stream);
-	States::Get().Commit(stream.str());
+	States::Get().Commit(*this);
 	//TODO: Commit to be displayed
 }
 

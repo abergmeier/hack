@@ -29,7 +29,7 @@ class States {
 public:
 	static States& Get();
 	void Commit( const Serializable& object );
-	void CommitTo( const Serializable& object, Player& player);
+	void CommitTo( const Serializable& object, hack::logic::Player& player);
 	//std::map< std::weak_ptr<void>, std::unique_ptr<void> > _state;
 	void SetNetwork( hack::net::Network& network );
 };
