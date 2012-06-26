@@ -4,7 +4,6 @@
 #include <Poco/Net/MulticastSocket.h>
 #include <chrono>
 #include <exception>
-#include "../logic/session.hpp"
 #include <iostream>
 #include <sstream>
 
@@ -151,9 +150,6 @@ void Network::Receive() {
 	}
 }
 
-const std::vector<Session>& Network::GetSessions() const {
-
-}
 #endif
 
 Network::Peer::Peer(ENetAddress address) :
