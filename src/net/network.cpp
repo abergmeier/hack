@@ -103,7 +103,7 @@ void Network::Destroy() {
 	enet_deinitialize();
 }
 
-Network::~Network() noexcept {
+Network::~Network() {
 	Destroy();
 }
 
