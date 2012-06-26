@@ -11,7 +11,6 @@
 #include <string>
 #include <functional>
 #include <array>
-#include "../net/network.hpp"
 #include "serializable.hpp"
 
 namespace hack {
