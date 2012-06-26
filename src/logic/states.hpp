@@ -21,10 +21,11 @@ namespace state {
 
 class States {
 	static States INSTANCE;
-	hack::net::Network* _network = nullptr;
+	hack::net::Network* _network;
 	// If no network is connected save data locally
 	std::deque<std::string> _queue;
 	void PassToNetwork( const std::string& data );
+	States();
 public:
 	static States& Get();
 	void Commit( const Serializable& object );

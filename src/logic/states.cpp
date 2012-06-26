@@ -15,6 +15,11 @@ States& States::Get() {
 	return INSTANCE;
 }
 
+States::States() :
+	_network(nullptr)
+{
+}
+
 void States::Commit( const Serializable& object ) {
 	std::stringstream stream;
 	object.Serialize( stream );
