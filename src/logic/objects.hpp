@@ -11,18 +11,24 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <list>
 #include "object.hpp"
 
 namespace hack {
 namespace logic {
 
 class Objects {
+	static Objects INSTANCE;
 	typedef std::map<id_type, std::weak_ptr<Object>> object_map_type;
-	static object_map_type OBJECTS;
+	object_map_type _objectMap;
+
+	typedef std::list<std::weak_ptr<Object>> object_list_type;
+	object_list_type _objects;
 	typedef std::function<std::unique_ptr<Object>(std::istream& stream)> deserialize_function_type;
 	typedef std::map<std::string, deserialize_function_type> class_map_type;
 	static class_map_type CLASS_MAP;
-	Objects(){};
+	Objects();
+
 public:
 	template <typename T>
 	static void Register() {
@@ -34,7 +40,21 @@ public:
 		CLASS_MAP.insert(std::make_pair(T::NAME, func));
 	}
 
+	typedef object_list_type::iterator iterator;
+	typedef object_list_type::const_iterator const_iterator;
+
+	iterator       begin();
+	const_iterator begin() const;
+	const_iterator cbegin() const;
+
+	iterator       end();
+	const_iterator end() const;
+	const_iterator cend() const;
+
 	static std::shared_ptr<Object> Deserialize(std::istream& stream);
+
+	static Objects& Get();
+	void Register(std::shared_ptr<Object> object);
 };
 
 } }

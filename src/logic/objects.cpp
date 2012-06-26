@@ -11,25 +11,33 @@
 
 using namespace hack::logic;
 
-#ifndef _MSC_VER
-typename 
-#endif
-	Objects::object_map_type Objects::OBJECTS;
+Objects Objects::INSTANCE;
+
 #ifndef _MSC_VER
 typename 
 #endif
 	Objects::class_map_type Objects::CLASS_MAP;
+
+Objects::Objects() :
+	_objectMap(),
+	_objects()
+{
+}
+
+Objects& Objects::Get() {
+	return INSTANCE;
+}
 
 std::shared_ptr<Object> Objects::Deserialize(std::istream& stream) {
 	std::string className;
 	stream >> className;
 	id_type id(stream);
 
-	auto it = OBJECTS.find(id);
+	auto it = Get()._objectMap.find(id);
 
 	std::shared_ptr<Object> object;
 
-	if( it == OBJECTS.cend() ) {
+	if( it == Get()._objectMap.cend() ) {
 		// Create new object
 		auto classIt = CLASS_MAP.find(className);
 		if( classIt == CLASS_MAP.cend() ) {
@@ -50,6 +58,39 @@ std::shared_ptr<Object> Objects::Deserialize(std::istream& stream) {
 	return object;
 }
 
+void Objects::Register(std::shared_ptr<Object> object) {
+	_objectMap.insert( std::make_pair(object->getid(), object) );
+	_objects.emplace_back( object );
+}
 
+Objects::iterator
+Objects::begin() {
+	return _objects.begin();
+}
+
+Objects::const_iterator
+Objects::begin() const {
+	return _objects.begin();
+}
+
+Objects::const_iterator
+Objects::cbegin() const {
+	return _objects.cbegin();
+}
+
+Objects::iterator
+Objects::end() {
+	return _objects.end();
+}
+
+Objects::const_iterator
+Objects::end() const {
+	return _objects.end();
+}
+
+Objects::const_iterator
+Objects::cend() const {
+	return _objects.cend();
+}
 
 

@@ -36,6 +36,8 @@ int main( int argc, char** args ) {
 	std::set<std::shared_ptr<hack::logic::Player>> _players;
 
 	hack::logic::Objects::Register<hack::logic::Stone>();
+	auto stone = std::make_shared<hack::logic::Stone>();
+	hack::logic::Objects::Get().Register(stone);
 
 	//std::string name = "Andreas";
 	_players.insert(std::make_shared<hack::state::LocalPlayer>());
