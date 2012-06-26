@@ -29,6 +29,7 @@ std::istream& operator >>(std::istream& stream, id_type& id);
 class entity {
 
 public:
+	virtual ~entity();
 virtual const id_type& getid() const = 0;
 virtual int getX() const = 0;
 virtual int getY() const = 0;
