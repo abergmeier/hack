@@ -12,3 +12,7 @@ libs/sfml
 *.lai
 *.la
 *.a
+
+*.obj
+*.Obj
+
