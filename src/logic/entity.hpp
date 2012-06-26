@@ -11,8 +11,14 @@ namespace hack {
 namespace logic {
 
 struct id_type {
-	size_t peerid;
-	size_t localid;
+	id_type(std::istream& stream );
+	id_type(const id_type& other) = default;
+	id_type(id_type&& other      ) = default;
+	id_type& operator=(const id_type& other) = default;
+	id_type& operator=(id_type&& other      ) = default;
+	bool operator <(const id_type& other) const;
+	std::string global_id;
+	size_t local_id;
 };
 
 
