@@ -157,7 +157,8 @@ const std::vector<Session>& Network::GetSessions() const {
 #endif
 
 Network::Peer::Peer(ENetAddress address) :
-	address(std::forward<ENetAddress>(address))
+	address(std::forward<ENetAddress>(address)),
+	enetPeer(nullptr)
 {
 }
 

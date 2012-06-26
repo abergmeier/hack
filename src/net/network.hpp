@@ -42,7 +42,7 @@ public:
 		void Destroy();
 		std::queue<std::tuple<buffer_type, std::function<void()>>> sendQueue;
 		std::string _uuid;
-		ENetPeer* enetPeer = nullptr;
+		ENetPeer* enetPeer;
 		ENetPeer* GetPeer();
 		void Disconnect();
 		void Receive(const ENetPacket& packet);
