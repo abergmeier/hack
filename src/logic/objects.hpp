@@ -22,8 +22,8 @@ class Objects {
 	typedef std::function<std::unique_ptr<Object>(std::istream& stream)> deserialize_function_type;
 	typedef std::map<std::string, deserialize_function_type> class_map_type;
 	static class_map_type CLASS_MAP;
+	Objects(){};
 public:
-	Objects() = delete;
 	template <typename T>
 	static void Register() {
 		deserialize_function_type func = [](std::istream& stream) -> std::unique_ptr<Object> {
