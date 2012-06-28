@@ -29,6 +29,7 @@
 #include <enet/enet.h>
 #include <future>
 #include "../subsystem.hpp"
+#include "../debug.hpp"
 
 extern bool operator<(const ENetAddress& lhs, const ENetAddress& rhs);
 
@@ -69,14 +70,10 @@ private:
 	void Destroy();
 	void CreatePeer( ENetPeer& event );
 
-	struct DEBUG {
-		static std::ostream& LOG      ( std::ostream& stream );
-		static std::ostream& LOG      ( const std::string& str );
-		static std::ostream& ERR      ( std::ostream& stream );
-		static void         LOG_ENTRY( std::ostream& stream);
-		static void         LOG_ENTRY( const std::string& str);
-		static void         ERR_ENTRY( std::ostream& stream);
+	struct Debug : public hack::Debug {
+		const std::string& GetCategory() const;
 	};
+	static const Debug DEBUG;
 
 	struct queue_element_type {
 		// Destination of data - broadcast if peer is null

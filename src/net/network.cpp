@@ -11,6 +11,8 @@
 
 using namespace hack::net;
 
+const Network::Debug Network::DEBUG;
+
 namespace {
 	bool DEBUG = true;
 
@@ -153,8 +155,8 @@ void Network::Receive() {
 #endif
 
 Network::Peer::Peer(ENetAddress address) :
-	address(std::forward<ENetAddress>(address)),
-	enetPeer(nullptr)
+	enetPeer(nullptr),
+	address(std::forward<ENetAddress>(address))
 {
 }
 
@@ -214,30 +216,6 @@ void Network::CreatePeer( ENetPeer& peer ) {
 	_connectCallback( sharedPeer );
 }
 
-std::ostream& Network::DEBUG::LOG( std::ostream& stream ) {
-	return std::cout << "[Network] " << stream.rdbuf();
-}
-
-std::ostream& Network::DEBUG::LOG( const std::string& str ) {
-	return std::cout << "[Network] " << str;
-}
-
-std::ostream& Network::DEBUG::ERR( std::ostream& stream ) {
-	return std::cerr << "[Network] " << stream.rdbuf();
-}
-
-void Network::DEBUG::LOG_ENTRY( std::ostream& stream ) {
-	 LOG( stream ) << std::endl;
-}
-
-void Network::DEBUG::LOG_ENTRY( const std::string& str ) {
-	 LOG( str ) << std::endl;
-}
-
-void Network::DEBUG::ERR_ENTRY( std::ostream& stream ) {
-	 ERR( stream ) << std::endl;
-}
-
 void Network::HandleUnconnected() {
 
 	//
@@ -256,7 +234,7 @@ void Network::HandleUnconnected() {
 	ENetEvent event;
 	for( auto& entry : outstandingConnections ) {
 
-		DEBUG::LOG_ENTRY(std::stringstream() << "Connecting to " << entry.host << ':' << entry.port);
+		DEBUG.LOG_ENTRY(std::stringstream() << "Connecting to " << entry.host << ':' << entry.port);
 		// Initiate the connection, allocating the two channels 0 and 1. */
 		auto peer = enet_host_connect( _client, &entry, 2, 0);
 
@@ -268,7 +246,7 @@ void Network::HandleUnconnected() {
 		// Wait 5 seconds for the connection attempt to succeed.
 		if( enet_host_service( _client, &event, 5000) > 0
 		 && event.type == ENET_EVENT_TYPE_CONNECT ) {
-			DEBUG::LOG_ENTRY(std::stringstream() << "Connecting to " << entry.host << ':' << entry.port << " !SUCCEEDED!");
+			DEBUG.LOG_ENTRY(std::stringstream() << "Connecting to " << entry.host << ':' << entry.port << " !SUCCEEDED!");
 			CreatePeer( *peer );
 		}
 		else
@@ -277,7 +255,7 @@ void Network::HandleUnconnected() {
 			/* received. Reset the peer in the event the 5 seconds   */
 			/* had run out without any significant event.            */
 			enet_peer_reset( peer );
-			DEBUG::ERR_ENTRY(std::stringstream() << "Connecting to " << entry.host << ':' << entry.port << " !FAILED!");
+			DEBUG.ERR_ENTRY(std::stringstream() << "Connecting to " << entry.host << ':' << entry.port << " !FAILED!");
 		}
 	}
 }
@@ -308,7 +286,7 @@ bool Network::_ExecuteWorker() {
 			case ENET_EVENT_TYPE_NONE:
 				break;
 			case ENET_EVENT_TYPE_CONNECT: {
-				DEBUG::LOG_ENTRY( std::stringstream() << "Peer connected from "
+				DEBUG.LOG_ENTRY( std::stringstream() << "Peer connected from "
 				                 << event.peer->address.host << ':'
 				                 << event.peer->address.port);
 
@@ -317,7 +295,7 @@ bool Network::_ExecuteWorker() {
 			}
 			case ENET_EVENT_TYPE_RECEIVE: {
 				auto peer = extractPeer();
-				DEBUG::LOG_ENTRY( std::stringstream() << "Packet received." << std::endl
+				DEBUG.LOG_ENTRY( std::stringstream() << "Packet received." << std::endl
 				                  << "\tLength: " << event.packet->dataLength
 				                  << "\tFrom: " << event.peer->address.host << ":" << event.peer->address.port);
 
@@ -378,7 +356,7 @@ bool Network::_ExecuteWorker() {
 void Network::ExecuteWorker() {
 	static const std::chrono::milliseconds duration( 1 );
 
-	DEBUG::LOG_ENTRY("[Worker] Start...");
+	DEBUG.LOG_ENTRY("[Worker] Start...");
 
 	while( _ExecuteWorker() ) {
 		auto queue = _atomicQueues[0].load();
@@ -392,7 +370,7 @@ void Network::ExecuteWorker() {
 			std::this_thread::sleep_for( duration );
 	}
 
-	DEBUG::LOG_ENTRY("[Worker] ...End");
+	DEBUG.LOG_ENTRY("[Worker] ...End");
 }
 
 void Network::ConnectTo( const std::string& host, enet_uint16 port ) {
@@ -406,5 +384,11 @@ void Network::ConnectTo( const std::string& host, enet_uint16 port ) {
 
 	// Make sure we are the only thread accessing object
 	std::lock_guard<std::mutex> lock( _peers.unconnectedLock );
-	_peers.unconnected.insert( address );
+	_peers.unconnected.insert( std::move(address) );
+}
+
+const std::string&
+Network::Debug::GetCategory() const {
+	static const std::string CATEGORY = "Network";
+	return CATEGORY;
 }
