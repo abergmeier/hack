@@ -27,6 +27,7 @@ public:
 	// proved to be too complicated
 	void Commit();
 	const std::string& GetUUID() const override;
+	bool IsProcessLocal() const;
 protected:
 	std::ostream& SerializeContent(std::ostream& stream) const;
 };

@@ -38,4 +38,8 @@ void LocalPlayer::Commit() {
 	//TODO: Commit to be displayed
 }
 
+bool LocalPlayer::IsProcessLocal() const {
+	return true;
+}
+
 

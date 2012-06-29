@@ -23,6 +23,8 @@ public:
 	virtual const std::string& GetUUID() const = 0;
 	const std::string& GetName() const;
 	virtual std::ostream& SerializeContent(const std::string& className, std::ostream& stream) const;
+	// Indicates whether Player is allocated in same Process as calling code.
+	virtual bool IsProcessLocal() const = 0;
 protected:
 	Player(std::string name);
 private:

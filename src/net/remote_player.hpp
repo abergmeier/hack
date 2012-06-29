@@ -26,6 +26,7 @@ public:
 	std::queue<buffer_type> GetFrom() override;
 	void Commit();
 	const std::string& GetUUID() const;
+	bool IsProcessLocal() const;
 protected:
 	std::ostream& SerializeContent(std::ostream& stream) const;
 private:

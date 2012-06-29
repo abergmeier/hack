@@ -72,3 +72,7 @@ std::ostream& RemotePlayer::SerializeContent(std::ostream& stream) const {
 	return Serializable::SerializeContent( NAME, stream );
 }
 
+bool RemotePlayer::IsProcessLocal() const {
+	return false;
+}
+
