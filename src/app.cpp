@@ -15,6 +15,18 @@
 #include "logic/objects.hpp"
 #include "net/remote_player.hpp"
 #include "logic/states.hpp"
+#include "debug.hpp"
+
+namespace {
+	class Debug : public hack::Debug {
+		const std::string& GetCategory() const {
+			static const std::string CATEGORY = "MAIN";
+			return CATEGORY;
+		}
+	};
+
+	static const Debug DEBUG;
+}
 
 int main( int argc, char** args ) {
 
