@@ -18,24 +18,32 @@ namespace hack {
 namespace net {
 
 class RemotePlayer : public hack::logic::Player, public Endpoint {
-public:
-	RemotePlayer(std::shared_ptr<Network::Peer> peer, std::string name);
-	~RemotePlayer();
-	bool operator==(const Network::Peer& peer) const;
-	void SendTo(buffer_type buffer, std::function<void()> callback) override;
-	std::queue<buffer_type> GetFrom() override;
-	void Commit();
-	const std::string& GetUUID() const;
-	bool IsProcessLocal() const;
-protected:
-	std::ostream& SerializeContent(std::ostream& stream) const;
-private:
 	void Deserialize(std::istream& stream);
 
 	static const std::string NAME;
 	std::queue<buffer_type> _receiveQueue;
 	std::function<void(buffer_type)> _receiver;
 	std::weak_ptr<Network::Peer> _peer;
+public:
+	RemotePlayer(std::shared_ptr<Network::Peer> peer, std::string name);
+	~RemotePlayer();
+	bool operator==(const Network::Peer& peer) const;
+
+	template <typename T>
+	void SendTo(const T& buffer) {
+		auto peer = _peer.lock();
+
+		if( !peer )
+			return;
+
+		peer->Send( buffer );
+	}
+	std::queue<buffer_type> GetFrom() override;
+	void Commit();
+	const std::string& GetUUID() const;
+	bool IsProcessLocal() const;
+protected:
+	std::ostream& SerializeContent(std::ostream& stream) const;
 };
 
 bool operator ==(const Network::Peer& peer, const RemotePlayer& player);

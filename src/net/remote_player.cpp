@@ -47,15 +47,6 @@ hack::net::operator ==(const Network::Peer& peer, const RemotePlayer& player) {
 	return player == peer;
 }
 
-void RemotePlayer::SendTo(buffer_type buffer, std::function<void()> callback) {
-	auto peer = _peer.lock();
-
-	if( !peer )
-		return;
-
-	peer->Send(std::forward<buffer_type>(buffer), callback);
-}
-
 std::queue<RemotePlayer::buffer_type> RemotePlayer::GetFrom() {
 	return std::move(_receiveQueue);
 }

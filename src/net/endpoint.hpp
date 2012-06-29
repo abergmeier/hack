@@ -21,7 +21,6 @@ protected:
 public:
 	virtual ~Endpoint(){};
 	typedef Network::buffer_type buffer_type;
-	virtual void SendTo(buffer_type buffer, std::function<void()> callback) = 0;
 	virtual std::queue<buffer_type> GetFrom() = 0;
 };
 

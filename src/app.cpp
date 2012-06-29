@@ -62,12 +62,18 @@ int main( int argc, char** args ) {
 		network.ConnectTo("localhost", peerPort);
 	}
 
-	auto playerConnected = [&_players](std::shared_ptr<hack::net::Network::Peer> peer) {
+	auto& objects = hack::logic::Objects::Get();
+	auto& states = hack::state::States::Get();
+	states.SetNetwork( network );
+
+	auto playerConnected = [&_players, &states](std::shared_ptr<hack::net::Network::Peer> peer) {
 		auto shared = std::make_shared<hack::net::RemotePlayer>(peer, "Unnamed");
 
-		auto& states = hack::state::States::Get();
+		auto sharedPlayer = std::static_pointer_cast<hack::logic::Player>( shared );
+
 		for( auto& otherPlayer : _players ) {
-			states.CommitTo( *otherPlayer, *shared );
+			DEBUG.LOG_ENTRY(std::stringstream() << "Sending player " << otherPlayer->GetName() << " to " << sharedPlayer->GetName() );
+			states.CommitTo( *otherPlayer, sharedPlayer );
 		}
 
 		_players.insert(shared);
@@ -92,17 +98,34 @@ int main( int argc, char** args ) {
 				break;
 			}
 		}
-
 	};
 
 	network.SetConnectCallback(playerConnected);
 	network.SetDisconnectCallback(playerDisconnected);
 
+	auto actions = [&states, &objects]() {
+		static const std::chrono::milliseconds duration( 5000 );
+
+		// If there is nothing to do - do not spam
+		// the CPU
+		std::this_thread::sleep_for( duration );
+		for( auto& object : objects ) {
+			auto sharedObject = object.lock();
+
+			if( !sharedObject )
+				continue;
+			states.Commit( *sharedObject );
+		}
+	};
+
+	const std::launch policy = std::launch::async;
+	auto future = std::async(policy, actions);
+
 	network.ExecuteWorker();
 #if 0
 	// Start all subsystems asynchronous
 	std::vector<std::future<void>> futures;
-	const std::launch policy = std::launch::async;
+
 
 	futures.push_back(std::async(policy, network.ExecuteWorker));
 

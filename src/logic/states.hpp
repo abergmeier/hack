@@ -23,13 +23,14 @@ class States {
 	static States INSTANCE;
 	hack::net::Network* _network;
 	// If no network is connected save data locally
-	std::deque<std::string> _queue;
-	void PassToNetwork( const std::string& data );
+	std::deque<std::pair<std::weak_ptr<hack::logic::Player>, std::string>> _queue;
+	bool PassToNetwork( const std::string& data );
+	bool PassToNetwork( const std::string& data, hack::logic::Player& player );
 	States();
 public:
 	static States& Get();
 	void Commit( const Serializable& object );
-	void CommitTo( const Serializable& object, hack::logic::Player& player);
+	void CommitTo( const Serializable& object, std::shared_ptr<hack::logic::Player> player);
 	//std::map< std::weak_ptr<void>, std::unique_ptr<void> > _state;
 	void SetNetwork( hack::net::Network& network );
 };
