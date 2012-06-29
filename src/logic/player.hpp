@@ -17,15 +17,18 @@ namespace hack {
 namespace logic {
 
 class Player : public hack::state::Serializable {
-	std::string _name;
-protected:
-	Player(std::string name);
 public:
 	virtual ~Player();
 	virtual bool operator <(const Player& player) const;
 	virtual const std::string& GetUUID() const = 0;
 	const std::string& GetName() const;
 	virtual std::ostream& SerializeContent(const std::string& className, std::ostream& stream) const;
+protected:
+	Player(std::string name);
+private:
+	std::string _name;
+	std::ostream& SerializeName( std::ostream& stream ) const;
+	std::ostream& SerializeUUID( std::ostream& stream ) const;
 };
 
 } }
