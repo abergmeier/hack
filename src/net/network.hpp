@@ -37,6 +37,18 @@ namespace hack {
 namespace net {
 
 class Network : public hack::Subsystem {
+	template <typename T>
+	static ENetPacket* _createPacket(const T& buffer) {
+		const size_t byteCount = buffer.size() * sizeof(typename T::value_type);
+		auto packet = enet_packet_create( buffer.data(),
+		                                  byteCount,
+		                                  ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE
+		);
+
+		if( packet == nullptr )
+			throw std::runtime_error("Could not create packet!");
+		return packet;
+	}
 public:
 	typedef std::vector<enet_uint8> buffer_type;
 
@@ -44,9 +56,9 @@ public:
 	class Peer {
 		// Make sure we can only be created by the network
 		friend class Network;
-		Peer(ENetAddress address);
+		Peer( ENetPeer& peer );
 		void Destroy();
-		std::queue<std::tuple<buffer_type, std::function<void()>>> sendQueue;
+		//std::queue<std::tuple<buffer_type, std::function<void()>>> sendQueue;
 		std::string _uuid;
 		ENetPeer* enetPeer;
 		ENetPeer* GetPeer();
@@ -58,7 +70,13 @@ public:
 		bool operator < (const Peer& other) const;
 		bool operator ==(const Peer& other) const;
 		std::function<void(buffer_type)> receiveCallback;
-		void Send(buffer_type buffer, std::function<void()> callback);
+		template <typename T>
+		void Send(const T& buffer) {
+			auto packet = _createPacket( buffer );
+			if( enet_peer_send( enetPeer, 0, packet ) != 0 )
+				throw std::runtime_error("SEND FAIL");
+		}
+
 		const std::string& GetUUID() const;
 
 		const ENetAddress address;
@@ -85,8 +103,6 @@ private:
 	std::array<std::unique_ptr<std::deque<queue_element_type>>, 2> _queues;
 	std::array<std::atomic<std::deque<queue_element_type>*>, 2> _atomicQueues;
 
-
-
 	struct {
 		// Mutex to be used when object is accessed
 		std::mutex unconnectedLock;
@@ -96,20 +112,7 @@ private:
 		std::map<ENetAddress, std::shared_ptr<Peer>> connected;
 	} _peers;
 
-	ENetHost* _client, * _server;
-
-	template <typename T>
-	static ENetPacket* _createPacket(const T& buffer) {
-		const size_t byteCount = buffer.size() * sizeof(typename T::value_type);
-		auto packet = enet_packet_create( buffer.data(),
-		                                  byteCount,
-		                                  ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE
-		);
-
-		if( packet == nullptr )
-			throw std::runtime_error("Could not create packet!");
-		return packet;
-	}
+	ENetHost/** _client,*/ * _server;
 
 public:
 	virtual ~Network();
@@ -119,17 +122,10 @@ public:
 	void ExecuteWorker();
 
 	template <typename T>
-	void Send(const T& buffer, std::function<void()> callback) {
-		auto packet = _createPacket(buffer);
-		enet_host_broadcast(_client, 0, packet);
-		std::async(std::launch::async, callback);
-	}
-
-	template <typename T>
 	void Send(const T& buffer) {
-		Send(buffer, []() {});
+		auto packet = _createPacket(buffer);
+		enet_host_broadcast( _server, 0, packet );
 	}
-
 
 	// Callback is executed synchronously. Make sure it returns very fast to not
 	// block the network communication!

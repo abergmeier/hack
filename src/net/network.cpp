@@ -89,7 +89,6 @@ Network::Network( enet_uint16 incomingPort )
 
 	try {
 		_server = createServer( incomingPort );
-		_client = createClient( );
 	} catch( ... ) {
 		auto eptr = std::current_exception();
 		// Invoke cleanup
@@ -99,7 +98,6 @@ Network::Network( enet_uint16 incomingPort )
 }
 
 void Network::Destroy() {
-	_client = nullptr;
 	_server = nullptr;
 	enet_deinitialize();
 }
@@ -116,13 +114,6 @@ void Network::Setup() {
 	registryTask.get();
 	stunTask.get();
 #endif
-}
-
-void Network::Peer::Send(buffer_type buffer, std::function<void()> callback) {
-	auto packet = _createPacket(buffer);
-
-	enet_peer_send(enetPeer, 0, packet);
-	std::async(std::launch::async, callback);
 }
 
 void Network::SetConnectCallback(std::function<void(std::shared_ptr<hack::net::Network::Peer>)> callback) {
@@ -154,9 +145,9 @@ void Network::Receive() {
 
 #endif
 
-Network::Peer::Peer(ENetAddress address) :
-	enetPeer(nullptr),
-	address(std::forward<ENetAddress>(address))
+Network::Peer::Peer( ENetPeer& peer ) :
+	enetPeer( &peer ),
+	address( peer.address )
 {
 }
 
@@ -203,11 +194,11 @@ void Network::Peer::SetUUID(std::string uuid) {
 void Network::CreatePeer( ENetPeer& peer ) {
 	// We have to build Peer manually on heap here because we only allow Network to
 	// instantiate Peer objects
-	auto sharedPeer = std::shared_ptr<Peer>( new Peer( peer.address ) );
+	auto sharedPeer = std::shared_ptr<Peer>( new Peer( peer ) );
 
 	auto insertPair = _peers.connected.insert( std::make_pair( peer.address, sharedPeer ) );
 
-	if( insertPair.second )
+	if( !insertPair.second )
 		return; // Already connected?
 
 	_peers.unconnected.erase( peer.address);
@@ -236,7 +227,7 @@ void Network::HandleUnconnected() {
 
 		DEBUG.LOG_ENTRY(std::stringstream() << "Connecting to " << entry.host << ':' << entry.port);
 		// Initiate the connection, allocating the two channels 0 and 1. */
-		auto peer = enet_host_connect( _client, &entry, 2, 0);
+		auto peer = enet_host_connect( _server, &entry, 2, 0);
 
 		if (peer == nullptr) {
 		   std::cerr << "CONNECT FAILED" << std::endl;
@@ -244,7 +235,7 @@ void Network::HandleUnconnected() {
 		}
 
 		// Wait 5 seconds for the connection attempt to succeed.
-		if( enet_host_service( _client, &event, 5000) > 0
+		if( enet_host_service( _server, &event, 5000) > 0
 		 && event.type == ENET_EVENT_TYPE_CONNECT ) {
 			DEBUG.LOG_ENTRY(std::stringstream() << "Connecting to " << entry.host << ':' << entry.port << " !SUCCEEDED!");
 			CreatePeer( *peer );
@@ -341,6 +332,7 @@ bool Network::_ExecuteWorker() {
 	auto& currentQueue = *_atomicQueues[1].load();
 	//TODO: introduce locking
 	// Process everything we have in the queue
+#if 0
 	for( auto& element : currentQueue ) {
 		if( element.peer )
 			// Send to peer
@@ -349,6 +341,7 @@ bool Network::_ExecuteWorker() {
 			// Do broadcast
 			Send( element.buffer, element.callback );
 	}
+#endif
 
 	return true;
 }
