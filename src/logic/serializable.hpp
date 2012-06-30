@@ -17,6 +17,11 @@ namespace state {
 
 class Serializable {
 public:
+	struct String {
+		static std::ostream& Serialize( std::ostream& stream, const std::string& str );
+		static std::string Deserialize( std::istream& input );
+	};
+
 	virtual ~Serializable(){};
 	void Serialize(std::ostream& stream) const;
 protected:
@@ -25,10 +30,6 @@ protected:
 	// Most times should just call the SerializeContent overload and pass the non abstract class name
 	virtual std::ostream& SerializeContent(std::ostream& stream) const = 0;
 	virtual std::ostream& SerializeContent(const std::string& className, std::ostream& stream) const;
-	struct String {
-		static std::ostream& Serialize( std::ostream& stream, const std::string& str );
-		static std::string Deserialize( std::istream& input );
-	};
 };
 
 
