@@ -42,7 +42,7 @@ app.put('/', function (req, res) {
 		uuid: uuid.v4()
 	};
 	clients[client.uuid] = client;
-	res.send(client.uuid);
+	res.send("");
 });
 
 app.del('/:uuid', function (req, res) {
@@ -58,7 +58,7 @@ app.del('/:uuid', function (req, res) {
 	client.uuid = undefined;
 	clients[removeUuid] = undefined;
 	
-	res.send('Removed');
+	res.send("");
 });
 
 
