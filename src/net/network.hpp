@@ -52,7 +52,7 @@ class Network : public hack::Subsystem {
 public:
 	typedef std::vector<enet_uint8> buffer_type;
 
-	Network( enet_uint16 incomingPort );
+	Network( );
 	class Peer {
 		// Make sure we can only be created by the network
 		friend class Network;
@@ -112,7 +112,8 @@ private:
 		std::map<ENetAddress, std::shared_ptr<Peer>> connected;
 	} _peers;
 
-	ENetHost/** _client,*/ * _server;
+	ENetHost* _server;
+	enet_uint16 _port;
 
 public:
 	virtual ~Network();
@@ -133,6 +134,7 @@ public:
 	void SetConnectCallback(std::function<void(std::shared_ptr<hack::net::Network::Peer>)> callback);
 	void SetDisconnectCallback(std::function<void(hack::net::Network::Peer&)> callback);
 	void ConnectTo( const std::string& host, enet_uint16 port );
+	enet_uint16 GetIncomingPort() const;
 private:
 
 	// Processes a filled queue

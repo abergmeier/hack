@@ -6,6 +6,7 @@
 #include <exception>
 #include <iostream>
 #include <sstream>
+#include <tuple>
 
 #include "network.hpp"
 
@@ -42,9 +43,10 @@ class Peer {
 };
 
 namespace {
-	ENetHost* createServer( enet_uint16 incomingPort ) {
+	std::tuple<ENetHost*, enet_uint16> createServer(  ) {
 		// Create Server
 		ENetAddress address;
+		enet_uint16 incomingPort = 50123;
 
 	    address.host = ENET_HOST_ANY;
 	    address.port = incomingPort;
@@ -58,7 +60,7 @@ namespace {
 		if( server == nullptr )
 			throw std::runtime_error("An error occurred while trying to create an ENet server.");
 
-		return server;
+		return std::make_tuple( server, incomingPort );
 	}
 
 	ENetHost* createClient() {
@@ -76,7 +78,7 @@ namespace {
 	}
 }
 
-Network::Network( enet_uint16 incomingPort )
+Network::Network( )
 {
 	_queues[0] = std::unique_ptr<std::deque<queue_element_type>>(new std::deque<queue_element_type>());
 	_queues[1] = std::unique_ptr<std::deque<queue_element_type>>(new std::deque<queue_element_type>());
@@ -88,7 +90,7 @@ Network::Network( enet_uint16 incomingPort )
 		throw std::runtime_error("Could not initialize ENET.");
 
 	try {
-		_server = createServer( incomingPort );
+		std::tie(_server, _port) = createServer( );
 	} catch( ... ) {
 		auto eptr = std::current_exception();
 		// Invoke cleanup
@@ -378,6 +380,10 @@ void Network::ConnectTo( const std::string& host, enet_uint16 port ) {
 	// Make sure we are the only thread accessing object
 	std::lock_guard<std::mutex> lock( _peers.unconnectedLock );
 	_peers.unconnected.insert( std::move(address) );
+}
+
+enet_uint16 Network::GetIncomingPort() const {
+	return _port;
 }
 
 const std::string&
