@@ -37,10 +37,13 @@ app.get('/:uuid', function (req, res) {
 	res.send(client);
 });
 
-app.put('/', function (req, res) {
+app.post('/:uuid', function (req, res) {
 	var client = {
-		uuid: uuid.v4()
+		uuid: req.params.uuid,
+		host: req.body.host,
+		port: req.body.port
 	};
+	
 	clients[client.uuid] = client;
 	res.send("");
 });
@@ -56,7 +59,7 @@ app.del('/:uuid', function (req, res) {
 	
 	// Make sure we do not have any references anymore
 	client.uuid = undefined;
-	clients[removeUuid] = undefined;
+	delete clients[removeUuid];
 	
 	res.send("");
 });
