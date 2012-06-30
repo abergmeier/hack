@@ -16,6 +16,7 @@
 #include "net/remote_player.hpp"
 #include "logic/states.hpp"
 #include "debug.hpp"
+#include "net/registration.hpp"
 
 namespace {
 	class Debug : public hack::Debug {
@@ -30,20 +31,10 @@ namespace {
 
 int main( int argc, char** args ) {
 
-	enet_uint16 incomingPort = 50123;
-
 	// Ignore binary path
 	--argc;
 	++args;
 
-	if( argc >= 1 ) {
-		// Handle incoming port
-		std::stringstream parser(*args);
-		parser >> incomingPort;
-
-		--argc;
-		++args;
-	}
 
 	std::set<std::shared_ptr<hack::logic::Player>> _players;
 
@@ -52,15 +43,17 @@ int main( int argc, char** args ) {
 	hack::logic::Objects::Get().Register(stone);
 
 	//std::string name = "Andreas";
-	_players.insert(std::make_shared<hack::state::LocalPlayer>());
+	auto sharedLocalPlayer = std::make_shared<hack::state::LocalPlayer>();
+	_players.insert( sharedLocalPlayer );
 
-	hack::net::Network network( incomingPort );
-	for( ; argc > 0; --argc, ++args ) {
-		enet_uint16 peerPort = 0;
-		std::stringstream parser(*args);
-		parser >> peerPort;
-		network.ConnectTo("localhost", peerPort);
+	hack::net::Network network;
+	// Connect to all known Peers before we register ourselves
+	// so we do not have to filter ourselves
+	for( auto& other : hack::net::Registration::GetAll() ) {
+		network.ConnectTo(other.host, other.port );
 	}
+
+	hack::net::Registration registration( sharedLocalPlayer->GetUUID(), network.GetIncomingPort() );
 
 	auto& objects = hack::logic::Objects::Get();
 	auto& states = hack::state::States::Get();
