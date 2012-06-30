@@ -1,6 +1,7 @@
 
 #include <istream>
 #include "entity.hpp"
+#include "serializable.hpp"
 
 using namespace hack::logic;
 
@@ -47,19 +48,20 @@ id_type& id_type::operator=(id_type&& other) {
 }
 
 std::ostream& hack::logic::operator <<(std::ostream& stream, const id_type& id) {
-	return stream << '{'
-	               << id.global_id << ','
-	               << id.local_id
-	               << '}';
+	stream << '{';
+	hack::state::Serializable::String::Serialize( stream, id.global_id );
+	stream << ','
+	       << id.local_id
+	       << '}';
+	return stream;
 }
 
 std::istream& hack::logic::operator >>(std::istream& stream, id_type& id) {
-	char term;
-	stream .get(term); //{
-	stream >> id.global_id;
-	stream .get(term); //,
+	stream.get(); //{
+	id.global_id = hack::state::Serializable::String::Deserialize( stream );
+	stream.get(); //,
 	stream >> id.local_id;
-	stream .get(term); //}
+	stream.get(); //}
 	return stream;
 }
 
