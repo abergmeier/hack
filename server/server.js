@@ -16,7 +16,13 @@ app.configure(function () {
 var clients = {};
 
 app.get('/', function (req, res) {
-	res.send(clients);
+	var result = [];
+	for( var client in clients ) {
+		if( !clients.hasOwnProperty(client) )
+			continue;
+		result.push( clients[client] );
+	}
+	res.send(result);
 });
 
 app.get('/:uuid', function (req, res) {
