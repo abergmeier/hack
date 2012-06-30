@@ -45,6 +45,7 @@ app.post('/:uuid', function (req, res) {
 	};
 	
 	clients[client.uuid] = client;
+	console.log("Added: " + client.uuid + " " + client.host + ":" + client.port);
 	res.send("");
 });
 
@@ -56,6 +57,8 @@ app.del('/:uuid', function (req, res) {
 		res.send('Could not find client ' + removeUuid);
 		return;
 	}
+	
+	console.log("Removed: " + client.uuid + " " + client.host + ":" + client.port);
 	
 	// Make sure we do not have any references anymore
 	client.uuid = undefined;
