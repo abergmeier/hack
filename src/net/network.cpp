@@ -376,10 +376,11 @@ void Network::ExecuteWorker() {
 
 	_state = STOPPED;
 
-	DEBUG.LOG_ENTRY("[Worker] ...End");
+	DEBUG.LOG_ENTRY("[Worker] ...Stop");
 }
 
 void Network::StopWorker() {
+	DEBUG.LOG_ENTRY("[Worker] Stopping...");
 	_state = HALTING;
 }
 

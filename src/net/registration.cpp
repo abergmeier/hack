@@ -186,10 +186,11 @@ void Registration::ExecuteWorker() {
 		std::this_thread::sleep_for( DURATION );
 	}
 
-	DEBUG.LOG_ENTRY("[Worker] ...End");
+	DEBUG.LOG_ENTRY("[Worker] ...Stop");
 }
 
 void Registration::StopWorker() {
+	DEBUG.LOG_ENTRY("[Worker] Stopping...");
 	_isPinging = false;
 }
 
