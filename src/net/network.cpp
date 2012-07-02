@@ -74,7 +74,8 @@ namespace {
 	}
 }
 
-Network::Network( )
+Network::Network() :
+	_state(STOPPED)
 {
 	_queues[0] = std::unique_ptr<std::deque<queue_element_type>>(new std::deque<queue_element_type>());
 	_queues[1] = std::unique_ptr<std::deque<queue_element_type>>(new std::deque<queue_element_type>());
@@ -349,13 +350,19 @@ bool Network::_ExecuteWorker() {
 void Network::ExecuteWorker() {
 	static const std::chrono::milliseconds duration( 1 );
 
+	_state = RUNNING;
+
 	DEBUG.LOG_ENTRY("[Worker] Start...");
 
 	// Make sure nobody destructs object as long as this
 	// function is running
 	std::lock_guard<std::mutex> lock( destructorMutex );
 
-	while( _ExecuteWorker() ) {
+	while( _state != HALTING ) {
+
+		if( !_ExecuteWorker() )
+			break;
+
 		auto queue = _atomicQueues[0].load();
 		if( queue == nullptr )
 			// Should never happen but paranoia is so sweet
@@ -367,7 +374,13 @@ void Network::ExecuteWorker() {
 			std::this_thread::sleep_for( duration );
 	}
 
+	_state = STOPPED;
+
 	DEBUG.LOG_ENTRY("[Worker] ...End");
+}
+
+void Network::StopWorker() {
+	_state = HALTING;
 }
 
 void Network::ConnectTo( const std::string& host, enet_uint16 port ) {

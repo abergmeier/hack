@@ -111,6 +111,11 @@ private:
 	ENetHost* _server;
 	enet_uint16 _port;
 
+	enum {
+		STOPPED,
+		RUNNING,
+		HALTING
+	} _state;
 public:
 	virtual ~Network();
 	void Setup();
