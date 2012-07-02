@@ -102,6 +102,8 @@ void Network::Destroy() {
 
 Network::~Network() {
 	Destroy();
+
+	StopWorker();
 }
 
 void Network::Setup() {
@@ -348,6 +350,10 @@ void Network::ExecuteWorker() {
 	static const std::chrono::milliseconds duration( 1 );
 
 	DEBUG.LOG_ENTRY("[Worker] Start...");
+
+	// Make sure nobody destructs object as long as this
+	// function is running
+	std::lock_guard<std::mutex> lock( destructorMutex );
 
 	while( _ExecuteWorker() ) {
 		auto queue = _atomicQueues[0].load();

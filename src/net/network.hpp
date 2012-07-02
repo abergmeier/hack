@@ -117,6 +117,7 @@ public:
 
 	// Processes the queue indefinitely
 	void ExecuteWorker();
+	void StopWorker();
 
 	template <typename T>
 	void Send(const T& buffer) {
