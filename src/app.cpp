@@ -15,9 +15,16 @@
 #include "logic/objects.hpp"
 #include "net/remote_player.hpp"
 #include "logic/states.hpp"
+#include "graphics/renderer.hpp"
+
+#include "logic\stone.hpp"
 
 int main( int argc, char** args ) {
-
+	renderer r(640,480);
+	hack::logic::Stone s;
+	r.registerEntity(s,"Stone");
+	r.run();
+/*
 	enet_uint16 incomingPort = 50123;
 
 	// Ignore binary path
@@ -109,5 +116,6 @@ int main( int argc, char** args ) {
 	auto future = std::async(std::launch::async, network.ExecuteWorker());
 	future.wait();
 */
+	
 }
 
