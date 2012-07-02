@@ -19,8 +19,10 @@ public:
 	virtual ~Subsystem(){ std::lock_guard<std::mutex> lock( destructorMutex ); };
 	// Start the worker loop. Should always be execute in a seperate process.
 	virtual void ExecuteWorker() = 0;
+	virtual void StopWorker() = 0;
 protected:
 	Subsystem(){};
+
 	std::mutex destructorMutex;
 };
 
