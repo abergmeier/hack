@@ -7,7 +7,9 @@
 
 #include <future>
 #include <memory>
+#include <vector>
 #include <sstream>
+#include <iostream>
 #include "logic/objects.hpp"
 #include "net/network.hpp"
 #include "state/local_player.hpp"
@@ -96,6 +98,7 @@ int main( int argc, char** args ) {
 	network.SetConnectCallback(playerConnected);
 	network.SetDisconnectCallback(playerDisconnected);
 
+#if 0
 	auto actions = [&states, &objects]() {
 		static const std::chrono::milliseconds duration( 5000 );
 
@@ -110,26 +113,42 @@ int main( int argc, char** args ) {
 			states.Commit( *sharedObject );
 		}
 	};
-
+#endif
 	const std::launch policy = std::launch::async;
-	auto future = std::async(policy, actions);
-
-	network.ExecuteWorker();
 #if 0
+	auto future = std::async(policy, actions);
+#endif
+
 	// Start all subsystems asynchronous
-	std::vector<std::future<void>> futures;
+	std::vector<std::pair<std::future<void>, hack::Subsystem*>> futures;
+
+	{ // Start Registration
+		auto worker = std::bind(&hack::net::Registration::ExecuteWorker, std::ref(registration));
+		futures.push_back(std::make_pair(std::async(policy, worker), &registration));
+	}
+
+	{ // Start Networking
+		auto worker = std::bind(&hack::net::Network::ExecuteWorker, std::ref(network));
+		futures.push_back(std::make_pair(std::async(policy, worker), &network));
+	}
 
 
-	futures.push_back(std::async(policy, network.ExecuteWorker));
+#if 0
 
 	futures.push_back(std::async(policy, logic.ExecuteWorker()));
 	futures.push_back(std::async(policy, ui.ExecuteWorker()));
+#endif
 
+	std::string input;
+	std::cin >> input;
+
+	for( auto& future : futures ) {
+		future.second->StopWorker();
+	}
 	// Wait for subsystems to terminate
 	for( auto& future : futures ) {
-		future.wait();
+		future.first.wait();
 	}
-#endif
 
 /*
 	auto& network = hack::net::Network::Get();
