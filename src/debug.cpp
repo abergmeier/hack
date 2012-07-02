@@ -13,15 +13,15 @@
 using namespace hack;
 
 std::ostream& Debug::LOG( std::ostream& stream ) const {
-	return std::cout << "[Network] " << stream.rdbuf();
+	return std::cout << '[' << GetCategory() << "] " << stream.rdbuf();
 }
 
 std::ostream& Debug::LOG( const std::string& str ) const {
-	return std::cout << "[Network] " << str;
+	return std::cout << '[' << GetCategory() << "] " << str;
 }
 
 std::ostream& Debug::ERR( std::ostream& stream ) const {
-	return std::cerr << "[Network] " << stream.rdbuf();
+	return std::cerr << '[' << GetCategory() << "] " << stream.rdbuf();
 }
 
 void Debug::LOG_ENTRY( std::ostream& stream ) const {
