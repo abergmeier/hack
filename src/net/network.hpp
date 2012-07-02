@@ -37,22 +37,8 @@ namespace hack {
 namespace net {
 
 class Network : public hack::Subsystem {
-	template <typename T>
-	static ENetPacket* _createPacket(const T& buffer) {
-		const size_t byteCount = buffer.size() * sizeof(typename T::value_type);
-		auto packet = enet_packet_create( buffer.data(),
-		                                  byteCount,
-		                                  ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE
-		);
-
-		if( packet == nullptr )
-			throw std::runtime_error("Could not create packet!");
-		return packet;
-	}
 public:
 	typedef std::vector<enet_uint8> buffer_type;
-
-	Network( );
 	class Peer {
 		// Make sure we can only be created by the network
 		friend class Network;
@@ -81,13 +67,24 @@ public:
 
 		const ENetAddress address;
 	};
-
 private:
+	template <typename T>
+	static ENetPacket* _createPacket(const T& buffer) {
+		const size_t byteCount = buffer.size() * sizeof(typename T::value_type);
+		auto packet = enet_packet_create( buffer.data(),
+		                                  byteCount,
+		                                  ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE
+		);
+
+		if( packet == nullptr )
+			throw std::runtime_error("Could not create packet!");
+		return packet;
+	}
+
 	std::function<void(std::shared_ptr<Peer>)> _connectCallback;
 	std::function<void(hack::net::Network::Peer&)> _disconnectCallback;
 	void Destroy();
 	void CreatePeer( ENetPeer& event );
-
 
 	struct queue_element_type {
 		// Destination of data - broadcast if peer is null
@@ -116,7 +113,14 @@ private:
 		RUNNING,
 		HALTING
 	} _state;
+
+	// Processes a filled queue
+	bool _ExecuteWorker();
+	// Process all known peers that are not yet connected
+	void HandleUnconnected();
 public:
+	Network( );
+
 	virtual ~Network();
 	void Setup();
 
@@ -137,14 +141,6 @@ public:
 	void SetDisconnectCallback(std::function<void(hack::net::Network::Peer&)> callback);
 	void ConnectTo( const std::string& host, enet_uint16 port );
 	enet_uint16 GetIncomingPort() const;
-private:
-
-	// Processes a filled queue
-	bool _ExecuteWorker();
-	// Process all known peers that are not yet connected
-	void HandleUnconnected();
-
-
 };
 
 } }
