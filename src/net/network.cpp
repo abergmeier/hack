@@ -12,19 +12,15 @@
 
 using namespace hack::net;
 
-const Network::Debug Network::DEBUG;
-
 namespace {
-	bool DEBUG = true;
+	struct Debug : public hack::Debug {
+		const std::string& GetCategory() const override {
+			static const std::string CATEGORY = "Network";
+			return CATEGORY;
+		}
+	};
 
-	//template <typename... ARGS>
-	void LogState(std::string args) {
-		if( !DEBUG )
-			return;
-
-		std::cout << args;
-		std::cout << std::endl;
-	}
+	const Debug DEBUG;
 }
 
 bool operator<(const ENetAddress& lhs, const ENetAddress& rhs) {
@@ -384,10 +380,4 @@ void Network::ConnectTo( const std::string& host, enet_uint16 port ) {
 
 enet_uint16 Network::GetIncomingPort() const {
 	return _port;
-}
-
-const std::string&
-Network::Debug::GetCategory() const {
-	static const std::string CATEGORY = "Network";
-	return CATEGORY;
 }

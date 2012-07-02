@@ -88,10 +88,6 @@ private:
 	void Destroy();
 	void CreatePeer( ENetPeer& event );
 
-	struct Debug : public hack::Debug {
-		const std::string& GetCategory() const;
-	};
-	static const Debug DEBUG;
 
 	struct queue_element_type {
 		// Destination of data - broadcast if peer is null
