@@ -22,10 +22,10 @@ namespace {
 		}
 	};
 
-	static const Debug DEBUG;
+	const Debug DEBUG;
 
-	static const std::string HOST("localhost");
-	static const size_t      PORT(4242);
+	const std::string HOST("hack-server.herokuapp.com");
+	const unsigned short PORT(80);
 
 	struct ResponseException : public std::runtime_error {
 		ResponseException( const Poco::Net::HTTPResponse& res, const std::string& message ) :
@@ -111,7 +111,6 @@ Registration::Registration(std::string uuid, port_type port) :
 	_uuid(uuid),
 	_uri([&uuid]() -> std::string {
 		std::stringstream stream;
-		//stream << URI;
 		stream << '/' << uuid;
 		return stream.str();
 	}()),
@@ -126,7 +125,7 @@ Registration::~Registration() {
 	try {
 		CreateRequest( HTTPRequest::HTTP_DELETE, _uri );
 	} catch( const std::exception& e ) {
-
+		DEBUG.ERR_ENTRY(std::stringstream() << "Deleting registration failed: " << e.what());
 	}
 
 	StopWorker();
