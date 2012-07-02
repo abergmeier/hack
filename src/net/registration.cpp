@@ -114,7 +114,8 @@ Registration::Registration(std::string uuid, port_type port) :
 		//stream << URI;
 		stream << '/' << uuid;
 		return stream.str();
-	}())
+	}()),
+	_isPinging(false)
 {
 	std::stringstream body;
 	body << "host=localhost&port=" << port;
@@ -127,6 +128,11 @@ Registration::~Registration() {
 	} catch( const std::exception& e ) {
 
 	}
+
+	StopWorker();
+
+	// Multithread handling is done by base
+	// destructor
 }
 
 std::vector<Registration::Element> Registration::GetAll() {
@@ -157,3 +163,35 @@ std::vector<Registration::Element> Registration::GetAll() {
 
 	return others;
 }
+
+void Registration::ExecuteWorker() {
+
+	// Set interval to 1 minute
+	static const std::chrono::milliseconds DURATION( 1 * 60 * 1000 );
+
+	_isPinging = true;
+
+	DEBUG.LOG_ENTRY("[Worker] Start...");
+
+	// Make sure nobody destructs object as long as this
+	// function is running
+	std::lock_guard<std::mutex> lock( destructorMutex );
+
+	while( _isPinging ) {
+
+		// Make request to registration server, so it
+		// does not shut down its internal state
+		CreateRequest( HTTPRequest::HTTP_GET, _uri );
+
+		// Do not flood the registration server
+		std::this_thread::sleep_for( DURATION );
+	}
+
+	DEBUG.LOG_ENTRY("[Worker] ...End");
+}
+
+void Registration::StopWorker() {
+	_isPinging = false;
+}
+
+

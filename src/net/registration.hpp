@@ -5,12 +5,13 @@
 #include <string>
 #include <future>
 #include <functional>
+#include "../subsystem.hpp"
 
 namespace hack {
 namespace net {
 
 
-class Registration {
+class Registration : public hack::Subsystem {
 public:
 	typedef size_t port_type;
 	struct Element {
@@ -27,9 +28,13 @@ public:
 	// Returns all other registrations on the server
 	static std::vector<Element> GetAll();
 
+	void ExecuteWorker() override;
+	void StopWorker() override;
+
 private:
 	const std::string _uuid;
 	const std::string _uri;
+	bool _isPinging;
 };
 
 } } //namespace hack::net
