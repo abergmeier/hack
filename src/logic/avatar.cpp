@@ -6,6 +6,9 @@ using namespace hack::logic;
 
 const std::string Avatar::NAME("Avatar");
 
+Avatar::Avatar() : Object() {};
+
+
 Avatar::Avatar(std::istream& stream) :
 	Object(stream)
 {
