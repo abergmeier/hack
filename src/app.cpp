@@ -119,35 +119,36 @@ int main( int argc, char** args ) {
 	auto future = std::async(policy, actions);
 #endif
 
-	// Start all subsystems asynchronous
-	std::vector<std::pair<std::future<void>, hack::Subsystem*>> futures;
+	{
+		// Start all subsystems asynchronous
+		std::vector<std::pair<std::future<void>, hack::Subsystem*>> futures;
 
-	{ // Start Registration
-		auto worker = std::bind(&hack::net::Registration::ExecuteWorker, std::ref(registration));
-		futures.push_back(std::make_pair(std::async(policy, worker), &registration));
-	}
+		{ // Start Registration
+			auto worker = std::bind(&hack::net::Registration::ExecuteWorker, std::ref(registration));
+			futures.push_back(std::make_pair(std::async(policy, worker), &registration));
+		}
 
-	{ // Start Networking
-		auto worker = std::bind(&hack::net::Network::ExecuteWorker, std::ref(network));
-		futures.push_back(std::make_pair(std::async(policy, worker), &network));
-	}
+		{ // Start Networking
+			auto worker = std::bind(&hack::net::Network::ExecuteWorker, std::ref(network));
+			futures.push_back(std::make_pair(std::async(policy, worker), &network));
+		}
 
 
 #if 0
-
-	futures.push_back(std::async(policy, logic.ExecuteWorker()));
-	futures.push_back(std::async(policy, ui.ExecuteWorker()));
+		futures.push_back(std::async(policy, logic.ExecuteWorker()));
+		futures.push_back(std::async(policy, ui.ExecuteWorker()));
 #endif
 
-	std::string input;
-	std::cin >> input;
+		std::string input;
+		std::cin >> input;
 
-	for( auto& future : futures ) {
-		future.second->StopWorker();
-	}
-	// Wait for subsystems to terminate
-	for( auto& future : futures ) {
-		future.first.wait();
+		for( auto& future : futures ) {
+			future.second->StopWorker();
+		}
+		// Wait for subsystems to terminate
+		for( auto& future : futures ) {
+			future.first.wait();
+		}
 	}
 
 /*
