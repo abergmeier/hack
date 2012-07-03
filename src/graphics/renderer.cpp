@@ -250,9 +250,9 @@ void renderer::renderAll() {
 
 void renderer::registerEntity(entity& e, const char* typeName) {
 	entities[&e] = am.get(typeName);
-	entities[&e]->setPosition(e.getX(),e.getY());
+	entities[&e]->setPosition((float)e.getX(),(float)e.getY());
 	entities[&e]->setRotation(e.getAngle());
-	entities[&e]->setSize(e.getWidth(),e.getHeight());
+	entities[&e]->setSize((float)e.getWidth(),(float)e.getHeight());
 }
 
 

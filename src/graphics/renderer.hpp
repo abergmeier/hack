@@ -22,6 +22,7 @@ public:
 
 	void registerEntity(hack::logic::entity& e, const char* typeName);
 	void deleteEntity(hack::logic::entity& e);
+	inputmanager& getInputmanager() { return *input; };
 private:
 	sf::RenderWindow *window;
 	inputmanager *input;
