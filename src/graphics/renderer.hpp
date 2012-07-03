@@ -4,8 +4,8 @@
 
 #include "assetmanager.hpp"
 #include "inputmanager.hpp"
-#include <SFML\Graphics.hpp>
-#include <SFML\System.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/System.hpp>
 #include <map>
 #include "../logic/entity.hpp"
 #include "asset.hpp"

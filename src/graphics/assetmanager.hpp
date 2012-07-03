@@ -3,7 +3,7 @@
 #include <map>
 #include "asset.hpp"
 #include "../logic/entity.hpp"
-#include <SFML\Graphics.hpp>
+#include <SFML/Graphics.hpp>
 
 class assetmanager
 {

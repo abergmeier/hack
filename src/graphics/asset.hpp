@@ -1,6 +1,6 @@
 #pragma once
 #include "../logic/entity.hpp"
-#include <SFML\Graphics.hpp>
+#include <SFML/Graphics.hpp>
 
 class asset
 {

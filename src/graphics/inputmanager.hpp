@@ -2,7 +2,7 @@
 #ifndef _INPUTMANAGER_HPP_
 #define _INPUTMANAGER_HPP_
 
-#include <SFML\Graphics.hpp>
+#include <SFML/Graphics.hpp>
 #include <map>
 #include <iostream>
 
