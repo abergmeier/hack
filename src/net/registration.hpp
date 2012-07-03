@@ -5,6 +5,7 @@
 #include <string>
 #include <future>
 #include <functional>
+#include <condition_variable>
 #include "../subsystem.hpp"
 
 namespace hack {
@@ -35,6 +36,7 @@ private:
 	const std::string _uuid;
 	const std::string _uri;
 	bool _isPinging;
+	std::condition_variable _sleepCondition;
 };
 
 } } //namespace hack::net

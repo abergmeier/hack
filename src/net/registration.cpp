@@ -114,7 +114,8 @@ Registration::Registration(std::string uuid, port_type port) :
 		stream << '/' << uuid;
 		return stream.str();
 	}()),
-	_isPinging(false)
+	_isPinging(false),
+	_sleepCondition()
 {
 	std::stringstream body;
 	body << "host=localhost&port=" << port;
@@ -129,6 +130,8 @@ Registration::~Registration() {
 	}
 
 	StopWorker();
+	// Wakeup next possible waiting condition
+	_sleepCondition.notify_one();
 
 	// Multithread handling is done by base
 	// destructor
@@ -176,14 +179,19 @@ void Registration::ExecuteWorker() {
 	// function is running
 	std::lock_guard<std::mutex> lock( destructorMutex );
 
+	std::mutex sleepMutex;
+	std::unique_lock<std::mutex> sleepLock(sleepMutex);
+	// Need lock for condition to work
+	sleepLock.lock();
+
 	while( _isPinging ) {
+
+		// Do not flood the registration server
+		_sleepCondition.wait_for(sleepLock, DURATION );
 
 		// Make request to registration server, so it
 		// does not shut down its internal state
 		CreateRequest( HTTPRequest::HTTP_GET, _uri );
-
-		// Do not flood the registration server
-		std::this_thread::sleep_for( DURATION );
 	}
 
 	DEBUG.LOG_ENTRY("[Worker] ...Stop");
