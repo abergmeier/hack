@@ -103,11 +103,11 @@ namespace {
 
 		form.prepareSubmit( req );
 
-        std::ostringstream oszMessage;
-        form.write( oszMessage );
-        auto body = oszMessage.str();
+        std::ostringstream bodyStream;
+        form.write( bodyStream );
+        auto body = bodyStream.str();
 
-        req.setContentLength((int) body.length() );
+        req.setContentLength( static_cast<int>( body.length() ) );
         session.sendRequest( req ) << body;
 
 		return ProcessResponse( session );
@@ -187,32 +187,34 @@ void Registration::ExecuteWorker() {
 
 	_isPinging = true;
 
-	DEBUG.LOG_ENTRY("[Worker] Start...");
+	DEBUG.LOG_ENTRY( "[Worker] Start..." );
 
 	// Make sure nobody destructs object as long as this
 	// function is running
 	std::lock_guard<std::mutex> lock( destructorMutex );
 
 	std::mutex sleepMutex;
-	std::unique_lock<std::mutex> sleepLock(sleepMutex);
+	std::unique_lock<std::mutex> sleepLock( sleepMutex );
 	// Need lock for condition to work
 	sleepLock.lock();
 
 	while( _isPinging ) {
 
 		// Do not flood the registration server
-		_sleepCondition.wait_for(sleepLock, DURATION );
+		// wait till we receive a notify or a fixed
+		// time has passed
+		_sleepCondition.wait_for( sleepLock, DURATION );
 
 		// Make request to registration server, so it
 		// does not shut down its internal state
 		CreateRequest( HTTPRequest::HTTP_GET, _uri );
 	}
 
-	DEBUG.LOG_ENTRY("[Worker] ...Stop");
+	DEBUG.LOG_ENTRY( "[Worker] ...Stop" );
 }
 
 void Registration::StopWorker() {
-	DEBUG.LOG_ENTRY("[Worker] Stopping...");
+	DEBUG.LOG_ENTRY( "[Worker] Stopping..." );
 	_isPinging = false;
 }
 
