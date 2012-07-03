@@ -116,7 +116,7 @@ int main() {
 		}
 	};
 #endif
-	const std::launch policy = std::launch::async;
+	const auto policy = std::launch::async;
 #if 0
 	auto future = std::async(policy, actions);
 #endif
