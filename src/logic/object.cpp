@@ -22,7 +22,7 @@ size_t Object::NEXT_ID = 1;
 Object::Object() :
 	entity(),
 	hack::state::Serializable(),
-	id("", NEXT_ID)
+	id("", NEXT_ID), x(0), y(0)
 {
 	++NEXT_ID;
 }

@@ -17,6 +17,7 @@
 #include "logic/objects.hpp"
 #include "net/remote_player.hpp"
 #include "logic/states.hpp"
+#include "graphics/renderer.hpp"
 #include "debug.hpp"
 #include "net/registration.hpp"
 
@@ -28,14 +29,15 @@ namespace {
 		}
 	};
 
-	static const Debug DEBUG;
+	const Debug DEBUG;
 }
 
-int main( int argc, char** args ) {
-
-	// Ignore binary path
-	--argc;
-	++args;
+int main() {
+#if 0
+	renderer r(640,480);
+	r.registerEntity(s,"Stone");
+	r.run();
+#endif
 
 
 	std::set<std::shared_ptr<hack::logic::Player>> _players;
