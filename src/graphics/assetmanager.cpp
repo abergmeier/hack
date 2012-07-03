@@ -1,5 +1,6 @@
 #include "assetmanager.hpp"
 #include "../logic/stone.hpp"
+#include "../logic/avatar.hpp"
 #include <iostream>
 using namespace sf;
 using namespace hack::logic;
@@ -17,6 +18,7 @@ assetmanager::~assetmanager(void)
 
 void assetmanager::init() {
 	addTexture(Stone::NAME.c_str(),"resources/stone.png");
+	addTexture(Avatar::NAME.c_str(),"resources/stone.png");
 }
 
 void assetmanager::addTexture(const char* name, const char* path) {

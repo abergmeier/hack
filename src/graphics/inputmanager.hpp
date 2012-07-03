@@ -14,14 +14,16 @@ public:
 	~inputmanager(void);
 	void tick();
 	
-	void registerCallbacks(std::function<void(float,float)>,std::function<void(float)>,std::function<void()>);
+	void registerCallbacks(std::function<void(int,int)>,std::function<void(int,int)>,std::function<void()>);
 private:
-	std::function<void(float,float)> moveCallback;
-	std::function<void(float)> rotateCallback;
+	std::function<void(int,int)> moveCallback;
+	std::function<void(int,int)> rotateCallback;
 	std::function<void()> attackCallback;
-	
-	std::map<sf::Keyboard::Key,bool> keys;
+
+	void handleKeys();
+
 	sf::RenderWindow* window;
+	std::map<sf::Keyboard::Key,bool> keys;
 };
 
 #endif // !_INPUTMANAGER_HPP_

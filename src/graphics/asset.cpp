@@ -5,13 +5,15 @@ using namespace sf;
 asset::asset(std::shared_ptr<Texture> texture) 
 	: tex(texture), spr()
 {
+	//set texture visual
 	spr.setTexture(*tex,true);
+	//set new origin for rotation
+	spr.setOrigin(tex->getSize().x/2,tex->getSize().y/2);
 }
 
-asset::asset(const asset& a) 
+asset::asset(const asset& a)
 	: tex(a.tex), spr(a.spr)
 {
-
 }
 
 asset::~asset(void)
@@ -19,11 +21,16 @@ asset::~asset(void)
 }
 
 void asset::setPosition(float x, float y) {
+	//set position of sprite
 	spr.setPosition(x,y);
 }
 void asset::setRotation(float angle) {
+	//set rotation / facing angle of the sprite
 	spr.setRotation(angle);
 }
 void asset::setSize(float width, float height) {
+	//set new size
 	spr.scale(width/(float)tex->getSize().x,height/(float)tex->getSize().y);
+	//set new origin for rotation
+	spr.setOrigin(tex->getSize().x/2,tex->getSize().y/2);
 }
