@@ -105,6 +105,8 @@ Network::~Network() {
 	Destroy();
 
 	StopWorker();
+
+	std::lock_guard<std::mutex> lock( destructorMutex );
 }
 
 void Network::Setup() {

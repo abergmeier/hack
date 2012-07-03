@@ -133,8 +133,7 @@ Registration::~Registration() {
 	// Wakeup next possible waiting condition
 	_sleepCondition.notify_one();
 
-	// Multithread handling is done by base
-	// destructor
+	std::lock_guard<std::mutex> lock( destructorMutex );
 }
 
 std::vector<Registration::Element> Registration::GetAll() {
