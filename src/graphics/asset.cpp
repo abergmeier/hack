@@ -3,7 +3,7 @@
 using namespace sf;
 
 asset::asset(Texture* tex) 
-	: tex(tex), spr(new Sprite()), name("hallo")
+	: name("hallo"), tex(tex), spr(new Sprite())
 {
 	spr->setTexture(*tex,true);
 }
@@ -16,6 +16,6 @@ asset::~asset(void)
 }
 
 asset::asset(const asset& a)
-	: tex(new Texture(*a.tex)), spr(new Sprite(*a.spr)), name(a.name)
+	: name(a.name), tex(new Texture(*a.tex)), spr(new Sprite(*a.spr))
 {	
 }
