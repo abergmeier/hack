@@ -18,3 +18,5 @@ libs/sfml
 libs/enet
 
 Debug
+
+libs/poco
