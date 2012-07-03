@@ -141,6 +141,18 @@ int main() {
 #endif
 
 		renderer r(640,480);
+		auto mover = [playerAvartar](float x, float y) {
+			playerAvartar->setX( std::lround(x) );
+			playerAvartar->setY( std::lround(y) );
+		};
+
+		auto rotater = [playerAvartar](float rot) {
+			playerAvartar->setAngle( rot );
+		};
+
+		auto attacker = [playerAvartar]() {
+			//TODO: Implement attack
+		};
 		hack::logic::Stone s;
 		r.registerEntity(s,hack::logic::Stone::NAME.c_str());
 		r.run();
