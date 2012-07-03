@@ -2,6 +2,7 @@
 #include <Poco/Net/HTTPRequest.h>
 #include <Poco/Net/HTTPClientSession.h>
 #include <Poco/Net/HTTPResponse.h>
+#include <Poco/Net/HTMLForm.h>
 #include <iostream>
 #include <sstream>
 #include <json/json.h>
@@ -12,6 +13,7 @@ using Poco::Net::HTTPClientSession;
 using Poco::Net::HTTPRequest;
 using Poco::Net::HTTPMessage;
 using Poco::Net::HTTPResponse;
+using Poco::Net::HTMLForm;
 
 namespace {
 
@@ -92,13 +94,21 @@ namespace {
 		return ProcessResponse( session );
 	}
 
-	std::string CreatePost( const std::string& uri, const std::string& body ) {
+	std::string CreatePost( const std::string& uri, HTMLForm& form ) {
 		HTTPClientSession session( HOST, PORT );
 
 		HTTPRequest req( HTTPRequest::HTTP_POST, uri, HTTPMessage::HTTP_1_1 );
-		//req.setContentType( "application/x-www-form-urlencoded\r\n" );
+		req.setContentType( "application/x-www-form-urlencoded\r\n" );
 		//req.setKeepAlive  ( true );
-		session.sendRequest( req ) << body;
+
+		form.prepareSubmit( req );
+
+        std::ostringstream oszMessage;
+        form.write( oszMessage );
+        auto body = oszMessage.str();
+
+        req.setContentLength((int) body.length() );
+        session.sendRequest( req ) << body;
 
 		return ProcessResponse( session );
 	}
@@ -117,9 +127,14 @@ Registration::Registration(std::string uuid, port_type port) :
 	_isPinging(false),
 	_sleepCondition()
 {
-	std::stringstream body;
-	body << "host=localhost&port=" << port;
-	std::string response = CreatePost( _uri, body.str() );
+	std::stringstream stream;
+	stream << port;
+
+	HTMLForm form;
+	form.set("host", "localhost");
+	form.set("port", stream.str());
+
+	std::string response = CreatePost( _uri, form );
 }
 
 Registration::~Registration() {
