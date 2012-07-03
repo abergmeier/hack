@@ -33,12 +33,6 @@ namespace {
 }
 
 int main() {
-#if 0
-	renderer r(640,480);
-	r.registerEntity(s,"Stone");
-	r.run();
-#endif
-
 
 	std::set<std::shared_ptr<hack::logic::Player>> _players;
 
@@ -141,8 +135,10 @@ int main() {
 		futures.push_back(std::async(policy, ui.ExecuteWorker()));
 #endif
 
-		std::string input;
-		std::cin >> input;
+		renderer r(640,480);
+		hack::logic::Stone s;
+		r.registerEntity(s,hack::logic::Stone::NAME.c_str());
+		r.run();
 
 		for( auto& future : futures ) {
 			future.second->StopWorker();

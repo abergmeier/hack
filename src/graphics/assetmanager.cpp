@@ -1,6 +1,8 @@
 #include "assetmanager.hpp"
-
+#include "../logic/stone.hpp"
+#include <iostream>
 using namespace sf;
+using namespace hack::logic;
 
 assetmanager::assetmanager(void)
 {
@@ -14,11 +16,11 @@ assetmanager::~assetmanager(void)
 }
 
 void assetmanager::init() {
-	addTexture("Stone","resources/stone.png");
+	addTexture(Stone::NAME.c_str(),"resources/stone.png");
 }
 
 void assetmanager::addTexture(const char* name, const char* path) {
-	Texture* tex = new Texture();
+	std::shared_ptr<Texture> tex(new Texture());
 	tex->loadFromFile(path);
 	textureMap[name] = tex;
 }

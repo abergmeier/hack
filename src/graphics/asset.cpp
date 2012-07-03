@@ -2,20 +2,28 @@
 
 using namespace sf;
 
-asset::asset(Texture* tex) 
-	: name("hallo"), tex(tex), spr(new Sprite())
+asset::asset(std::shared_ptr<Texture> texture) 
+	: tex(texture), spr()
 {
-	spr->setTexture(*tex,true);
+	spr.setTexture(*tex,true);
+}
+
+asset::asset(const asset& a) 
+	: tex(a.tex), spr(a.spr)
+{
+
 }
 
 asset::~asset(void)
 {
-	Texture* t;
-	t = new Texture();
-	Texture k(*t);
 }
 
-asset::asset(const asset& a)
-	: name(a.name), tex(new Texture(*a.tex)), spr(new Sprite(*a.spr))
-{	
+void asset::setPosition(float x, float y) {
+	spr.setPosition(x,y);
+}
+void asset::setRotation(float angle) {
+	spr.setRotation(angle);
+}
+void asset::setSize(float width, float height) {
+	spr.scale(width/(float)tex->getSize().x,height/(float)tex->getSize().y);
 }

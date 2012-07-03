@@ -16,7 +16,8 @@ size_t Object::NEXT_ID = 1;
 Object::Object() :
 	entity(),
 	hack::state::Serializable(),
-	id("", NEXT_ID), x(0), y(0)
+	id("", NEXT_ID),
+	x(0), y(0), angle(0), width(100), height(100)
 {
 	++NEXT_ID;
 }
