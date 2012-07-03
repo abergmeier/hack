@@ -20,6 +20,7 @@
 #include "graphics/renderer.hpp"
 #include "debug.hpp"
 #include "net/registration.hpp"
+#include "logic/avatar.hpp"
 
 namespace {
 	class Debug : public hack::Debug {
@@ -37,17 +38,22 @@ namespace {
 	}
 }
 
+using namespace hack::logic;
 
 int main() {
 
-	std::set<std::shared_ptr<hack::logic::Player>> _players;
+	std::set<std::shared_ptr<Player>> _players;
 
-	auto stone = std::make_shared<hack::logic::Stone>();
-	hack::logic::Objects::Get().Register(stone);
+	RegisterAllClasses();
 
 	//std::string name = "Andreas";
 	auto sharedLocalPlayer = std::make_shared<hack::state::LocalPlayer>();
 	_players.insert( sharedLocalPlayer );
+
+	auto stone = std::make_shared<Stone>();
+	hack::logic::Objects::Get().Register(stone);
+
+	auto playerAvartar = std::make_shared<Avatar>();
 
 	hack::net::Network network;
 	// Connect to all known Peers before we register ourselves
@@ -141,6 +147,7 @@ int main() {
 #endif
 
 		renderer r(640,480);
+
 		auto mover = [playerAvartar](float x, float y) {
 			playerAvartar->setX( std::lround(x) );
 			playerAvartar->setY( std::lround(y) );
@@ -153,9 +160,11 @@ int main() {
 		auto attacker = [playerAvartar]() {
 			//TODO: Implement attack
 		};
+
 		hack::logic::Stone s;
 		r.registerEntity(s,hack::logic::Stone::NAME.c_str());
 		r.run();
+		// Runs till window is closed
 
 		for( auto& future : futures ) {
 			future.second->StopWorker();
