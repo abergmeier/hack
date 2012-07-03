@@ -348,7 +348,7 @@ bool Network::_ExecuteWorker() {
 }
 
 void Network::ExecuteWorker() {
-	static const std::chrono::milliseconds duration( 1 );
+	static const std::chrono::milliseconds DURATION( 1 );
 
 	_state = RUNNING;
 
@@ -371,7 +371,7 @@ void Network::ExecuteWorker() {
 		if( queue->empty() )
 			// If there is nothing to do - do not spam
 			// the CPU
-			std::this_thread::sleep_for( duration );
+			std::this_thread::sleep_for( DURATION );
 	}
 
 	_state = STOPPED;
