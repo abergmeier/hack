@@ -9,10 +9,16 @@ const std::string Avatar::NAME("Avatar");
 Avatar::Avatar(std::istream& stream) :
 	Object(stream)
 {
+	Set(stream);
 }
 
 std::ostream& Avatar::SerializeContent(std::ostream& stream) const {
-	return Object::SerializeContent(NAME, stream);
+	return SerializeContent(NAME, stream);
+}
+
+std::ostream& Avatar::SerializeContent(const std::string& className, std::ostream& stream) const {
+	return Object::SerializeContent( className, stream )
+		<< ',' << hitpoints << ',' << damage ;
 }
 
 size_t Avatar::getHitpoints(){
@@ -32,5 +38,19 @@ void Avatar::setDamage(size_t value) {
 }
 
 void Avatar::hit(size_t value) {
-	hitpoints = hitpoints-value;
+	hitpoints -= std::min(hitpoints, value);
+}
+
+void Avatar::Set(std::istream& stream) {
+	 stream.get();
+	 stream >> hitpoints;
+	 stream.get();
+	 stream >> damage;
+}
+
+
+Object& Avatar::operator = (std::istream& stream) {
+	Object::operator = (stream);
+	Set(stream);
+	return *this;
 }

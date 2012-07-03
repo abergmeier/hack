@@ -11,14 +11,17 @@ namespace logic {
 
 class Avatar : public Object {
 public:
+	virtual Object& Avatar::operator = (std::istream& stream)override;
 	Avatar() : Object() {};
 	Avatar(std::istream& stream);
 	static const std::string NAME;
 	std::ostream& SerializeContent(std::ostream& stream) const override;
+	std::ostream& Avatar::SerializeContent(const std::string& className, std::ostream& stream) const override;
 	size_t getHitpoints();
 	size_t getDamage();
 	
 private:
+	void Set(std::istream& stream);
 	size_t hitpoints;
 	size_t damage;
 	void setHitpoints(size_t value);

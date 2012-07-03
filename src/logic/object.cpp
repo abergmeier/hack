@@ -10,12 +10,6 @@
 
 using namespace hack::logic;
 
-std::ostream& hack::logic::operator <<(std::ostream& stream, const Object::Position& position) {
-	return _left_shift_operator(stream, position);
-}
-std::istream& hack::logic::operator >>(std::istream& stream, Object::Position& position) {
-	return _right_shift_operator(stream, position);
-}
 
 size_t Object::NEXT_ID = 1;
 
@@ -37,7 +31,16 @@ Object::~Object() {
 }
 
 void Object::Set(std::istream& stream) {
-	stream >> _position;
+	 stream.get();
+	 stream >> x;
+	 stream.get();
+	 stream >> y;
+	 stream.get();
+	 stream >> width;
+	 stream.get();
+	 stream >> height;
+	 stream.get();
+	 stream >> angle;
 }
 
 Object& Object::operator = (std::istream& stream) {
@@ -47,7 +50,7 @@ Object& Object::operator = (std::istream& stream) {
 
 std::ostream& Object::SerializeContent(const std::string& className, std::ostream& stream) const {
 	return Serializable::SerializeContent( className, stream )
-	<< ',' << id << ',' << _position;
+		<< ',' << id << ',' << x << ',' << y << ',' << width << ',' << height << ',' << angle ;
 }
 
 int Object::getX() const {

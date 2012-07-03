@@ -20,9 +20,6 @@ namespace logic {
 
 class Object : public entity, public hack::state::Serializable {
 public:
-	// Use a class so we can have working operator deduction
-	class Position : public std::array<size_t, 2> {
-	};
 	virtual ~Object();
 	virtual Object& operator = (std::istream& stream);
 
@@ -38,7 +35,6 @@ public:
 private:
 	static size_t NEXT_ID;
 	id_type id;
-	Position _position;
 	int x;
 	int y;
 	float angle;
@@ -59,8 +55,6 @@ protected:
 	virtual std::ostream& SerializeContent(const std::string& className, std::ostream& stream) const;
 };
 
-std::ostream& operator <<(std::ostream& stream, const Object::Position& id);
-std::istream& operator >>(std::istream& stream, Object::Position& id);
 
 } }
 
