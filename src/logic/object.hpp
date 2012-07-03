@@ -32,6 +32,11 @@ public:
 	size_t getHeight() const;
 	size_t getWidth() const;
 
+	void setX(int value);
+	void setY(int value);
+	void setAngle(float value);
+
+
 private:
 	static size_t NEXT_ID;
 	id_type id;
@@ -42,9 +47,6 @@ private:
 	size_t height;
 
 	void Set(std::istream& stream);
-	void setX(int value);
-	void setY(int value);
-	void setAngle(float value);
 	void setWidth(size_t value);
 	void setHeight(size_t value);
 
