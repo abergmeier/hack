@@ -98,6 +98,9 @@ namespace {
 
 		playerAvatar.setAngle( rot );
 	};
+
+	static const int WINDOW_WIDTH = 640;
+	static const int WINDOW_HEIGHT = 480;
 }
 
 using namespace hack::logic;
@@ -111,7 +114,7 @@ int main() {
 	auto sharedLocalPlayer = std::make_shared<hack::state::LocalPlayer>();
 	_players.insert( sharedLocalPlayer );
 
-	auto r = std::make_shared<renderer>(640, 480);
+	auto r = std::make_shared<renderer>(WINDOW_WIDTH, WINDOW_HEIGHT);
 	Objects objects(r);
 
 	hack::net::Network network;
@@ -207,6 +210,9 @@ int main() {
 		auto sharedAvatar = std::make_shared<Avatar>();
 
 		objects.Register( stone );
+		sharedAvatar->setX( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_WIDTH) );
+		sharedAvatar->setY( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_HEIGHT) );
+		//TODO: Validate against collision
 		objects.Register( sharedAvatar );
 
 		vector2<int> lastMousePosition;
