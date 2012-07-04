@@ -18,6 +18,11 @@ using namespace hack::state;
 
 const std::string LocalPlayer::NAME("LocalPlayer");
 
+const std::string&
+LocalPlayer::GetClassName() const {
+	return NAME;
+}
+
 LocalPlayer::LocalPlayer() :
 	hack::logic::Player("Unnamed"),
 	_uuid(UUID::Generate())
@@ -26,11 +31,6 @@ LocalPlayer::LocalPlayer() :
 
 const std::string& LocalPlayer::GetUUID() const {
 	return _uuid;
-}
-
-std::ostream& LocalPlayer::SerializeContent(std::ostream& stream) const {
-	//Poco::Base64Encoder encoder(stream);
-	return Player::SerializeContent( NAME, stream );
 }
 
 void LocalPlayer::Commit() {

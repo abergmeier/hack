@@ -24,12 +24,12 @@ public:
 
 	virtual ~Serializable(){};
 	void Serialize(std::ostream& stream) const;
+	virtual const std::string& GetClassName() const = 0;
 protected:
 	Serializable(){};
 	// This has to be implemented in order to easily serialize an object
 	// Most times should just call the SerializeContent overload and pass the non abstract class name
 	virtual std::ostream& SerializeContent(std::ostream& stream) const = 0;
-	virtual std::ostream& SerializeContent(const std::string& className, std::ostream& stream) const;
 };
 
 

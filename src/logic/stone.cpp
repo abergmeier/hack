@@ -13,12 +13,13 @@ using namespace hack::logic;
 
 const std::string Stone::NAME("Stone");
 
+const std::string&
+Stone::GetClassName() const {
+	return NAME;
+}
+
 Stone::Stone(std::istream& stream) :
 	Object(stream)
 {
-}
-
-std::ostream& Stone::SerializeContent(std::ostream& stream) const {
-	return Object::SerializeContent(NAME, stream);
 }
 

@@ -15,8 +15,8 @@ public:
 	Avatar(); 
 	Avatar(std::istream& stream);
 	static const std::string NAME;
+	const std::string& GetClassName() const override;
 	std::ostream& SerializeContent(std::ostream& stream) const override;
-	std::ostream& SerializeContent(const std::string& className, std::ostream& stream) const override;
 	size_t getHitpoints();
 	size_t getDamage();
 	

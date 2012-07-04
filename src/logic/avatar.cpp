@@ -6,6 +6,11 @@ using namespace hack::logic;
 
 const std::string Avatar::NAME("Avatar");
 
+const std::string&
+Avatar::GetClassName() const {
+	return NAME;
+}
+
 Avatar::Avatar() : Object() {};
 
 
@@ -16,11 +21,7 @@ Avatar::Avatar(std::istream& stream) :
 }
 
 std::ostream& Avatar::SerializeContent(std::ostream& stream) const {
-	return SerializeContent(NAME, stream);
-}
-
-std::ostream& Avatar::SerializeContent(const std::string& className, std::ostream& stream) const {
-	return Object::SerializeContent( className, stream )
+	return Object::SerializeContent( stream )
 		<< ',' << hitpoints << ',' << damage ;
 }
 

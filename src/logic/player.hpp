@@ -22,7 +22,7 @@ public:
 	virtual bool operator <(const Player& player) const;
 	virtual const std::string& GetUUID() const = 0;
 	const std::string& GetName() const;
-	virtual std::ostream& SerializeContent(const std::string& className, std::ostream& stream) const;
+	virtual std::ostream& SerializeContent( std::ostream& stream ) const override;
 	// Indicates whether Player is allocated in same Process as calling code.
 	virtual bool IsProcessLocal() const = 0;
 protected:

@@ -54,7 +54,7 @@ protected:
 	Object();
 	// Use this constructor to deserialize object
 	Object(std::istream& stream);
-	virtual std::ostream& SerializeContent(const std::string& className, std::ostream& stream) const;
+	virtual std::ostream& SerializeContent(std::ostream& stream) const override;
 };
 
 

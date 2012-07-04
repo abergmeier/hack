@@ -31,6 +31,7 @@ class entity {
 
 public:
 	virtual ~entity(){};
+	virtual const std::string& GetClassName() const = 0;
 virtual const id_type& getid() const = 0;
 virtual int getX() const = 0;
 virtual int getY() const = 0;

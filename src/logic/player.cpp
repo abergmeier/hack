@@ -23,8 +23,8 @@ std::ostream& Player::SerializeUUID( std::ostream& stream ) const {
 	return String::Serialize( stream, GetUUID() );
 }
 
-std::ostream& Player::SerializeContent(const std::string& className, std::ostream& stream) const {
-	Serializable::SerializeContent( className, stream );
+std::ostream& Player::SerializeContent(std::ostream& stream) const {
+	Serializable::SerializeContent( stream );
 	stream << ',';
 	SerializeUUID( stream );
 	stream << ',';

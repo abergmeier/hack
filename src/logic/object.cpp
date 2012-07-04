@@ -49,8 +49,8 @@ Object& Object::operator = (std::istream& stream) {
 	return *this;
 }
 
-std::ostream& Object::SerializeContent(const std::string& className, std::ostream& stream) const {
-	return Serializable::SerializeContent( className, stream )
+std::ostream& Object::SerializeContent(std::ostream& stream) const {
+	return Serializable::SerializeContent( stream )
 		<< ',' << id << ',' << x << ',' << y << ',' << width << ',' << height << ',' << angle ;
 }
 

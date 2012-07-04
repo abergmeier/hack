@@ -28,8 +28,7 @@ public:
 	void Commit();
 	const std::string& GetUUID() const override;
 	bool IsProcessLocal() const;
-protected:
-	std::ostream& SerializeContent(std::ostream& stream) const;
+	const std::string& GetClassName() const override;
 };
 
 } }

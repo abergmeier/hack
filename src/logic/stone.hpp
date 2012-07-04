@@ -21,7 +21,7 @@ public:
 	Stone() : Object() {};
 	Stone(std::istream& stream);
 	static const std::string NAME;
-	std::ostream& SerializeContent(std::ostream& stream) const override;
+	const std::string& GetClassName() const override;
 };
 
 } }

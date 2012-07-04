@@ -7,6 +7,11 @@ using namespace hack::net;
 
 const std::string RemotePlayer::NAME("RemotePlayer");
 
+const std::string&
+RemotePlayer::GetClassName() const {
+	return NAME;
+}
+
 RemotePlayer::RemotePlayer(std::shared_ptr<Network::Peer> peer, std::string name) :
 	hack::logic::Player(name),
 	_receiveQueue(),
@@ -57,10 +62,6 @@ void RemotePlayer::Deserialize(std::istream& stream) {
 
 void RemotePlayer::Commit() {
 	//TODO: commit to be displayed
-}
-
-std::ostream& RemotePlayer::SerializeContent(std::ostream& stream) const {
-	return Serializable::SerializeContent( NAME, stream );
 }
 
 bool RemotePlayer::IsProcessLocal() const {
