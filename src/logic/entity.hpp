@@ -31,7 +31,9 @@ class entity {
 
 public:
 	virtual ~entity(){};
-	virtual const std::string& GetClassName() const = 0;
+	// We use ClassName instead of GetClassName because
+	// §$%& VS2012 hardcodes GetClassName
+	virtual const std::string& ClassName() const = 0;
 	virtual const id_type& getid() const = 0;
 	virtual int getX() const = 0;
 	virtual int getY() const = 0;

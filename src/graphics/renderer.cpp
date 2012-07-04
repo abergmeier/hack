@@ -254,7 +254,7 @@ void renderer::insert(const value_type& value ) {
 	if( !e )
 		return;
 
-	auto& typeName = e->GetClassName();
+	auto& typeName = e->ClassName();
 
 	entities[e.get()] = am.get(typeName.c_str());
 	entities[e.get()]->setPosition((float)e->getX(),(float)e->getY());

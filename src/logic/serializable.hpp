@@ -24,7 +24,9 @@ public:
 
 	virtual ~Serializable(){};
 	void Serialize(std::ostream& stream) const;
-	virtual const std::string& GetClassName() const = 0;
+	// We use ClassName instead of GetClassName because
+	// §$%& VS2012 hardcodes GetClassName
+	virtual const std::string& ClassName() const = 0;
 protected:
 	Serializable(){};
 	// This has to be implemented in order to easily serialize an object

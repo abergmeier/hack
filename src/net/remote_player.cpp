@@ -8,7 +8,7 @@ using namespace hack::net;
 const std::string RemotePlayer::NAME("RemotePlayer");
 
 const std::string&
-RemotePlayer::GetClassName() const {
+RemotePlayer::ClassName() const {
 	return NAME;
 }
 

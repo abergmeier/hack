@@ -42,7 +42,7 @@ public:
 	void Commit();
 	const std::string& GetUUID() const override;
 	bool IsProcessLocal() const override;
-	const std::string& GetClassName() const override;
+	const std::string& ClassName() const override;
 };
 
 bool operator ==(const Network::Peer& peer, const RemotePlayer& player);

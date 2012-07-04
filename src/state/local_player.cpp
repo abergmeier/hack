@@ -19,7 +19,7 @@ using namespace hack::state;
 const std::string LocalPlayer::NAME("LocalPlayer");
 
 const std::string&
-LocalPlayer::GetClassName() const {
+LocalPlayer::ClassName() const {
 	return NAME;
 }
 

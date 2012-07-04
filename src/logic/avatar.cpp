@@ -7,7 +7,7 @@ using namespace hack::logic;
 const std::string Avatar::NAME("Avatar");
 
 const std::string&
-Avatar::GetClassName() const {
+Avatar::ClassName() const {
 	return NAME;
 }
 

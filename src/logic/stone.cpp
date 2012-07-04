@@ -14,7 +14,7 @@ using namespace hack::logic;
 const std::string Stone::NAME("Stone");
 
 const std::string&
-Stone::GetClassName() const {
+Stone::ClassName() const {
 	return NAME;
 }
 
