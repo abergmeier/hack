@@ -104,6 +104,11 @@ namespace {
 }
 
 using namespace hack::logic;
+using hack::state::LocalPlayer;
+using hack::net::Registration;
+using hack::state::States;
+using hack::net::RemotePlayer;
+using hack::net::Network;
 
 int main() {
 
@@ -111,7 +116,7 @@ int main() {
 
 	RegisterAllClasses();
 
-	auto sharedLocalPlayer = std::make_shared<hack::state::LocalPlayer>();
+	auto sharedLocalPlayer = std::make_shared<LocalPlayer>();
 	_players.insert( sharedLocalPlayer );
 
 	auto r = std::make_shared<renderer>(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -120,17 +125,17 @@ int main() {
 	hack::net::Network network;
 	// Connect to all known Peers before we register ourselves
 	// so we do not have to filter ourselves
-	for( auto& other : hack::net::Registration::GetAll() ) {
+	for( auto& other : Registration::GetAll() ) {
 		network.ConnectTo(other.host, other.port );
 	}
 
-	hack::net::Registration registration( sharedLocalPlayer->GetUUID(), network.GetIncomingPort() );
+	Registration registration( sharedLocalPlayer->GetUUID(), network.GetIncomingPort() );
 
-	auto& states = hack::state::States::Get();
+	auto& states = States::Get();
 	states.SetNetwork( network );
 
 	auto playerConnected = [&_players, &states](std::shared_ptr<hack::net::Network::Peer> peer) {
-		auto shared = std::make_shared<hack::net::RemotePlayer>(peer, "Unnamed");
+		auto shared = std::make_shared<RemotePlayer>(peer, "Unnamed");
 
 		auto sharedPlayer = std::static_pointer_cast<Player>( shared );
 
@@ -148,10 +153,10 @@ int main() {
 #endif
 	};
 
-	auto playerDisconnected = [&_players](hack::net::Network::Peer& peer) {
+	auto playerDisconnected = [&_players](Network::Peer& peer) {
 
 		for( auto it = _players.cbegin(); it != _players.cend(); ++it ) {
-			auto remotePlayerPtr = std::dynamic_pointer_cast<hack::net::RemotePlayer>(*it);
+			auto remotePlayerPtr = std::dynamic_pointer_cast<RemotePlayer>(*it);
 
 			if( remotePlayerPtr == nullptr )
 				continue; // Not a RemotePlayer
@@ -213,6 +218,7 @@ int main() {
 		sharedAvatar->setX( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_WIDTH) );
 		sharedAvatar->setY( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_HEIGHT) );
 		//TODO: Validate against collision
+
 		objects.Register( sharedAvatar );
 
 		vector2<int> lastMousePosition;
