@@ -248,14 +248,26 @@ void renderer::renderAll() {
 	}
 }
 
-void renderer::registerEntity(entity& e, const char* typeName) {
-	entities[&e] = am.get(typeName);
-	entities[&e]->setPosition((float)e.getX(),(float)e.getY());
-	entities[&e]->setRotation(e.getAngle());
-	entities[&e]->setSize((float)e.getWidth(),(float)e.getHeight());
+void renderer::insert(const value_type& value ) {
+	auto e = value.lock();
+
+	if( !e )
+		return;
+
+	auto& typeName = e->GetClassName();
+
+	entities[e.get()] = am.get(typeName.c_str());
+	entities[e.get()]->setPosition((float)e->getX(),(float)e->getY());
+	entities[e.get()]->setRotation(e->getAngle());
+	entities[e.get()]->setSize((float)e->getWidth(),(float)e->getHeight());
 }
 
 
-void renderer::deleteEntity(entity& e) {
-	entities.erase(&e);
+void renderer::erase( const value_type& value) {
+	auto e = value.lock();
+
+	if( !e )
+		return;
+
+	entities.erase(e.get());
 }

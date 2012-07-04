@@ -18,16 +18,39 @@ namespace hack {
 namespace logic {
 
 class Objects {
-	static Objects INSTANCE;
-	typedef std::map<id_type, std::weak_ptr<Object>> object_map_type;
+public:
+	typedef std::shared_ptr<entity>                value_type;
+	typedef std::weak_ptr<entity>                  internal_value_type;
+	typedef std::map<id_type, internal_value_type> object_map_type;
+
+	class iterator {
+		object_map_type::iterator _it;
+	public:
+		iterator( object_map_type::iterator it );
+	};
+
+	class const_iterator {
+		object_map_type::const_iterator _it;
+	public:
+		const_iterator( object_map_type::const_iterator it );
+	};
+private:
+	typedef value_type                                                   key_type;
+	typedef object_map_type::size_type                                   size_type;
+	typedef std::function<std::unique_ptr<Object>(std::istream& stream)> deserialize_function_type;
+	typedef std::map<std::string, deserialize_function_type>             class_map_type;
+
 	object_map_type _objectMap;
 
-	typedef std::list<std::weak_ptr<Object>> object_list_type;
-	object_list_type _objects;
-	typedef std::function<std::unique_ptr<Object>(std::istream& stream)> deserialize_function_type;
-	typedef std::map<std::string, deserialize_function_type> class_map_type;
+	// Makes sure handler lives as long as we use _handlerCallback
+	const std::shared_ptr<void>                            _handlerHolder;
+	const std::function<void(const internal_value_type&)> _insertHandlerCallback;
+	const std::function<void(const internal_value_type&)> _eraseHandlerCallback;
+
 	static class_map_type CLASS_MAP;
-	Objects();
+
+	std::pair<iterator, bool> insert( const value_type& value );
+	size_type                 erase( const key_type& key );
 
 public:
 	template <typename T>
@@ -39,10 +62,7 @@ public:
 
 		CLASS_MAP.insert(std::make_pair(T::NAME, func));
 	}
-
-	typedef object_list_type::iterator iterator;
-	typedef object_list_type::const_iterator const_iterator;
-
+/*
 	iterator       begin();
 	const_iterator begin() const;
 	const_iterator cbegin() const;
@@ -50,11 +70,22 @@ public:
 	iterator       end();
 	const_iterator end() const;
 	const_iterator cend() const;
+*/
+	value_type Deserialize(std::istream& stream);
 
-	static std::shared_ptr<Object> Deserialize(std::istream& stream);
+	// Beware: This will crash if you give a null
+	// shared ptr
+	template <typename T>
+	Objects( std::shared_ptr<T> collectible ) :
+		_objectMap(),
+		_handlerHolder( collectible ),
+		_insertHandlerCallback( std::bind( &T::insert, *collectible, std::placeholders::_1 ) ),
+		_eraseHandlerCallback ( std::bind( &T::erase , *collectible, std::placeholders::_1) )
+	{
+	}
 
-	static Objects& Get();
-	void Register(std::shared_ptr<Object> object);
+	void Register( value_type object);
+	void Unregister( value_type object);
 };
 
 } }

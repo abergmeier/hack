@@ -36,6 +36,74 @@ namespace {
 		hack::logic::Objects::Register<hack::logic::Stone>();
 		hack::logic::Objects::Register<hack::logic::Avatar>();
 	}
+
+	template <typename T>
+	struct vector2 : protected std::array<T, 2> {
+		typedef std::array<T, 2> __BASE;
+		typedef typename __BASE::reference reference;
+		typedef typename __BASE::const_reference const_reference;
+		typedef typename __BASE::size_type size_type;
+
+		vector2() :
+			__BASE()
+		{
+		}
+
+		vector2(std::initializer_list<T> list) :
+			__BASE()
+		{
+			auto valueIt = this->begin();
+			auto initIt = list.begin();
+
+			while( valueIt != this->end() && initIt != list.end() ) {
+				(*valueIt) = (*initIt);
+			     ++valueIt;
+			     ++initIt;
+			}
+		}
+
+		template <typename OT>
+		T dot( const OT& other ) const {
+			T result = 0;
+			for( size_t i = 0; i != std::tuple_size<__BASE>::value; ++i ) {
+				result += (*this)[i] * other[i];
+			}
+			return result;
+		}
+
+		reference operator[]( size_type pos ) {
+			return __BASE::operator[]( pos );
+		}
+		const_reference operator[]( size_type pos ) const {
+			return __BASE::operator[]( pos );
+		}
+
+		double length() const {
+			double result = 0;
+			for( size_t i = 0; i != std::tuple_size<__BASE>::value; ++i ) {
+				result += std::pow( (*this)[i], 2 );
+			}
+			return std::sqrt( result );
+		}
+	};
+
+	void UpdateRotation(vector2<int>& mousePosition, hack::logic::Avatar& playerAvatar) {
+
+		static const vector2<int> ORIG_ROTATION = {0, -1};
+		static const auto         ORIG_LENGTH = ORIG_ROTATION.length();
+
+		vector2<int> vector = {
+			mousePosition[0] - playerAvatar.getX(),
+			mousePosition[1] - playerAvatar.getY()
+		};
+
+		auto cosrot = vector.dot( ORIG_ROTATION ) / ( vector.length() * ORIG_LENGTH );
+		auto rot = std::acos( cosrot );
+
+		//DEBUG.LOG_ENTRY(std::stringstream() << "Rotation: " << rot);
+
+		playerAvatar.setAngle( rot );
+	};
 }
 
 using namespace hack::logic;
@@ -46,14 +114,11 @@ int main() {
 
 	RegisterAllClasses();
 
-	//std::string name = "Andreas";
 	auto sharedLocalPlayer = std::make_shared<hack::state::LocalPlayer>();
 	_players.insert( sharedLocalPlayer );
 
-	auto stone = std::make_shared<Stone>();
-	hack::logic::Objects::Get().Register(stone);
-
-	auto playerAvartar = std::make_shared<Avatar>();
+	auto r = std::make_shared<renderer>(640, 480);
+	Objects objects(r);
 
 	hack::net::Network network;
 	// Connect to all known Peers before we register ourselves
@@ -64,17 +129,16 @@ int main() {
 
 	hack::net::Registration registration( sharedLocalPlayer->GetUUID(), network.GetIncomingPort() );
 
-	auto& objects = hack::logic::Objects::Get();
 	auto& states = hack::state::States::Get();
 	states.SetNetwork( network );
 
 	auto playerConnected = [&_players, &states](std::shared_ptr<hack::net::Network::Peer> peer) {
 		auto shared = std::make_shared<hack::net::RemotePlayer>(peer, "Unnamed");
 
-		auto sharedPlayer = std::static_pointer_cast<hack::logic::Player>( shared );
+		auto sharedPlayer = std::static_pointer_cast<Player>( shared );
 
 		for( auto& otherPlayer : _players ) {
-			DEBUG.LOG_ENTRY(std::stringstream() << "Sending player " << otherPlayer->GetName() << " to " << sharedPlayer->GetName() );
+			DEBUG.LOG_ENTRY(std::stringstream() << "Sending player " << otherPlayer->GetName() << " to " << sharedPlayer->GetName());
 			states.CommitTo( *otherPlayer, sharedPlayer );
 		}
 
@@ -145,25 +209,44 @@ int main() {
 		futures.push_back(std::async(policy, logic.ExecuteWorker()));
 		futures.push_back(std::async(policy, ui.ExecuteWorker()));
 #endif
+		auto stone = std::make_shared<Stone>();
+		auto sharedAvatar = std::make_shared<Avatar>();
 
-		renderer r(640,480);
+		objects.Register( stone );
+		objects.Register( sharedAvatar );
 
-		auto mover = [playerAvartar](float x, float y) {
-			playerAvartar->setX( std::lround(x) );
-			playerAvartar->setY( std::lround(y) );
+		vector2<int> lastMousePosition;
+
+		auto mover = [&lastMousePosition, sharedAvatar]( int x, int y ) {
+			sharedAvatar->setX( sharedAvatar->getX() + x );
+			sharedAvatar->setY( sharedAvatar->getY() + y );
+
+			DEBUG.LOG_ENTRY(std::stringstream() << "Avatar Pos: " << sharedAvatar->getX() << ':' << sharedAvatar->getY());
+
+			UpdateRotation( lastMousePosition, *sharedAvatar );
 		};
 
-		auto rotater = [playerAvartar](float rot) {
-			playerAvartar->setAngle( rot );
+		auto mouseMoved = [&lastMousePosition, sharedAvatar]( int absx, int absy ) {
+
+			// Save for further processing
+			lastMousePosition[0] = absx;
+			lastMousePosition[1] = absy;
+
+			//DEBUG.LOG_ENTRY(std::stringstream() << "Mouse Pos: " << absx << ':' << absy);
+
+			UpdateRotation( lastMousePosition, *sharedAvatar );
 		};
 
-		auto attacker = [playerAvartar]() {
+		auto attacker = [sharedAvatar]() {
 			//TODO: Implement attack
 		};
 
-		hack::logic::Stone s;
-		r.registerEntity(s,hack::logic::Stone::NAME.c_str());
-		r.run();
+		r->getInputmanager().registerCallbacks( mover,
+		                                       mouseMoved,
+		                                       attacker );
+
+		r->run();
+		r = nullptr;
 		// Runs till window is closed
 
 		for( auto& future : futures ) {

@@ -7,6 +7,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 #include <map>
+#include <memory>
 #include "../logic/entity.hpp"
 #include "asset.hpp"
 #include <vector>
@@ -14,14 +15,15 @@
 class renderer
 {
 public:
+	typedef std::weak_ptr<hack::logic::entity> value_type;
 	renderer(int width, int height);
 	virtual ~renderer(void);
 
 	void run();
 	void start();
 
-	void registerEntity(hack::logic::entity& e, const char* typeName);
-	void deleteEntity(hack::logic::entity& e);
+	void insert(const value_type& e);
+	void erase( const value_type& e);
 	inputmanager& getInputmanager() { return *input; };
 private:
 	sf::RenderWindow *window;
