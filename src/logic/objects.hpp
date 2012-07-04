@@ -43,7 +43,6 @@ private:
 	object_map_type _objectMap;
 
 	// Makes sure handler lives as long as we use _handlerCallback
-	const std::shared_ptr<void>                            _handlerHolder;
 	const std::function<void(const internal_value_type&)> _insertHandlerCallback;
 	const std::function<void(const internal_value_type&)> _eraseHandlerCallback;
 
@@ -78,9 +77,12 @@ public:
 	template <typename T>
 	Objects( std::shared_ptr<T> collectible ) :
 		_objectMap(),
-		_handlerHolder( collectible ),
-		_insertHandlerCallback( std::bind( &T::insert, *collectible, std::placeholders::_1 ) ),
-		_eraseHandlerCallback ( std::bind( &T::erase , *collectible, std::placeholders::_1) )
+		_insertHandlerCallback( [collectible]( const internal_value_type& value) mutable {
+			collectible->insert( value );
+		}),
+		_eraseHandlerCallback ( [collectible]( const internal_value_type& value) mutable {
+			collectible->erase( value );
+		})
 	{
 	}
 
