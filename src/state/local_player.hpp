@@ -27,7 +27,7 @@ public:
 	// proved to be too complicated
 	void Commit();
 	const std::string& GetUUID() const override;
-	bool IsProcessLocal() const;
+	bool IsProcessLocal() const override;
 	const std::string& GetClassName() const override;
 };
 

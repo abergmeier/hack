@@ -40,8 +40,8 @@ public:
 	}
 	std::queue<buffer_type> GetFrom() override;
 	void Commit();
-	const std::string& GetUUID() const;
-	bool IsProcessLocal() const;
+	const std::string& GetUUID() const override;
+	bool IsProcessLocal() const override;
 	const std::string& GetClassName() const override;
 };
 
