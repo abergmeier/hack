@@ -32,12 +32,12 @@ class entity {
 public:
 	virtual ~entity(){};
 	virtual const std::string& GetClassName() const = 0;
-virtual const id_type& getid() const = 0;
-virtual int getX() const = 0;
-virtual int getY() const = 0;
-virtual float getAngle() const = 0;
-virtual size_t getHeight() const= 0;
-virtual size_t getWidth() const = 0;
+	virtual const id_type& getid() const = 0;
+	virtual int getX() const = 0;
+	virtual int getY() const = 0;
+	virtual float getAngle() const = 0;
+	virtual size_t getHeight() const= 0;
+	virtual size_t getWidth() const = 0;
 
 
 private:
