@@ -49,17 +49,11 @@ namespace {
 		{
 		}
 
-		vector2(std::initializer_list<T> list) :
+		vector2(T first, T second) :
 			__BASE()
 		{
-			auto valueIt = this->begin();
-			auto initIt = list.begin();
-
-			while( valueIt != this->end() && initIt != list.end() ) {
-				(*valueIt) = (*initIt);
-			     ++valueIt;
-			     ++initIt;
-			}
+			(*this)[0] = first;
+			(*this)[1] = second;
 		}
 
 		template <typename OT>
@@ -89,13 +83,13 @@ namespace {
 
 	void UpdateRotation(vector2<int>& mousePosition, hack::logic::Avatar& playerAvatar) {
 
-		static const vector2<int> ORIG_ROTATION = {0, -1};
+		static const vector2<int> ORIG_ROTATION(0, -1);
 		static const auto         ORIG_LENGTH = ORIG_ROTATION.length();
 
-		vector2<int> vector = {
+		vector2<int> vector(
 			mousePosition[0] - playerAvatar.getX(),
 			mousePosition[1] - playerAvatar.getY()
-		};
+		);
 
 		auto cosrot = vector.dot( ORIG_ROTATION ) / ( vector.length() * ORIG_LENGTH );
 		auto rot = std::acos( cosrot );
