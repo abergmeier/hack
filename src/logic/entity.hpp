@@ -43,11 +43,11 @@ public:
 
 
 private:
-virtual void setX(int value) = 0;
-virtual void setY(int value) = 0;
-virtual void setAngle(float value) = 0;
-virtual void setWidth(size_t value) = 0;
-virtual void setHeight(size_t value) = 0;
+	virtual void setX(int value) = 0;
+	virtual void setY(int value) = 0;
+	virtual void setAngle(float value) = 0;
+	virtual void setWidth(size_t value) = 0;
+	virtual void setHeight(size_t value) = 0;
 
 protected:
 	entity(){};
