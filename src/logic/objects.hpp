@@ -20,9 +20,9 @@ namespace logic {
 class Objects {
 public:
 	typedef entity                            object_base_type;
-	typedef std::shared_ptr<entity>                value_type;
-	typedef std::weak_ptr<entity>                  internal_value_type;
-	typedef std::map<id_type, internal_value_type> object_map_type;
+	typedef std::shared_ptr<object_base_type> value_type;
+	typedef std::weak_ptr<object_base_type>   internal_value_type;
+	typedef std::map<id_type, value_type>     object_map_type;
 
 	class iterator {
 		object_map_type::iterator _it;
