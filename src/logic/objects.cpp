@@ -65,22 +65,6 @@ Objects::erase( const key_type& key ) {
 	return _objectMap.erase( key->getid() );
 }
 
-void
-Objects::Register( value_type object ) {
-	if( !object )
-		return;
-
-	insert( object );
-}
-
-void
-Objects::Unregister( value_type object ) {
-	if( !object )
-		return;
-
-	erase( object );
-}
-
 /*
 Objects::iterator
 Objects::begin() {

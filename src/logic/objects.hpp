@@ -19,6 +19,7 @@ namespace logic {
 
 class Objects {
 public:
+	typedef entity                            object_base_type;
 	typedef std::shared_ptr<entity>                value_type;
 	typedef std::weak_ptr<entity>                  internal_value_type;
 	typedef std::map<id_type, internal_value_type> object_map_type;
@@ -101,8 +102,21 @@ public:
 		};
 	}
 
-	void Register( value_type object);
-	void Unregister( value_type object);
+	template <typename T>
+	void Register( std::shared_ptr<T> object ) {
+		if( !object )
+			return;
+
+		insert( std::static_pointer_cast<object_base_type>(object) );
+	}
+
+	template <typename T>
+	void Unregister( std::shared_ptr<T> object ) {
+		if( !object )
+			return;
+
+		erase( std::static_pointer_cast<object_base_type>(object) );
+	}
 };
 
 } }
