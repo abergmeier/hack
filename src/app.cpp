@@ -111,6 +111,7 @@ using hack::net::RemotePlayer;
 using hack::net::Network;
 
 int main() {
+	Objects objects;
 
 	std::set<std::shared_ptr<Player>> _players;
 
@@ -120,7 +121,7 @@ int main() {
 	_players.insert( sharedLocalPlayer );
 
 	auto r = std::make_shared<renderer>(WINDOW_WIDTH, WINDOW_HEIGHT);
-	Objects objects(r);
+	objects.SetCallback( std::weak_ptr<renderer>(r) );
 
 	hack::net::Network network;
 	// Connect to all known Peers before we register ourselves

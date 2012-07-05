@@ -43,8 +43,8 @@ private:
 	object_map_type _objectMap;
 
 	// Makes sure handler lives as long as we use _handlerCallback
-	const std::function<void(const internal_value_type&)> _insertHandlerCallback;
-	const std::function<void(const internal_value_type&)> _eraseHandlerCallback;
+	std::function<void(const internal_value_type&)> _insertHandlerCallback;
+	std::function<void(const internal_value_type&)> _eraseHandlerCallback;
 
 	static class_map_type CLASS_MAP;
 
@@ -74,16 +74,31 @@ public:
 
 	// Beware: This will crash if you give a null
 	// shared ptr
-	template <typename T>
-	Objects( std::shared_ptr<T> collectible ) :
+	Objects() :
 		_objectMap(),
-		_insertHandlerCallback( [collectible]( const internal_value_type& value) mutable {
-			collectible->insert( value );
-		}),
-		_eraseHandlerCallback ( [collectible]( const internal_value_type& value) mutable {
-			collectible->erase( value );
-		})
+		_insertHandlerCallback(),
+		_eraseHandlerCallback()
 	{
+	}
+
+	template <typename T>
+	void SetCallback( std::weak_ptr<T> weakCollectible ) {
+		_insertHandlerCallback = [weakCollectible]( const internal_value_type& value) mutable {
+			auto collectible = weakCollectible.lock();
+
+			if( !collectible )
+				return;
+
+			collectible->insert( value );
+		};
+		_eraseHandlerCallback = [weakCollectible]( const internal_value_type& value) mutable {
+			auto collectible = weakCollectible.lock();
+
+			if( !collectible )
+				return;
+
+			collectible->erase( value );
+		};
 	}
 
 	void Register( value_type object);
