@@ -228,7 +228,7 @@ int main() {
 			sharedAvatar->setX( sharedAvatar->getX() + x );
 			sharedAvatar->setY( sharedAvatar->getY() + y );
 
-			DEBUG.LOG_ENTRY(std::stringstream() << "Avatar Pos: " << sharedAvatar->getX() << ':' << sharedAvatar->getY());
+			//DEBUG.LOG_ENTRY(std::stringstream() << "Avatar Pos: " << sharedAvatar->getX() << ':' << sharedAvatar->getY());
 
 			UpdateRotation( lastMousePosition, *sharedAvatar );
 		};
