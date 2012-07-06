@@ -114,6 +114,37 @@ namespace {
 
 	static const int WINDOW_WIDTH = 640;
 	static const int WINDOW_HEIGHT = 480;
+
+	vector2<int> lastMousePosition;
+
+	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar ) {
+		return [&lastMousePosition, sharedAvatar]( int x, int y ) {
+			sharedAvatar->setX( sharedAvatar->getX() + x );
+			sharedAvatar->setY( sharedAvatar->getY() + y );
+
+			//DEBUG.LOG_ENTRY(std::stringstream() << "Avatar Pos: " << sharedAvatar->getX() << ':' << sharedAvatar->getY());
+
+			UpdateRotation( lastMousePosition, *sharedAvatar );
+		};
+	}
+
+	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar ) {
+		return [&lastMousePosition, sharedAvatar]( int absx, int absy ) {
+			// Save for further processing
+			lastMousePosition[0] = absx;
+			lastMousePosition[1] = absy;
+
+			//DEBUG.LOG_ENTRY(std::stringstream() << "Mouse Pos: " << absx << ':' << absy);
+
+			UpdateRotation( lastMousePosition, *sharedAvatar );
+		};
+	}
+
+	std::function<void()> getAvatarAttackHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar ) {
+		return [sharedAvatar]() {
+			//TODO: Implement attack
+		};
+	}
 }
 
 using namespace hack::logic;
@@ -225,6 +256,7 @@ int main() {
 		futures.push_back(std::async(policy, logic.ExecuteWorker()));
 		futures.push_back(std::async(policy, ui.ExecuteWorker()));
 #endif
+
 		auto stone = std::make_shared<Stone>();
 		auto sharedAvatar = std::make_shared<Avatar>();
 
@@ -235,35 +267,9 @@ int main() {
 
 		objects.Register( sharedAvatar );
 
-		vector2<int> lastMousePosition;
-
-		auto mover = [&lastMousePosition, sharedAvatar]( int x, int y ) {
-			sharedAvatar->setX( sharedAvatar->getX() + x );
-			sharedAvatar->setY( sharedAvatar->getY() + y );
-
-			//DEBUG.LOG_ENTRY(std::stringstream() << "Avatar Pos: " << sharedAvatar->getX() << ':' << sharedAvatar->getY());
-
-			UpdateRotation( lastMousePosition, *sharedAvatar );
-		};
-
-		auto mouseMoved = [&lastMousePosition, sharedAvatar]( int absx, int absy ) {
-
-			// Save for further processing
-			lastMousePosition[0] = absx;
-			lastMousePosition[1] = absy;
-
-			//DEBUG.LOG_ENTRY(std::stringstream() << "Mouse Pos: " << absx << ':' << absy);
-
-			UpdateRotation( lastMousePosition, *sharedAvatar );
-		};
-
-		auto attacker = [sharedAvatar]() {
-			//TODO: Implement attack
-		};
-
-		r->getInputmanager().registerCallbacks( mover,
-		                                       mouseMoved,
-		                                       attacker );
+		r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar ),
+		                                        getMouseMoveHandler   ( sharedAvatar ),
+		                                        getAvatarAttackHandler( sharedAvatar ) );
 
 		r->run();
 		r = nullptr;
