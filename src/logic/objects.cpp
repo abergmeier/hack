@@ -38,7 +38,7 @@ Objects::Deserialize(std::istream& stream) {
 		object = createFunc(stream);
 	} else {
 		// Set already present object
-		object = (*it).second.lock();
+		object = (*it).second;
 
 		if( object ) {
 			// Dead ugly cast, but everything else would require to mix entity
