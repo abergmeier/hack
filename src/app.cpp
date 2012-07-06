@@ -91,10 +91,23 @@ namespace {
 			mousePosition[1] - playerAvatar.getY()
 		);
 
-		auto cosrot = vector.dot( ORIG_ROTATION ) / ( vector.length() * ORIG_LENGTH );
-		auto rot = std::acos( cosrot );
+		//DEBUG.LOG_ENTRY(std::stringstream() << "length " << vector.dot( ORIG_ROTATION ) << " " << vector.length() << ' ' << ORIG_LENGTH);
 
-		//DEBUG.LOG_ENTRY(std::stringstream() << "Rotation: " << rot);
+		const auto vectorLength = vector.length();
+
+		// If mouse is in avatar center there is no
+		// point in changing angle
+		if( vectorLength == 0.0 )
+			return;
+
+		auto cosrot = vector.dot( ORIG_ROTATION ) / ( vectorLength * ORIG_LENGTH );
+		auto rot = std::acos( cosrot ) / M_PI * 180.0f;
+
+		// Since rotation calculation only works in [0, PI]
+		// we have to process the direction of rotation
+		// separately
+		if( vector[0] < 0 )
+			rot = -rot;
 
 		playerAvatar.setAngle( rot );
 	};
