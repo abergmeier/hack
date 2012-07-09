@@ -32,7 +32,7 @@ void assetmanager::init() {
 	
 	//stone texture
 	addTexture(Stone::NAME.c_str(),"resources/stone.png");
-	//addTexture(Avatar::NAME.c_str(),"resources/stone.png");
+	addTexture(Avatar::NAME.c_str(),"resources/stone.png"); //fallback if too many players
 }
 
 void assetmanager::addTexture(const char* name, const char* path) {
