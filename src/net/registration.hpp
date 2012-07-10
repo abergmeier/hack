@@ -32,6 +32,7 @@ public:
 	static std::vector<Element> GetAll();
 
 	void ExecuteWorker() override;
+protected:
 	void StopWorker() override;
 
 private:

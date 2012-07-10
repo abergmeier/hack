@@ -163,7 +163,6 @@ public:
 
 	// Processes the queue indefinitely
 	void ExecuteWorker() override;
-	void StopWorker() override;
 
 	template <typename T>
 	void Send(const T& buffer) {
@@ -182,6 +181,8 @@ public:
 	const std::string& GetIPAddress() const;
 	enet_uint16 GetIncomingPort() const;
 	const std::string uuid;
+protected:
+	void StopWorker() override;
 };
 
 } }

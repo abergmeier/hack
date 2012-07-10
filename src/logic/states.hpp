@@ -54,6 +54,7 @@ public:
 	void ReceiveFrom( std::string&& serialized, hack::logic::Player& player );
 
 	void ExecuteWorker() override;
+protected:
 	void StopWorker() override;
 };
 

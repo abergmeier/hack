@@ -31,13 +31,14 @@ States& States::Get() {
 States::States() :
 	_network( std::shared_ptr<hack::net::Network>() )
 {
+	worker = [this]() {
+		auto worker = std::bind(&hack::state::States::ExecuteWorker, std::ref(*this));
+		return std::async(ASYNC_POLICY, worker);
+	}();
 }
 
 States::~States() {
-	StopWorker();
-
-	// Wait until it is save to destruct
-	std::lock_guard<std::mutex> lock( destructorMutex );
+	SaveStopWorker();
 }
 
 void States::Commit( const Serializable& object ) {
@@ -150,10 +151,6 @@ void States::ExecuteWorker() {
 	DEBUG.LOG_ENTRY( "[Worker] Start..." );
 
 	_isRunning = true;
-
-	// Make sure nobody destructs object as long as this
-	// function is running
-	std::lock_guard<std::mutex> lock( destructorMutex );
 
 	while( _ExecuteWorker() ) {
 

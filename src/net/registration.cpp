@@ -136,6 +136,11 @@ Registration::Registration(std::string uuid, const std::string& host, port_type 
 	form.set("port", stream.str());
 
 	std::string response = CreatePost( _uri, form );
+
+	worker = [this]() -> std::future<void> {
+		auto worker = std::bind(&hack::net::Registration::ExecuteWorker, std::ref(*this));
+		return std::async(ASYNC_POLICY, worker);
+	}();
 }
 
 Registration::~Registration() {
@@ -145,11 +150,11 @@ Registration::~Registration() {
 		DEBUG.ERR_ENTRY(std::stringstream() << "Deleting registration failed: " << e.what());
 	}
 
-	StopWorker();
+
 	// Wakeup next possible waiting condition
 	_sleepCondition.notify_one();
 
-	std::lock_guard<std::mutex> lock( destructorMutex );
+	SaveStopWorker();
 }
 
 std::vector<Registration::Element> Registration::GetAll() {
@@ -190,10 +195,6 @@ void Registration::ExecuteWorker() {
 	_isPinging = true;
 
 	DEBUG.LOG_ENTRY( "[Worker] Start..." );
-
-	// Make sure nobody destructs object as long as this
-	// function is running
-	std::lock_guard<std::mutex> lock( destructorMutex );
 
 	std::mutex sleepMutex;
 	std::unique_lock<std::mutex> sleepLock( sleepMutex );

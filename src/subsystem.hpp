@@ -17,14 +17,14 @@ namespace hack {
 // architecture for communication.
 class Subsystem {
 public:
-	virtual ~Subsystem(){ std::lock_guard<std::mutex> lock( destructorMutex ); };
+	virtual ~Subsystem(){};
 	// Start the worker loop. Should always be execute in a seperate process.
 	virtual void ExecuteWorker() = 0;
-	virtual void StopWorker() = 0;
 protected:
 	Subsystem(){};
 
-	std::mutex destructorMutex;
+	virtual void StopWorker() = 0;
+
 	// Signals stop to worker
 	// and wait when it stopped
 	void SaveStopWorker() {

@@ -129,6 +129,12 @@ Network::Network( std::string uuid ) :
 		Destroy();
 		std::rethrow_exception( eptr );
 	}
+
+	worker = [this]() -> std::future<void> {
+		// Start Networking
+		auto worker = std::bind( &hack::net::Network::ExecuteWorker, std::ref(*this) );
+		return std::async( ASYNC_POLICY, worker );
+	}();
 }
 
 void Network::Destroy() {
@@ -146,12 +152,9 @@ Network::~Network() {
 	}
 
 	_peers.connectionTimeout.clear();
+	SaveStopWorker();
 
 	Destroy();
-
-	StopWorker();
-
-	std::lock_guard<std::mutex> destructorLock( destructorMutex );
 }
 
 void Network::Setup() {
@@ -596,10 +599,6 @@ void Network::ExecuteWorker() {
 	_state = RUNNING;
 
 	DEBUG.LOG_ENTRY("[Worker] Start...");
-
-	// Make sure nobody destructs object as long as this
-	// function is running
-	std::lock_guard<std::mutex> lock( destructorMutex );
 
 	while( _ExecuteWorker() ) {
 

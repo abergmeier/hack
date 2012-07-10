@@ -185,14 +185,6 @@ int main() {
 		network->ConnectTo( other.host, other.port, other.uuid );
 	}
 
-	// Start all subsystems asynchronous
-	std::vector<std::pair<std::future<void>, hack::Subsystem*>> futures;
-
-	{ // Start Networking
-		auto worker = std::bind(&hack::net::Network::ExecuteWorker, std::ref(network));
-		futures.push_back(std::make_pair(std::async(ASYNC_POLICY, worker), network.get()));
-	}
-
 	// Before doing anything else, we first have to register with the Server
 	Registration registration( sharedLocalPlayer->GetUUID(), network->GetIPAddress(), network->GetIncomingPort() );
 
@@ -244,16 +236,6 @@ int main() {
 	network->SetConnectCallback(playerConnected);
 	network->SetDisconnectCallback(playerDisconnected);
 
-	{ // Start Registration
-		auto worker = std::bind(&hack::net::Registration::ExecuteWorker, std::ref(registration));
-		futures.push_back(std::make_pair(std::async(ASYNC_POLICY, worker), &registration));
-	}
-
-	{ // Start State management
-		auto worker = std::bind(&hack::state::States::ExecuteWorker, std::ref(states));
-		futures.push_back(std::make_pair(std::async(ASYNC_POLICY, worker), &states));
-	}
-
 	if( needObjectCreation ) {
 		// We need to create the basic objects
 
@@ -275,24 +257,12 @@ int main() {
 		return sharedAvatar;
 	}();
 
-	{
-		r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, objects ),
-		                                        getMouseMoveHandler   ( sharedAvatar ),
-		                                        getAvatarAttackHandler( sharedAvatar ) );
+	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, objects ),
+											getMouseMoveHandler   ( sharedAvatar ),
+											getAvatarAttackHandler( sharedAvatar ) );
 
-		r->run();
-		// Runs till window is closed
-		r = nullptr;
-	}
-
-	// Signal stop to all Subsystems
-	for( auto& future : futures ) {
-		future.second->StopWorker();
-	}
-
-	// Wait for Subsystems to terminate
-	for( auto& future : futures ) {
-		future.first.wait();
-	}
+	r->run();
+	// Runs till window is closed
+	r = nullptr;
 }
 
