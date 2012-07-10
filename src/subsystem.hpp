@@ -8,6 +8,7 @@
 #ifndef SUBSYSTEM_HPP_
 #define SUBSYSTEM_HPP_
 
+#include <future>
 #include <mutex>
 
 namespace hack {
@@ -24,6 +25,16 @@ protected:
 	Subsystem(){};
 
 	std::mutex destructorMutex;
+	// Signals stop to worker
+	// and wait when it stopped
+	void SaveStopWorker() {
+		StopWorker();
+		worker.wait();
+	}
+
+	static const auto ASYNC_POLICY = std::launch::async;
+
+	std::future<void> worker;
 };
 
 }
