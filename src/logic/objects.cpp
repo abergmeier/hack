@@ -16,6 +16,42 @@ typename
 #endif
 	Objects::class_map_type Objects::CLASS_MAP;
 
+namespace {
+	bool intersect(vector2<float> d, vector2<float> f, float r) {
+		float a = d.dot( d ) ;
+		float b = 2*f.dot( d ) ;
+		float c = f.dot( f ) - r*r ;
+
+		float discriminant = b*b-4*a*c;
+		if( discriminant < 0 ) {
+			return false;
+		    // no intersection
+		}
+			// ray didn't totally miss sphere,
+			// so there is a solution to
+			// the equation.
+
+		discriminant = sqrt( discriminant );
+		// either solution may be on or off the ray so need to test both
+		float t1 = (-b + discriminant)/(2*a);
+		float t2 = (-b - discriminant)/(2*a);
+	
+		if( t1 >= 0 && t1 <= 1 ) {
+			return true;
+			// t1 solution on is ON THE RAY.
+		} 
+		    // t1 solution "out of range" of ray
+
+		if( t2 >= 0 && t2 <= 1 ) {
+			return true;
+			// t2 solution on is ON THE RAY.
+		} else {
+			return false;
+			// t2 solution "out of range" of ray
+		}
+	}
+}
+
 Objects::value_type
 Objects::Deserialize(std::istream& stream) {
 	std::string className;
@@ -100,4 +136,8 @@ Objects::cend() const {
 Objects::iterator::iterator( object_map_type::iterator it ) :
 	_it(it)
 {
+}
+
+bool allintersect( ) {
+
 }
