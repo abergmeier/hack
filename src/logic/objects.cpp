@@ -135,7 +135,7 @@ Objects::erase( const key_type& key ) {
 	return _objectMap.erase( key->getid() );
 }
 
-/*
+
 Objects::iterator
 Objects::begin() {
 	return Objects::iterator( _objectMap.begin() );
@@ -165,14 +165,17 @@ Objects::const_iterator
 Objects::cend() const {
 	return Objects::const_iterator( _objectMap.cend() );
 }
-*/
 
 Objects::iterator::iterator( object_map_type::iterator it ) :
 	_it(it)
 {
 }
 
+Objects::const_iterator::const_iterator( object_map_type::const_iterator it ) :
+	_it(it)
+{
 
+}
 
 bool Objects::movementCheck(const hack::logic::Avatar &avatar)  {
 	for(auto &e : _objectMap) {

@@ -29,12 +29,55 @@ public:
 		object_map_type::iterator _it;
 	public:
 		iterator( object_map_type::iterator it );
+
+		iterator& operator++() {
+			++_it;
+			return *this;
+		}
+
+		bool operator==(const iterator& other) {
+			return _it == other._it;
+		}
+
+		bool operator!=(const iterator& other) {
+			return !(_it == other._it);
+		}
+
+		value_type& operator*() {
+			return _it->second;
+		}
+
+		value_type& operator->() {
+			return _it->second;
+		}
+
 	};
 
 	class const_iterator {
 		object_map_type::const_iterator _it;
 	public:
 		const_iterator( object_map_type::const_iterator it );
+
+		const_iterator& operator++() {
+			++_it;
+			return *this;
+		}
+
+		bool operator==(const const_iterator& other) {
+			return _it == other._it;
+		}
+
+		bool operator!=(const const_iterator& other) {
+			return !(_it == other._it);
+		}
+
+		const value_type& operator*() {
+			return _it->second;
+		}
+
+		const value_type& operator->() {
+			return _it->second;
+		}
 	};
 
 	bool movementCheck(const hack::logic::Avatar &avatar);
@@ -65,7 +108,7 @@ public:
 
 		CLASS_MAP.insert(std::make_pair(T::NAME, func));
 	}
-/*
+
 	iterator       begin();
 	const_iterator begin() const;
 	const_iterator cbegin() const;
@@ -73,7 +116,7 @@ public:
 	iterator       end();
 	const_iterator end() const;
 	const_iterator cend() const;
-*/
+
 	value_type Deserialize(std::istream& stream);
 
 	// Beware: This will crash if you give a null
