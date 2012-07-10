@@ -275,6 +275,7 @@ int main() {
 		return sharedAvatar;
 	}();
 
+	{
 		r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, objects ),
 		                                        getMouseMoveHandler   ( sharedAvatar ),
 		                                        getAvatarAttackHandler( sharedAvatar ) );
