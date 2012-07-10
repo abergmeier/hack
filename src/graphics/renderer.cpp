@@ -222,6 +222,7 @@ void renderer::run() {
 		//clear screen
 		window->clear();
         
+		//window->
 		//handle inputs
 		input->tick();
 		

@@ -22,6 +22,12 @@
 #include "net/registration.hpp"
 #include "logic/avatar.hpp"
 
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES // for C++
+#include <math.h>
+#endif // _MSC_VER
+
+
 using hack::logic::vector2;
 namespace {
 	class Debug : public hack::Debug {
@@ -59,6 +65,7 @@ namespace {
 
 		auto cosrot = vector.dot( ORIG_ROTATION ) / ( vectorLength * ORIG_LENGTH );
 		auto rot = std::acos( cosrot ) / M_PI * 180.0f;
+		
 
 		// Since rotation calculation only works in [0, PI]
 		// we have to process the direction of rotation
@@ -74,7 +81,7 @@ namespace {
 
 	vector2<int> lastMousePosition;
 
-	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar ) {
+	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  vector2<int> &lastMousePosition) {
 		return [&lastMousePosition, sharedAvatar]( int x, int y ) {
 			sharedAvatar->setX( sharedAvatar->getX() + x );
 			sharedAvatar->setY( sharedAvatar->getY() + y );
@@ -85,7 +92,7 @@ namespace {
 		};
 	}
 
-	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar ) {
+	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar, vector2<int> &lastMousePosition ) {
 		return [&lastMousePosition, sharedAvatar]( int absx, int absy ) {
 			// Save for further processing
 			lastMousePosition[0] = absx;
@@ -224,8 +231,8 @@ int main() {
 
 		objects.Register( sharedAvatar );
 
-		r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar ),
-		                                        getMouseMoveHandler   ( sharedAvatar ),
+		r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, lastMousePosition ),
+		                                        getMouseMoveHandler   ( sharedAvatar, lastMousePosition ),
 		                                        getAvatarAttackHandler( sharedAvatar ) );
 
 		r->run();

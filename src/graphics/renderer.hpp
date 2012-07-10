@@ -20,7 +20,6 @@ public:
 	virtual ~renderer(void);
 
 	void run();
-	void start();
 
 	void insert(const value_type& e);
 	void erase( const value_type& e);

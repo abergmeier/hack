@@ -12,6 +12,8 @@ class inputmanager
 public:
 	inputmanager(sf::RenderWindow* window);
 	~inputmanager(void);
+	
+	//handles given input for 1 rendertick
 	void tick();
 	
 	void registerCallbacks(std::function<void(int,int)>,std::function<void(int,int)>,std::function<void()>);
@@ -24,6 +26,7 @@ private:
 
 	sf::RenderWindow* window;
 	std::map<sf::Keyboard::Key,bool> keys;
+	bool focus;
 };
 
 #endif // !_INPUTMANAGER_HPP_

@@ -16,6 +16,12 @@ asset::asset(const asset& a)
 {
 }
 
+asset& asset::operator=(const asset& a) {
+	tex = a.tex;
+	spr = a.spr;
+	return *this;
+}
+
 asset::~asset(void)
 {
 }

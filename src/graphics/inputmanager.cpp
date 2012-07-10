@@ -4,7 +4,7 @@ using namespace sf;
 using namespace std;
 
 inputmanager::inputmanager(RenderWindow* window)
-	: window(window)
+	: window(window), focus(true)
 {
 }
 
@@ -18,20 +18,34 @@ void inputmanager::tick() {
 	sf::Event event;
 	while (window->pollEvent(event))
 	{
-		if (event.type == sf::Event::Closed) {
-			window->close();
+		if(event.type == sf::Event::GainedFocus) {
+			cout << "focus gained" << endl;
+			focus = true;
 		}
-		if (event.type == sf::Event::KeyPressed) {
-			keys[event.key.code] = true;
+		if(event.type == sf::Event::LostFocus) {
+			cout << "focus lost" << endl;
+			focus = false;
 		}
-		if (event.type == sf::Event::KeyReleased) {
-			keys[event.key.code] = false;
-		}
-		if (event.type == sf::Event::MouseMoved) {
-			//rotation
-			if(rotateCallback) rotateCallback(event.mouseMove.x,event.mouseMove.y);
+
+		//when the application has the focus, all events will be handled
+		if (focus) 
+		{
+			if (event.type == sf::Event::Closed) {
+				window->close();
+			}
+			if (event.type == sf::Event::KeyPressed) {
+				keys[event.key.code] = true;
+			}
+			if (event.type == sf::Event::KeyReleased) {
+				keys[event.key.code] = false;
+			}
+			if (event.type == sf::Event::MouseMoved) {
+				//rotation
+				if(rotateCallback) rotateCallback(event.mouseMove.x,event.mouseMove.y);
+			}
 		}
 	}
+	//handle key inputs, after they where accumulated
 	handleKeys();
 }
 
