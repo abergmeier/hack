@@ -26,6 +26,7 @@ namespace {
 
 	const Debug DEBUG;
 
+	// The hostname for the registry Server
 	const std::string HOST("hack-server.herokuapp.com");
 	const unsigned short PORT(80);
 
