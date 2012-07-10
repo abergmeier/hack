@@ -90,7 +90,8 @@ namespace {
 
 	static const auto ASYNC_POLICY = std::launch::async;
 
-	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  vector2<int> &lastMousePosition, hack::logic::Objects &obj) {
+	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  hack::logic::Objects &obj) {
+		auto& lastMousePosition = ::lastMousePosition;
 		return [&lastMousePosition, sharedAvatar, &obj]( int x, int y ) {
 
 			int xx = sharedAvatar->getX() + x;
@@ -106,7 +107,8 @@ namespace {
 		};
 	}
 
-	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar, vector2<int> &lastMousePosition ) {
+	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar ) {
+		auto& lastMousePosition = ::lastMousePosition;
 		return [&lastMousePosition, sharedAvatar]( int absx, int absy ) {
 			// Save for further processing
 			lastMousePosition[0] = absx;
@@ -270,8 +272,8 @@ int main() {
 		return sharedAvatar;
 	}();
 
-		r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, lastMousePosition, objects ),
-		                                        getMouseMoveHandler   ( sharedAvatar, lastMousePosition ),
+		r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, objects ),
+		                                        getMouseMoveHandler   ( sharedAvatar ),
 		                                        getAvatarAttackHandler( sharedAvatar ) );
 
 		r->run();
