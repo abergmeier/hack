@@ -9,6 +9,7 @@
 #include <sstream>
 #include <tuple>
 #include <string.h> //for strnlen
+#include <Poco/Net/NetworkInterface.h>
 #include "network.hpp"
 
 using namespace hack::net;
@@ -22,6 +23,23 @@ namespace {
 	};
 
 	const Debug DEBUG;
+
+	Poco::Net::NetworkInterface findActiveNetworkInterface()
+	{
+	    auto interfaces = Poco::Net::NetworkInterface::list();
+
+	    for( auto& interface : interfaces ) {
+	        if( interface.address().isWildcard() )
+	        	continue;
+
+	        if( interface.address().isLoopback() )
+	        	continue;
+
+	        if( interface.supportsIPv4() || interface.supportsIPv6() )
+	        	return interface;
+	    }
+	    throw Poco::IOException("No configured Ethernet interface found");
+	}
 }
 
 bool operator<(const ENetAddress& lhs, const ENetAddress& rhs) {
@@ -107,6 +125,8 @@ Network::Network( std::string uuid ) :
 			}
 
 			// Server was successfully created
+			auto interface = findActiveNetworkInterface();
+			_host = interface.address().toString();
 			_port = port;
 			break;
 		}
@@ -621,4 +641,8 @@ void Network::ConnectTo( const std::string& host, enet_uint16 port, std::string 
 
 enet_uint16 Network::GetIncomingPort() const {
 	return _port;
+}
+
+const std::string& Network::GetIPAddress() const {
+	return _host;
 }

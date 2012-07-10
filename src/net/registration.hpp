@@ -24,7 +24,7 @@ public:
 	};
 
 	// Create a new registration on the server
-	Registration( std::string uuid, port_type port);
+	Registration( std::string uuid, const std::string& host, port_type port);
 	// Remove registration from server
 	~Registration();
 

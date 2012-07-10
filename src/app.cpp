@@ -194,7 +194,7 @@ int main() {
 	}
 
 	// Before doing anything else, we first have to register with the Server
-	Registration registration( sharedLocalPlayer->GetUUID(), network->GetIncomingPort() );
+	Registration registration( sharedLocalPlayer->GetUUID(), network->GetIPAddress(), network->GetIncomingPort() );
 
 	// Check whether we are the first node in the game
 	// If we are, we have to create the objects

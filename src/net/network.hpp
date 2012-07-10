@@ -137,6 +137,7 @@ private:
 	Peers _peers;
 
 	ENetHost* _server;
+	std::string _host;
 	enet_uint16 _port;
 
 	enum {
@@ -178,6 +179,7 @@ public:
 	void SetConnectCallback(std::function<void(std::shared_ptr<hack::net::Network::Peer>)> callback);
 	void SetDisconnectCallback(std::function<void(hack::net::Network::Peer&)> callback);
 	void ConnectTo( const std::string& host, enet_uint16 port, std::string uuid );
+	const std::string& GetIPAddress() const;
 	enet_uint16 GetIncomingPort() const;
 	const std::string uuid;
 };

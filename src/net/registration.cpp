@@ -118,7 +118,7 @@ namespace {
 
 using namespace hack::net;
 
-Registration::Registration(std::string uuid, port_type port) :
+Registration::Registration(std::string uuid, const std::string& host, port_type port) :
 	_uuid(uuid),
 	_uri([&uuid]() -> std::string {
 		std::stringstream stream;
@@ -132,7 +132,7 @@ Registration::Registration(std::string uuid, port_type port) :
 	stream << port;
 
 	HTMLForm form;
-	form.set("host", "localhost");
+	form.set("host", host);
 	form.set("port", stream.str());
 
 	std::string response = CreatePost( _uri, form );
