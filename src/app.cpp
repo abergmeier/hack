@@ -22,6 +22,7 @@
 #include "net/registration.hpp"
 #include "logic/avatar.hpp"
 
+using hack::logic::vector2;
 namespace {
 	class Debug : public hack::Debug {
 		const std::string& GetCategory() const {
@@ -36,50 +37,6 @@ namespace {
 		hack::logic::Objects::Register<hack::logic::Stone>();
 		hack::logic::Objects::Register<hack::logic::Avatar>();
 	}
-
-	template <typename T>
-	struct vector2 : protected std::array<T, 2> {
-		typedef std::array<T, 2> __BASE;
-		typedef typename __BASE::reference reference;
-		typedef typename __BASE::const_reference const_reference;
-		typedef typename __BASE::size_type size_type;
-
-		vector2() :
-			__BASE()
-		{
-		}
-
-		vector2(T first, T second) :
-			__BASE()
-		{
-			(*this)[0] = first;
-			(*this)[1] = second;
-		}
-
-		template <typename OT>
-		T dot( const OT& other ) const {
-			T result = 0;
-			for( size_t i = 0; i != std::tuple_size<__BASE>::value; ++i ) {
-				result += (*this)[i] * other[i];
-			}
-			return result;
-		}
-
-		reference operator[]( size_type pos ) {
-			return __BASE::operator[]( pos );
-		}
-		const_reference operator[]( size_type pos ) const {
-			return __BASE::operator[]( pos );
-		}
-
-		double length() const {
-			double result = 0;
-			for( size_t i = 0; i != std::tuple_size<__BASE>::value; ++i ) {
-				result += std::pow( (*this)[i], 2 );
-			}
-			return std::sqrt( result );
-		}
-	};
 
 	void UpdateRotation(vector2<int>& mousePosition, hack::logic::Avatar& playerAvatar) {
 
