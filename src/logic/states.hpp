@@ -19,20 +19,42 @@
 namespace hack {
 namespace state {
 
-class States {
+class States : public hack::Subsystem {
 	static States INSTANCE;
-	hack::net::Network* _network;
+	struct {
+		std::mutex mutex;
+		std::deque<std::string> queue;
+		std::deque<std::string> backup_queue;
+	} _input;
+	struct {
+		typedef std::pair<std::weak_ptr<hack::logic::Player>, std::string> value_type;
+		std::mutex mutex;
+		std::deque<value_type> queue;
+		std::deque<value_type> backup_queue;
+	} _output;
+	bool _isRunning;
+	std::function<void(std::istream&)> _deserialize;
+	std::weak_ptr<hack::net::Network> _network;
 	// If no network is connected save data locally
-	std::deque<std::pair<std::weak_ptr<hack::logic::Player>, std::string>> _queue;
+
 	bool PassToNetwork( const std::string& data );
 	bool PassToNetwork( const std::string& data, hack::logic::Player& player );
 	States();
+	bool _ExecuteWorker();
+	void ProcessInput();
+	void ProcessOutput();
 public:
+	~States();
 	static States& Get();
 	void Commit( const Serializable& object );
 	void CommitTo( const Serializable& object, std::shared_ptr<hack::logic::Player> player);
 	//std::map< std::weak_ptr<void>, std::unique_ptr<void> > _state;
-	void SetNetwork( hack::net::Network& network );
+	void SetNetwork( std::weak_ptr<hack::net::Network> network );
+	void SetDeserializer( std::function<void(std::istream&)> );
+	void ReceiveFrom( std::string&& serialized, hack::logic::Player& player );
+
+	void ExecuteWorker() override;
+	void StopWorker() override;
 };
 
 } } //namespace hack

@@ -2,6 +2,8 @@
 //#include <Poco/Base64Decoder.h>
 #include "remote_player.hpp"
 #include "../include.hpp"
+#include <string.h>
+#include "../logic/states.hpp"
 
 using namespace hack::net;
 
@@ -15,8 +17,18 @@ RemotePlayer::ClassName() const {
 RemotePlayer::RemotePlayer(std::shared_ptr<Network::Peer> peer, std::string name) :
 	hack::logic::Player(name),
 	_receiveQueue(),
-	_receiver([](buffer_type buffer) {
-		//_receiveQueue.push(std::forward<buffer_type>(buffer));
+	_receiver([this](buffer_type buffer) {
+		// Transforms network to deserializable format
+		auto charPtr = reinterpret_cast<char*>(buffer.data());
+
+		const auto maxBytes = buffer.size() * sizeof(buffer_type::value_type);
+
+		// Do not trust the char
+		const auto charLength = strnlen( charPtr, maxBytes );
+
+		std::string strBuffer( charPtr, charLength );
+		// Forward this to objects
+		hack::state::States::Get().ReceiveFrom( std::move(strBuffer), *this );
 	}),
 	_peer(peer)
 {
@@ -27,7 +39,7 @@ const std::string& RemotePlayer::GetUUID() const {
 	auto peer = _peer.lock();
 
 	if( peer )
-		return peer->GetUUID();
+		return peer->uuid;
 
 	throw std::runtime_error("Cannot retrieve UUID - Peer is no longer connected");
 }

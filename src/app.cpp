@@ -10,6 +10,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <limits>
 #include "logic/objects.hpp"
 #include "net/network.hpp"
 #include "state/local_player.hpp"
@@ -28,6 +29,11 @@
 #endif // _MSC_VER
 
 
+using hack::state::LocalPlayer;
+using hack::net::Registration;
+using hack::state::States;
+using hack::net::RemotePlayer;
+using hack::net::Network;
 using hack::logic::vector2;
 using namespace hack::graphics;
 namespace {
@@ -82,6 +88,8 @@ namespace {
 
 	vector2<int> lastMousePosition;
 
+	static const auto ASYNC_POLICY = std::launch::async;
+
 	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  vector2<int> &lastMousePosition, hack::logic::Objects &obj) {
 		return [&lastMousePosition, sharedAvatar, &obj]( int x, int y ) {
 
@@ -115,14 +123,39 @@ namespace {
 			//TODO: Implement attack
 		};
 	}
+
+	bool IsFirstNode( const hack::logic::Player& player, Network& network ) {
+
+		std::map<Registration::Element::timestamp_type, std::string> timeMap;
+
+		const auto& localUUID =  player.GetUUID();
+
+		auto ourTime = std::numeric_limits<Registration::Element::timestamp_type>::max();
+
+		// Create a map with key of all timestamps sorted
+		for( auto& other : Registration::GetAll() ) {
+			if( other.uuid == localUUID )
+				ourTime = other.time;
+
+			timeMap.insert( std::make_pair(other.time, other.uuid) );
+		}
+
+		auto it = timeMap.find( ourTime );
+
+		// Process in reverse, so chance of
+		// near timeout entries are less
+		do {
+			--it;
+			if( network.WaitUntilConnected( (*it).second ) )
+				return true;
+		}
+		while( it == timeMap.begin() );
+
+		return false;
+	}
 }
 
 using namespace hack::logic;
-using hack::state::LocalPlayer;
-using hack::net::Registration;
-using hack::state::States;
-using hack::net::RemotePlayer;
-using hack::net::Network;
 
 int main() {
 	Objects objects;
@@ -137,17 +170,37 @@ int main() {
 	auto r = std::make_shared<renderer>(WINDOW_WIDTH, WINDOW_HEIGHT);
 	objects.SetCallback( std::weak_ptr<renderer>(r) );
 
-	hack::net::Network network;
+	auto network = std::make_shared<hack::net::Network>( sharedLocalPlayer->GetUUID() );
 	// Connect to all known Peers before we register ourselves
 	// so we do not have to filter ourselves
-	for( auto& other : Registration::GetAll() ) {
-		network.ConnectTo(other.host, other.port );
+
+	const auto others = Registration::GetAll();
+
+	for( auto& other : others ) {
+		network->ConnectTo( other.host, other.port, other.uuid );
 	}
 
-	Registration registration( sharedLocalPlayer->GetUUID(), network.GetIncomingPort() );
+	// Start all subsystems asynchronous
+	std::vector<std::pair<std::future<void>, hack::Subsystem*>> futures;
 
+	{ // Start Networking
+		auto worker = std::bind(&hack::net::Network::ExecuteWorker, std::ref(network));
+		futures.push_back(std::make_pair(std::async(ASYNC_POLICY, worker), network.get()));
+	}
+
+	// Before doing anything else, we first have to register with the Server
+	Registration registration( sharedLocalPlayer->GetUUID(), network->GetIncomingPort() );
+
+	// Check whether we are the first node in the game
+	// If we are, we have to create the objects
+	const auto needObjectCreation = IsFirstNode( *sharedLocalPlayer, *network );
+
+	// Setup states
 	auto& states = States::Get();
 	states.SetNetwork( network );
+	states.SetDeserializer( [&objects]( std::istream& stream ) {
+		objects.Deserialize( stream );
+	});
 
 	auto playerConnected = [&_players, &states](std::shared_ptr<hack::net::Network::Peer> peer) {
 		auto shared = std::make_shared<RemotePlayer>(peer, "Unnamed");
@@ -183,82 +236,57 @@ int main() {
 		}
 	};
 
-	network.SetConnectCallback(playerConnected);
-	network.SetDisconnectCallback(playerDisconnected);
+	network->SetConnectCallback(playerConnected);
+	network->SetDisconnectCallback(playerDisconnected);
 
-#if 0
-	auto actions = [&states, &objects]() {
-		static const std::chrono::milliseconds duration( 5000 );
+	{ // Start Registration
+		auto worker = std::bind(&hack::net::Registration::ExecuteWorker, std::ref(registration));
+		futures.push_back(std::make_pair(std::async(ASYNC_POLICY, worker), &registration));
+	}
 
-		// If there is nothing to do - do not spam
-		// the CPU
-		std::this_thread::sleep_for( duration );
-		for( auto& object : objects ) {
-			auto sharedObject = object.lock();
+	{ // Start State management
+		auto worker = std::bind(&hack::state::States::ExecuteWorker, std::ref(states));
+		futures.push_back(std::make_pair(std::async(ASYNC_POLICY, worker), &states));
+	}
 
-			if( !sharedObject )
-				continue;
-			states.Commit( *sharedObject );
-		}
-	};
-#endif
-	const auto policy = std::launch::async;
-#if 0
-	auto future = std::async(policy, actions);
-#endif
-
-	{
-		// Start all subsystems asynchronous
-		std::vector<std::pair<std::future<void>, hack::Subsystem*>> futures;
-
-		{ // Start Registration
-			auto worker = std::bind(&hack::net::Registration::ExecuteWorker, std::ref(registration));
-			futures.push_back(std::make_pair(std::async(policy, worker), &registration));
-		}
-
-		{ // Start Networking
-			auto worker = std::bind(&hack::net::Network::ExecuteWorker, std::ref(network));
-			futures.push_back(std::make_pair(std::async(policy, worker), &network));
-		}
-
-
-#if 0
-		futures.push_back(std::async(policy, logic.ExecuteWorker()));
-		futures.push_back(std::async(policy, ui.ExecuteWorker()));
-#endif
+	if( needObjectCreation ) {
+		// We need to create the basic objects
 
 		auto stone = std::make_shared<Stone>();
-		auto sharedAvatar = std::make_shared<Avatar>();
-
 		objects.Register( stone );
+
+		//TODO: Validate against collision
+		DEBUG.LOG_ENTRY(std::stringstream() << "FIRST");
+	} else {
+		DEBUG.LOG_ENTRY(std::stringstream() << "NO FIRST");
+	}
+
+	auto sharedAvatar = [&objects]() -> std::shared_ptr<Avatar> {
+		// Create our player representation
+		auto sharedAvatar = std::make_shared<Avatar>();
 		sharedAvatar->setX( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_WIDTH) );
 		sharedAvatar->setY( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_HEIGHT) );
-		//TODO: Validate against collision
-
 		objects.Register( sharedAvatar );
+		return sharedAvatar;
+	}();
 
 		r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, lastMousePosition, objects ),
 		                                        getMouseMoveHandler   ( sharedAvatar, lastMousePosition ),
 		                                        getAvatarAttackHandler( sharedAvatar ) );
 
 		r->run();
-		r = nullptr;
 		// Runs till window is closed
-
-		for( auto& future : futures ) {
-			future.second->StopWorker();
-		}
-		// Wait for subsystems to terminate
-		for( auto& future : futures ) {
-			future.first.wait();
-		}
+		r = nullptr;
 	}
 
-/*
-	auto& network = hack::net::Network::Get();
-	network.AddPeer("127.0.0.1", 5647);
-	auto future = std::async(std::launch::async, network.ExecuteWorker());
-	future.wait();
-*/
+	// Signal stop to all Subsystems
+	for( auto& future : futures ) {
+		future.second->StopWorker();
+	}
+
+	// Wait for Subsystems to terminate
+	for( auto& future : futures ) {
+		future.first.wait();
+	}
 }
 

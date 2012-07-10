@@ -16,9 +16,11 @@ class Registration : public hack::Subsystem {
 public:
 	typedef size_t port_type;
 	struct Element {
+		typedef unsigned long long timestamp_type;
 		std::string uuid;
 		std::string host;
 		port_type port;
+		timestamp_type time;
 	};
 
 	// Create a new registration on the server

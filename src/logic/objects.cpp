@@ -79,10 +79,15 @@ namespace {
 
 Objects::value_type
 Objects::Deserialize(std::istream& stream) {
-	std::string className;
-	stream >> className;
+	auto className = hack::state::Serializable::String::Deserialize( stream );
+
+	// Remember position of id - we might
+	// need to jump back to it
+	const auto streamPodId = stream.tellg();
+
 	id_type id(stream);
 
+	// See whether we already have the id
 	auto it = _objectMap.find(id);
 
 	Objects::value_type object;
@@ -94,6 +99,10 @@ Objects::Deserialize(std::istream& stream) {
 			std::cerr << "No class registration with name " << className << " found.";
 			return nullptr;
 		}
+
+		// We need to be able to extract id, too
+		// so rewind stream back to id
+		stream.seekg( streamPodId );
 
 		auto& createFunc = (*classIt).second;
 		object = createFunc(stream);

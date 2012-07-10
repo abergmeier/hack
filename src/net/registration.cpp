@@ -173,7 +173,8 @@ std::vector<Registration::Element> Registration::GetAll() {
 		Element element;
 		element.uuid = object["uuid"].asString();
 		element.host = object["host"].asString();
-		element.port = object.get("port", 0).asInt();
+		element.port = object.get("port", 0).asUInt();
+		element.time = object.get("time", 0).asUInt64();;
 		others.push_back( std::move(element) );
 	}
 
