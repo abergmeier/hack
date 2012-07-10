@@ -7,6 +7,9 @@
 #include <iostream>
 #include <functional>
 
+namespace hack {
+namespace graphics {
+
 class inputmanager
 {
 public:
@@ -28,6 +31,9 @@ private:
 	std::map<sf::Keyboard::Key,bool> keys;
 	bool focus;
 };
+
+}
+}
 
 #endif // !_INPUTMANAGER_HPP_
 

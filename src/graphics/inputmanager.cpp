@@ -2,6 +2,7 @@
 
 using namespace sf;
 using namespace std;
+using namespace hack::graphics;
 
 inputmanager::inputmanager(RenderWindow* window)
 	: window(window), focus(true)

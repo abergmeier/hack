@@ -6,6 +6,7 @@
 using namespace sf;
 using namespace std;
 using namespace hack::logic;
+using namespace hack::graphics;
 
 static const struct {
   unsigned int   width;

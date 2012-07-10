@@ -6,6 +6,7 @@
 
 using namespace sf;
 using namespace hack::logic;
+using namespace hack::graphics;
 
 assetmanager::assetmanager(void)
 	: numPlayer(0)

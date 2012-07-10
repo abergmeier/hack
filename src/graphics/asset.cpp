@@ -1,6 +1,7 @@
 #include "asset.hpp"
 
 using namespace sf;
+using namespace hack::graphics;
 
 asset::asset(std::shared_ptr<Texture> texture) 
 	: tex(texture), spr()

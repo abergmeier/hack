@@ -12,6 +12,9 @@
 #include "asset.hpp"
 #include <vector>
 
+namespace hack {
+namespace graphics {
+
 class renderer
 {
 public:
@@ -31,9 +34,11 @@ private:
 	assetmanager am;
 	
 	void renderAll();
-	bool isCloseRequest();
 	void init();
 };
+
+}
+}
 #endif // !_RENDERER_HPP_
 
 

@@ -1,4 +1,6 @@
 #pragma once
+#ifndef _ASSETMANAGER_HPP_
+#define _ASSETMANAGER_HPP_
 
 #include <map>
 #include "asset.hpp"
@@ -7,6 +9,9 @@
 #include <memory>
 #include <vector>
 #include <string>
+
+namespace hack {
+namespace graphics {
 
 class assetmanager
 {
@@ -22,3 +27,7 @@ private:
 	void addTexture(const char* name, const char* path);
 };
 
+}
+}
+
+#endif // !_ASSETMANAGER_HPP_

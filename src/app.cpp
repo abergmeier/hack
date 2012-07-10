@@ -29,6 +29,7 @@
 
 
 using hack::logic::vector2;
+using namespace hack::graphics;
 namespace {
 	class Debug : public hack::Debug {
 		const std::string& GetCategory() const {
