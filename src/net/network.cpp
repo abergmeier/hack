@@ -49,14 +49,6 @@ bool operator<(const ENetAddress& lhs, const ENetAddress& rhs) {
 	return lhs.host < rhs.host;
 }
 
-class OtherEndpoint {
-
-};
-
-class Peer {
-
-};
-
 namespace {
 	ENetHost* createServer( enet_uint16 incomingPort ) {
 		// Create Server
