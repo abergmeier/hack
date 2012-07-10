@@ -142,6 +142,9 @@ namespace {
 			timeMap.insert( std::make_pair(other.time, other.uuid) );
 		}
 
+		if( timeMap.empty() )
+			return true;
+
 		auto it = timeMap.find( ourTime );
 
 		// Process in reverse, so chance of
@@ -151,7 +154,7 @@ namespace {
 			if( network.WaitUntilConnected( (*it).second ) )
 				return true;
 		}
-		while( it == timeMap.begin() );
+		while( it != timeMap.begin() );
 
 		return false;
 	}
