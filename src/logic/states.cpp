@@ -14,7 +14,7 @@ using namespace hack::state;
 namespace {
 	struct Debug : public hack::Debug {
 		const std::string& GetCategory() const override {
-			static const std::string CATEGORY = "State management";
+			static const std::string CATEGORY = "States";
 			return CATEGORY;
 		}
 	};
@@ -22,9 +22,8 @@ namespace {
 	const Debug DEBUG;
 }
 
-States States::INSTANCE;
-
 States& States::Get() {
+	static States INSTANCE;
 	return INSTANCE;
 }
 

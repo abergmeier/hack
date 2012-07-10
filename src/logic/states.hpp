@@ -20,7 +20,7 @@ namespace hack {
 namespace state {
 
 class States : public hack::Subsystem {
-	static States INSTANCE;
+
 	struct {
 		std::mutex mutex;
 		std::deque<std::string> queue;

@@ -273,14 +273,6 @@ Network::Peer::GetUUID() const {
 	return _uuid;
 }
 
-bool
-Network::IsConnecting() {
-
-	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-
-	return !_peers.unconnected.empty()
-	     || !_peers.handshaking.empty();
-}
 #endif
 
 bool
