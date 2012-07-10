@@ -8,6 +8,7 @@
 #include <functional>
 #include <iostream>
 #include "objects.hpp"
+#include "stone.hpp"
 
 using namespace hack::logic;
 
@@ -17,7 +18,9 @@ typename
 	Objects::class_map_type Objects::CLASS_MAP;
 
 namespace {
-	bool intersect(vector2<float> d, vector2<float> f, float r) {
+	bool intersect(vector2<float> &start, vector2<float> &end, vector2<float> &f, float r) {
+		
+		vector2<float> d = start.sub(end);
 		float a = d.dot( d ) ;
 		float b = 2*f.dot( d ) ;
 		float c = f.dot( f ) - r*r ;
@@ -37,18 +40,40 @@ namespace {
 		float t2 = (-b - discriminant)/(2*a);
 	
 		if( t1 >= 0 && t1 <= 1 ) {
-			return true;
 			// t1 solution on is ON THE RAY.
-		} 
-		    // t1 solution "out of range" of ray
-
+			return true;
+		}
 		if( t2 >= 0 && t2 <= 1 ) {
 			return true;
 			// t2 solution on is ON THE RAY.
-		} else {
-			return false;
-			// t2 solution "out of range" of ray
+		} 
+		return false;	
+	}
+
+	bool intersectAll(const Objects::value_type& obj, const Avatar& avatar) {
+		
+		float x1 = obj->getX() - (float)obj->getWidth() / 2;
+		float y1 = obj->getY() - (float)obj->getHeight() / 2;
+		float x2 = obj->getX() + (float)obj->getWidth() / 2;
+		float y2 = obj->getY() - (float)obj->getHeight() / 2;
+		float x3 = obj->getX() + (float)obj->getWidth() / 2;
+		float y3 = obj->getY() + (float)obj->getHeight() / 2;
+		float x4 = obj->getX() - (float)obj->getWidth() / 2;
+		float y4 = obj->getY() + (float)obj->getHeight() / 2;
+
+		vector2<float> A(x1,y1);
+		vector2<float> B(x2,y2);
+		vector2<float> C(x3,x3);
+		vector2<float> D(x4,x4);
+		vector2<float> pos(avatar.getX(),avatar.getY());
+
+		if(intersect(A,B,pos,avatar.getRadius()) 
+			|| intersect(B,C,pos,avatar.getRadius())
+			|| intersect(C,D,pos,avatar.getRadius())
+			|| intersect(D,A,pos,avatar.getRadius())) {
+			return true;
 		}
+		return false;
 	}
 }
 
@@ -138,6 +163,19 @@ Objects::iterator::iterator( object_map_type::iterator it ) :
 {
 }
 
-bool allintersect( ) {
 
+
+bool Objects::movementCheck(const hack::logic::Avatar &avatar)  {
+	for(auto &e : _objectMap) {
+		//world collision
+		if(e.second->ClassName() == hack::logic::Stone::NAME) {
+			if(intersectAll(e.second,avatar))
+				return false;
+		}
+		//player collision
+		if(e.second->ClassName() == hack::logic::Avatar::NAME) {
+
+		}
+	}
+	return true;
 }

@@ -13,6 +13,7 @@
 #include <vector>
 #include <list>
 #include "object.hpp"
+#include "avatar.hpp"
 
 namespace hack {
 namespace logic {
@@ -35,6 +36,8 @@ public:
 	public:
 		const_iterator( object_map_type::const_iterator it );
 	};
+
+	bool movementCheck(const hack::logic::Avatar &avatar);
 private:
 	typedef value_type                                                   key_type;
 	typedef object_map_type::size_type                                   size_type;

@@ -82,11 +82,16 @@ namespace {
 
 	vector2<int> lastMousePosition;
 
-	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  vector2<int> &lastMousePosition) {
-		return [&lastMousePosition, sharedAvatar]( int x, int y ) {
-			sharedAvatar->setX( sharedAvatar->getX() + x );
-			sharedAvatar->setY( sharedAvatar->getY() + y );
+	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  vector2<int> &lastMousePosition, hack::logic::Objects &obj) {
+		return [&lastMousePosition, sharedAvatar, &obj]( int x, int y ) {
 
+			int xx = sharedAvatar->getX() + x;
+			int yy = sharedAvatar->getY() + y;
+
+			if (obj.movementCheck(*sharedAvatar)) {
+				sharedAvatar->setX(xx);
+				sharedAvatar->setY(yy);
+			}
 			//DEBUG.LOG_ENTRY(std::stringstream() << "Avatar Pos: " << sharedAvatar->getX() << ':' << sharedAvatar->getY());
 
 			UpdateRotation( lastMousePosition, *sharedAvatar );
@@ -232,7 +237,7 @@ int main() {
 
 		objects.Register( sharedAvatar );
 
-		r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, lastMousePosition ),
+		r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, lastMousePosition, objects ),
 		                                        getMouseMoveHandler   ( sharedAvatar, lastMousePosition ),
 		                                        getAvatarAttackHandler( sharedAvatar ) );
 

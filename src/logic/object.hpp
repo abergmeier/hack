@@ -100,6 +100,16 @@ struct vector2 : protected std::array<T, 2> {
 		}
 		return std::sqrt( result );
 	}
+
+	template <typename OT>
+	vector2<T> sub(const OT& other) {
+		return vector2<T>((*this)[0]-other[0],(*this)[1]-other[1]);
+	}
+
+	template <typename OT>
+	vector2<T> add(const OT& other) {
+		return vector2<T>((*this)[0]+OT[0],(*this)[1]+OT[1]);
+	}
 };
 
 } }

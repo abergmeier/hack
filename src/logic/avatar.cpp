@@ -11,7 +11,9 @@ Avatar::ClassName() const {
 	return NAME;
 }
 
-Avatar::Avatar() : Object() {};
+Avatar::Avatar()
+	: Object(), radius(15), weaponRange(50)
+{};
 
 
 Avatar::Avatar(std::istream& stream) :
@@ -31,6 +33,22 @@ size_t Avatar::getHitpoints(){
 
 size_t Avatar::getDamage(){
 	return damage;
+}
+
+float Avatar::getRadius() {
+	return radius;
+}
+
+float Avatar::getWeaponRange() {
+	return weaponRange;
+}
+
+float Avatar::getRadius() const {
+	return radius;
+}
+
+float Avatar::getWeaponRange() const {
+	return weaponRange;
 }
 
 void Avatar::setHitpoints(size_t value){
