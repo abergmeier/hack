@@ -12,7 +12,7 @@ Avatar::ClassName() const {
 }
 
 Avatar::Avatar()
-	: Object(), radius(15), weaponRange(50)
+	: Object(), radius(40), weaponRange(50)
 {};
 
 

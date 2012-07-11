@@ -9,6 +9,10 @@
 #include <iostream>
 #include "objects.hpp"
 #include "stone.hpp"
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES // for C++
+#include <math.h>
+#endif // _MSC_VER
 
 using namespace hack::logic;
 
@@ -18,9 +22,11 @@ typename
 	Objects::class_map_type Objects::CLASS_MAP;
 
 namespace {
-	bool intersect(vector2<float> &start, vector2<float> &end, vector2<float> &f, float r) {
-		
+	bool intersect(vector2<float> &start, vector2<float> &end, vector2<float> &pos, float r) {
 		vector2<float> d = start.sub(end);
+		
+		vector2<float> f(pos[0]-start[0],pos[1]-start[1]);
+		
 		float a = d.dot( d ) ;
 		float b = 2*f.dot( d ) ;
 		float c = f.dot( f ) - r*r ;
@@ -50,8 +56,29 @@ namespace {
 		return false;	
 	}
 
+	vector2<float> rotateVector(float x, float y, float px, float py, float angle) {
+		angle = angle * M_PI / 180;
+		std::cout << x - px << std::endl;
+		float dx = x - px;
+		float dy = y - py;
+		x = (dx * std::cos(angle) + dy * -std::sin(angle)) + px;
+		y = (dx * std::sin(angle) + dy * std::cos(angle)) + py;
+
+		return vector2<float>(x,y);
+	}
+
 	bool intersectAll(const Objects::value_type& obj, const Avatar& avatar, const vector2<int>& possibleChange) {
 		
+		//player intersection
+		if (obj->ClassName == hack::logic::Avatar::NAME) {
+			float dx = avatar.getX() - obj->getX();
+			float dy = avatar.getY() - obj->getY();
+			float length = std::sqrt(dy * dy + dy * dy);
+
+			return length < avatar.getRadius()*2;
+		}
+
+		//static object intersection
 		float x1 = obj->getX() - (float)obj->getWidth() / 2;
 		float y1 = obj->getY() - (float)obj->getHeight() / 2;
 		float x2 = obj->getX() + (float)obj->getWidth() / 2;
@@ -60,30 +87,11 @@ namespace {
 		float y3 = obj->getY() + (float)obj->getHeight() / 2;
 		float x4 = obj->getX() - (float)obj->getWidth() / 2;
 		float y4 = obj->getY() + (float)obj->getHeight() / 2;
-		std::cout << obj->getX() << " " << obj->getY() << " " << possibleChange[0] << " " << possibleChange[1] <<  std::endl;
 
-		/*float x1 = possibleChange[0] - (float)obj->getWidth() / 2;
-		float y1 = possibleChange[1] - (float)obj->getHeight() / 2;
-		float x2 = possibleChange[0] + (float)obj->getWidth() / 2;
-		float y2 = possibleChange[1] - (float)obj->getHeight() / 2;
-		float x3 = possibleChange[0] + (float)obj->getWidth() / 2;
-		float y3 = possibleChange[1] + (float)obj->getHeight() / 2;
-		float x4 = possibleChange[0] - (float)obj->getWidth() / 2;
-		float y4 = possibleChange[1] + (float)obj->getHeight() / 2;
-
-		float x1 = possibleChange[0];
-		float y1 = possibleChange[1];
-		float x2 = possibleChange[0] + (float)obj->getWidth();
-		float y2 = possibleChange[1];
-		float x3 = possibleChange[0] + (float)obj->getWidth();
-		float y3 = possibleChange[1] + (float)obj->getHeight();
-		float x4 = possibleChange[0];
-		float y4 = possibleChange[1] + (float)obj->getHeight();*/
-
-		vector2<float> A(x1,y1);
-		vector2<float> B(x2,y2);
-		vector2<float> C(x3,x3);
-		vector2<float> D(x4,x4);
+		vector2<float> A = rotateVector(x1,y1,obj->getX(),obj->getY(),obj->getAngle());
+		vector2<float> B = rotateVector(x2,y2,obj->getX(),obj->getY(),obj->getAngle());
+		vector2<float> C = rotateVector(x3,y3,obj->getX(),obj->getY(),obj->getAngle());
+		vector2<float> D = rotateVector(x4,y4,obj->getX(),obj->getY(),obj->getAngle());
 		vector2<float> pos((float)possibleChange[0],(float)possibleChange[1]);
 
 		if(intersect(A,B,pos,avatar.getRadius()) 

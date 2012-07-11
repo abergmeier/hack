@@ -108,9 +108,9 @@ namespace {
 		};
 	}
 
-	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar ) {
+	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar, hack::logic::Objects &obj) {
 		auto& localMousePosition = lastMousePosition;
-		return [&localMousePosition, sharedAvatar]( int absx, int absy ) {
+		return [&localMousePosition, sharedAvatar, &obj]( int absx, int absy ) {
 			// Save for further processing
 			localMousePosition[0] = absx;
 			localMousePosition[1] = absy;
@@ -123,7 +123,7 @@ namespace {
 
 	std::function<void()> getAvatarAttackHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar ) {
 		return [sharedAvatar]() {
-			//TODO: Implement attack
+			
 		};
 	}
 }
@@ -177,6 +177,7 @@ int main() {
 		auto stone = std::make_shared<Stone>();
 		stone->setX(200);
 		stone->setY(200);
+		stone->setAngle(45);
 		objects.Register( stone );
 		states.Commit( *stone );
 	};
