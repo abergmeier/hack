@@ -313,18 +313,26 @@ Network::WaitUntilConnected( const std::string& uuid ) const {
 void Network::CreatePeer( ENetPeer& peer, std::string uuid ) {
 	// We have to build Peer manually on heap here because we only allow Network to
 	// instantiate Peer objects
-	auto sharedPeer = std::shared_ptr<Peer>( new Peer( peer, uuid ) );
+	std::shared_ptr<Peer> sharedPeer( new Peer( peer, uuid ) );
+	enet_peer_timeout( &peer,
+	                   ENET_PEER_TIMEOUT_LIMIT,
+	                   ENET_PEER_TIMEOUT_MINIMUM,
+	                   ENET_PEER_TIMEOUT_MAXIMUM );
 
 	{
 		std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-		auto insertPair = _peers.connected.insert( std::make_pair( Address(sharedPeer->address, uuid), sharedPeer ) );
+		auto insertPair = _peers.connected.insert( std::make_pair( Address(sharedPeer->address, uuid), std::shared_ptr<Peer>(sharedPeer) ) );
 
 		if( !insertPair.second )
 			return; // Already present and connected!?
 
-		_peers.unconnected.erase( Address(sharedPeer->address, uuid) );
-		peer.data = &_peers.connected.at( Address(sharedPeer->address, uuid) );
-		//peer.data = &(*insertPair.first);
+		Address address(sharedPeer->address, uuid);
+		_peers.unconnected.erase( address );
+		_peers.AbortWait( peer );
+
+		// Make sure we have a pointer to our Peer Wrapper
+		std::shared_ptr<Peer>* peerPtr = &insertPair.first->second;
+		peer.data = peerPtr;
 	}
 
 	_connectCallback( sharedPeer );
@@ -442,32 +450,24 @@ bool Network::_ExecuteWorker() {
 				const auto peerHost = GetIPAddress( *event.peer );
 				const auto peerPort = event.peer->address.port;
 				DEBUG.LOG_ENTRY( std::stringstream() << "Peer connected from "
-				                 << peerHost << ':'
-				                 << peerPort);
+				                 << peerHost << ':' << peerPort);
 
 				SendTo( event.peer, uuid );
-				DEBUG.LOG_ENTRY(std::stringstream() << "Waiting for UUID handshake from " << peerHost << ':' << peerPort);
+				DEBUG.LOG_ENTRY( std::stringstream() << "Sent Handshake to "
+				                 << peerHost << ':' << peerPort);
 
-				{
-					std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-					auto it = _peers.awaitingConnection.find( event.peer );
+				std::lock_guard<std::recursive_mutex> lock( _peers.lock );
+				auto it = _peers.awaitingConnection.find( event.peer );
 
-					// When we await connection, we initiated it
-					if( it == _peers.awaitingConnection.end() ) {
-						// Play passive role in connection establishment
-						// First wait on other UUID
-						_peers.awaitingHandshake.insert( std::make_pair( event.peer, std::string() ) );
-					} else {
-						// Play active role in connection establishment
-						// Send our UUID to Peer
+				std::string otherUuid;
 
-						std::string otherUuid = (*it).second;
-						_peers.awaitingHandshake.insert( std::make_pair( event.peer, std::move(otherUuid) ) );
-					}
-
-					if( it != _peers.awaitingConnection.end() )
-						_peers.awaitingConnection.erase( it );
+				// Add known UUID information
+				if( it != _peers.awaitingConnection.end() ) {
+					otherUuid = (*it).second;
+					_peers.awaitingConnection.erase( it );
 				}
+
+				_peers.awaitingHandshake.insert( std::make_pair( event.peer, std::move(otherUuid) ) );
 
 				break;
 			}
@@ -480,20 +480,28 @@ bool Network::_ExecuteWorker() {
 
 				{
 					std::lock_guard<std::recursive_mutex> lock( _peers.lock );
+					bool isFullyConnected = [&]() -> bool {
+						// Check whether this is the first packet after
+						// starting the connection AKA Handshake
+						auto it = _peers.awaitingHandshake.begin();
 
-					bool isConnected = false;
-
-					for( const auto& address : _peers.connected ) {
-						if( address.first.host == peerHost
-						 && address.first.port == peerPort ) {
-							isConnected = true;
-							break;
+						for( ; it != _peers.awaitingHandshake.end(); ++it ) {
+							if( it->first->address.host == event.peer->address.host
+							 && it->first->address.port == peerPort ) {
+								break;
+							}
 						}
-					}
 
-					if( isConnected ) {
-						// Handshake was already done
-						// with normal processing
+						if( it == _peers.awaitingHandshake.end() )
+							return true;
+
+						_peers.awaitingHandshake.erase( it );
+						return false;
+					}();
+
+					if( isFullyConnected ) {
+						// Handshake was already done,
+						// continue with normal processing
 						auto peer = extractPeer();
 						peer->Receive( *event.packet );
 					} else {
@@ -501,9 +509,7 @@ bool Network::_ExecuteWorker() {
 
 						// Peer sent UUID
 						CreatePeer( *event.peer, Peers::ExtractUUID( event.packet ) );
-						DEBUG.LOG_ENTRY(std::stringstream() << "Waiting for UUID handshake from " << peerHost << ':' << peerPort << "!SUCCEEDED!");
-
-						_peers.AbortWait( *event.peer );
+						DEBUG.LOG_ENTRY(std::stringstream() << "Received handshake from " << peerHost << ':' << peerPort);
 					}
 				}
 
@@ -515,31 +521,32 @@ bool Network::_ExecuteWorker() {
 				auto peer = event.peer;
 				auto host = GetIPAddress( *event.peer );
 				auto port = event.peer->address.port;
-				std::cout << "A client disconnected: " << peer->address.host
-						  << ":" << peer->address.port
-						  << std::endl;
+
+				DEBUG.LOG_ENTRY(std::stringstream() << "Disconnected: " << host << ':' << peer->address.port);
 
 				{
 					std::lock_guard<std::recursive_mutex> lock( _peers.lock );
 
 					typedef decltype(_peers.connected) connected_type;
-					auto isSame = [&host, &port]( const connected_type::value_type& element ) -> bool {
-						return element.first.host == host && element.first.port == port;
+					auto isSame = [&]( const connected_type::value_type& element ) -> bool {
+						return element.first.host == event.peer->address.host && element.first.port == port;
 					};
 
 					auto it = std::find_if( _peers.connected.begin(),
 					                        _peers.connected.end(),
 					                        isSame );
 
-					if( it != _peers.connected.end() ) {
-						// We set the user data of Event to null so
+					if( it == _peers.connected.end() ) {
+						// Skip waiting for handshake
+						_peers.AbortWait( *event.peer );
+						// Handshake failed
+						_connectFailedCallback( host, port );
+					} else {
+						// The user data of Event is already set to null so
 						// we are allowed to remove the shared_ptr
 						_disconnectCallback( *(it->second) );
 						_peers.connected.erase ( it );
 					}
-
-					// Skip waiting for handshake
-					_peers.AbortWait( *event.peer );
 				}
 				break;
 			}
