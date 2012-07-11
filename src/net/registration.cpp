@@ -5,6 +5,7 @@
 #include <Poco/Net/HTMLForm.h>
 #include <iostream>
 #include <sstream>
+#include <set>
 #include <json/json.h>
 #include "../debug.hpp"
 #include "registration.hpp"
@@ -157,10 +158,10 @@ Registration::~Registration() {
 	SaveStopWorker();
 }
 
-std::vector<Registration::Element> Registration::GetAll() {
+std::set<Registration::Element> Registration::GetAll() {
 	std::string response = CreateRequest( HTTPRequest::HTTP_GET, "/" );
 
-	std::vector<Element> others;
+	std::set<Element> others;
 
 	Json::Value root; // will contains the root value after parsing.
 	Json::Reader reader;
@@ -180,8 +181,21 @@ std::vector<Registration::Element> Registration::GetAll() {
 		element.uuid = object["uuid"].asString();
 		element.host = object["host"].asString();
 		element.port = object.get("port", 0).asUInt();
-		element.time = object.get("time", 0).asUInt64();;
-		others.push_back( std::move(element) );
+		element.time = object.get("time", 0).asUInt64();
+
+		auto it = others.find( element );
+
+		if( it != others.end() ) {
+			DEBUG.ERR_ENTRY(std::stringstream() << "Duplicate entry removed for: " << element.host << ':' << element.port);
+
+			if( it->time > element.time )
+				continue; // more recent
+
+			others.erase( it );
+		}
+
+		others.insert( std::move(element) );
+
 	}
 
 	return others;
@@ -221,4 +235,10 @@ void Registration::StopWorker() {
 	_isPinging = false;
 }
 
+bool Registration::Element::operator <(const Element& other) const {
+	if( host != other.host )
+		return host < other.host;
 
+	return port < other.port;
+
+}

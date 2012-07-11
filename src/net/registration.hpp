@@ -21,6 +21,7 @@ public:
 		std::string host;
 		port_type port;
 		timestamp_type time;
+		bool operator<(const Element& other) const;
 	};
 
 	// Create a new registration on the server
@@ -29,7 +30,7 @@ public:
 	~Registration();
 
 	// Returns all other registrations on the server
-	static std::vector<Element> GetAll();
+	static std::set<Element> GetAll();
 
 	void ExecuteWorker() override;
 protected:
