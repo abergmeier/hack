@@ -82,7 +82,7 @@ public:
 	};
 
 	bool movementCheck(const hack::logic::Avatar &avatar, const vector2<int>& possibleChange);
-	bool Objects::attackCheck(const hack::logic::Weapon &weapon);
+	bool attackCheck(const hack::logic::Weapon &weapon);
 private:
 	typedef value_type                                                   key_type;
 	typedef object_map_type::size_type                                   size_type;
