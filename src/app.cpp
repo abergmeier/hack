@@ -175,22 +175,12 @@ int main() {
 	auto r = std::make_shared<renderer>(WINDOW_WIDTH, WINDOW_HEIGHT);
 	objects.SetCallback( std::weak_ptr<renderer>(r) );
 
+	auto others = Registration::GetAll();
+
 	auto network = std::make_shared<hack::net::Network>( sharedLocalPlayer->GetUUID() );
-	// Connect to all known Peers before we register ourselves
-	// so we do not have to filter ourselves
-
-	const auto others = Registration::GetAll();
-
-	for( auto& other : others ) {
-		network->ConnectTo( other.host, other.port, other.uuid );
-	}
 
 	// Before doing anything else, we first have to register with the Server
 	Registration registration( sharedLocalPlayer->GetUUID(), network->GetIPAddress(), network->GetIncomingPort() );
-
-	// Check whether we are the first node in the game
-	// If we are, we have to create the objects
-	const auto needObjectCreation = IsFirstNode( *sharedLocalPlayer, *network );
 
 	// Setup states
 	auto& states = States::Get();
@@ -199,23 +189,73 @@ int main() {
 		objects.Deserialize( stream );
 	});
 
-	auto playerConnected = [&_players, &states](std::shared_ptr<hack::net::Network::Peer> peer) {
+	auto sharedAvatar = [&objects, &states]() -> std::shared_ptr<Avatar> {
+		// Create our player representation
+		auto sharedAvatar = std::make_shared<Avatar>();
+		sharedAvatar->setX( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_WIDTH) );
+		sharedAvatar->setY( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_HEIGHT) );
+		objects.Register( sharedAvatar );
+		states.Commit( *sharedAvatar );
+
+		return sharedAvatar;
+	}();
+
+	bool hasData = false;
+	auto createObjects = [&]() {
+		hasData = true;
+		others.clear();
+		// We need to create the basic objects
+
+		auto stone = std::make_shared<Stone>();
+		objects.Register( stone );
+		states.Commit( *stone );
+	};
+
+	auto playerConnected = [&](std::shared_ptr<hack::net::Network::Peer> peer) mutable {
 		auto shared = std::make_shared<RemotePlayer>(peer, "Unnamed");
+
+		for( auto it = others.begin(); it != others.end(); ++it ) {
+			if( it->uuid == peer->uuid ) {
+				others.erase( it );
+				DEBUG.LOG_ENTRY(std::stringstream() << "PREVIOUS: " << others.size() );
+				// Other peer has data
+				hasData = true;
+				// We no longer need others
+				others.clear();
+				break;
+			}
+		}
+
+		if( others.empty() && !hasData ) {
+			// No other peer before us
+			// so we have to create the objects
+			createObjects();
+		}
 
 		auto sharedPlayer = std::static_pointer_cast<Player>( shared );
 
-		for( auto& otherPlayer : _players ) {
-			DEBUG.LOG_ENTRY(std::stringstream() << "Sending player " << otherPlayer->GetName() << " to " << sharedPlayer->GetName());
-			states.CommitTo( *otherPlayer, sharedPlayer );
-		}
-
 		_players.insert(shared);
 
-#if 0
 		for( const auto& object : objects ) {
-			peer->Send(object);
+			auto serializable = std::dynamic_pointer_cast<hack::state::Serializable>(object);
+			states.CommitTo( *serializable, sharedPlayer );
 		}
-#endif
+	};
+
+	auto playerConnectedFailed = [&]( const std::string& ip, size_t port) mutable {
+		for( auto it = others.begin(); it != others.end(); ++it ) {
+			if( it->host == ip && it->port == port ) {
+				others.erase( it );
+				DEBUG.LOG_ENTRY(std::stringstream() << "PREVIOUS: " << others.size() );
+				break;
+			}
+		}
+
+		if( others.empty() && !hasData ) {
+			// No other peer before us
+			// so we have to create the objects
+			createObjects();
+		}
 	};
 
 	auto playerDisconnected = [&_players](Network::Peer& peer) {
@@ -234,28 +274,12 @@ int main() {
 	};
 
 	network->SetConnectCallback(playerConnected);
+	network->SetConnectFailedCallback(playerConnectedFailed);
 	network->SetDisconnectCallback(playerDisconnected);
 
-	if( needObjectCreation ) {
-		// We need to create the basic objects
-
-		auto stone = std::make_shared<Stone>();
-		objects.Register( stone );
-
-		//TODO: Validate against collision
-		DEBUG.LOG_ENTRY(std::stringstream() << "FIRST");
-	} else {
-		DEBUG.LOG_ENTRY(std::stringstream() << "NO FIRST");
+	for( auto& other : others ) {
+		network->ConnectTo( other.host, other.port, other.uuid );
 	}
-
-	auto sharedAvatar = [&objects]() -> std::shared_ptr<Avatar> {
-		// Create our player representation
-		auto sharedAvatar = std::make_shared<Avatar>();
-		sharedAvatar->setX( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_WIDTH) );
-		sharedAvatar->setY( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_HEIGHT) );
-		objects.Register( sharedAvatar );
-		return sharedAvatar;
-	}();
 
 	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, objects ),
 											getMouseMoveHandler   ( sharedAvatar ),
