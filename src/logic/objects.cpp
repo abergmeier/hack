@@ -210,10 +210,17 @@ bool Objects::movementCheck(const hack::logic::Avatar &avatar, const vector2<int
 			if(intersectAll(e.second,avatar,possibleChange))
 				return false;
 		}
-		//player collision
-		if(e.second->ClassName() == hack::logic::Avatar::NAME) {
-
-		}
 	}
 	return true;
+}
+
+bool Objects::attackCheck(const hack::logic::Weapon &weapon) {
+	//TODO: implement me
+	/*for(auto &e : _objectMap) {
+		if(e.second->ClassName() == hack::logic::Avatar::NAME) {
+			if(intersectAll(e.second,avatar,possibleChange))
+				return true;
+		}
+	}
+	return false;*/
 }

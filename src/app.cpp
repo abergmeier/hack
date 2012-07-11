@@ -84,13 +84,13 @@ namespace {
 		playerAvatar.setAngle( rot );
 	};
 
-	void updateWeaponPosition(hack::logic::Avatar& avatar, hack::logic::Weapon& weapon) {
-		float angle = avatar.getAngle() * M_PI / 180;
-		float xx = avatar.getRadius();
-		float yy = 0;
-		xx = xx * std::cos(angle) + yy * -std::sin(angle);
-		yy = xx * std::sin(angle) + yy * std::cos(angle);
+	float attack = 0;
 
+	void updateWeaponPosition(hack::logic::Avatar& avatar, hack::logic::Weapon& weapon) {
+		float angle = (avatar.getAngle()) * M_PI / 180;
+		float rad = avatar.getRadius();
+		float xx = rad * std::cos(angle) + attack * rad * -std::sin(angle);
+		float yy = rad * std::sin(angle) + attack * rad * std::cos(angle);
 		weapon.setX(xx+avatar.getX());
 		weapon.setY(yy+avatar.getY());
 	}
@@ -145,9 +145,11 @@ namespace {
 		};
 	}
 
-	std::function<void()> getAvatarAttackHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar ) {
-		return [sharedAvatar]() {
-			
+	std::function<void()> getAvatarAttackHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  std::shared_ptr<hack::logic::Weapon> sharedWeapon) {
+		return [sharedAvatar,sharedWeapon]() {
+			attack = -1;
+			updateWeaponPosition(*sharedAvatar, *sharedWeapon);
+			attack = 0;
 		};
 	}
 }
@@ -309,7 +311,7 @@ int main() {
 
 	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, sharedWeapon ,objects ),
 											getMouseMoveHandler   ( sharedAvatar, sharedWeapon ,objects ),
-											getAvatarAttackHandler( sharedAvatar ) );
+											getAvatarAttackHandler( sharedAvatar, sharedWeapon ) );
 
 	r->run();
 	// Runs till window is closed
