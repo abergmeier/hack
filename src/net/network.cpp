@@ -186,7 +186,7 @@ Network::Address::Address( Address&& other ) :
 
 bool
 Network::Address::operator <(const Address& other) const {
-	return uuid == other.uuid;
+	return uuid < other.uuid;
 }
 
 Network::Peer::Peer( ENetPeer& peer, std::string uuid ) :
