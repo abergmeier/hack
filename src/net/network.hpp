@@ -97,9 +97,9 @@ private:
 			throw std::runtime_error("SEND FAIL");
 	}
 
-	std::function<void(std::shared_ptr<Peer>)> _connectCallback;
-	std::function<void(hack::net::Network::Peer&)> _disconnectCallback;
+	std::function<void(std::shared_ptr<Peer>)>      _connectCallback;
 	std::function<void(const std::string&, size_t)> _connectFailedCallback;
+	std::function<void(hack::net::Network::Peer&)>  _disconnectCallback;
 	void Destroy();
 	void CreatePeer( ENetPeer& event, std::string uuid );
 
