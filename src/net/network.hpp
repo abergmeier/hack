@@ -127,6 +127,7 @@ private:
 		std::map<ENetPeer*, std::string> awaitingConnection;
 
 		// Not fully connected peers, that miss the handshake
+		// Use this special, mostly small or empty map for performance purposes.
 		std::map<ENetPeer*, std::string> awaitingHandshake;
 
 		// All peers which are connected
