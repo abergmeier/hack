@@ -215,10 +215,10 @@ Network::Address::operator <(const Address& other) const {
 }
 
 Network::Peer::Peer( ENetPeer& peer, std::string uuid ) :
-	uuid    ( uuid ),
-	address ( peer.address ),
-	enetPeer( &peer )
+	uuid     ( uuid ),
+	address  ( peer.address ),
 	ipAddress( GetIPAddress( peer ) ),
+	enetPeer ( &peer )
 {
 }
 
