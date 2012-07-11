@@ -235,10 +235,6 @@ void Network::CreatePeer( ENetPeer& peer, std::string uuid ) {
 	// We have to build Peer manually on heap here because we only allow Network to
 	// instantiate Peer objects
 	std::shared_ptr<Peer> sharedPeer( new Peer( peer, uuid ) );
-	enet_peer_timeout( &peer,
-	                   ENET_PEER_TIMEOUT_LIMIT,
-	                   ENET_PEER_TIMEOUT_MINIMUM,
-	                   ENET_PEER_TIMEOUT_MAXIMUM );
 
 	{
 		std::lock_guard<std::recursive_mutex> lock( _peers.lock );
@@ -274,7 +270,6 @@ void Network::Peers::AbortWait( ENetPeer& peer ) {
 	awaitingConnection.erase( &peer );
 	awaitingHandshake .erase( &peer );
 
-
 	// We could not set up a connection before
 	// (for whatever reason). Clean up peer.
 	enet_peer_reset( &peer );
@@ -299,12 +294,6 @@ void Network::HandleUnconnected() {
 		   DEBUG.ERR_ENTRY(std::stringstream() << "Setting up connection !FAILED!");
 		   exit (-1);
 		}
-
-		enet_peer_timeout( peer,
-				           100, //timeoutLimit
-                           0, //timeoutMinimum
-                           0  //timeoutMaximum
-		);
 
 		// Check whether it is already in
 		auto ipAddress = GetIPAddress( *peer );
