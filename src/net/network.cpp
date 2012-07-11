@@ -572,7 +572,7 @@ bool Network::_ExecuteWorker() {
 	}
 #endif
 
-	return _state != HALTING;
+	return _state == RUNNING;
 }
 
 void Network::ExecuteWorker() {
