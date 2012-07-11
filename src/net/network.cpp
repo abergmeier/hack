@@ -359,7 +359,7 @@ bool Network::_ExecuteWorker() {
 				DEBUG.LOG_ENTRY( std::stringstream() << "Peer connected from "
 				                 << peerHost << ':' << peerPort);
 
-				SendTo( event.peer, uuid );
+				SendTo( *event.peer, uuid );
 				DEBUG.LOG_ENTRY( std::stringstream() << "Sent Handshake to "
 				                 << peerHost << ':' << peerPort);
 

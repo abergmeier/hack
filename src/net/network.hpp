@@ -58,7 +58,7 @@ public:
 
 		template <typename T>
 		void Send(const T& buffer) {
-			SendTo( enetPeer, buffer );
+			SendTo( *enetPeer, buffer );
 		}
 
 		const std::string uuid;
@@ -91,9 +91,9 @@ private:
 	}
 
 	template <typename T>
-	static void SendTo(ENetPeer* enetPeer, const T& buffer) {
+	static void SendTo(ENetPeer& enetPeer, const T& buffer) {
 		auto packet = _createPacket( buffer );
-		if( enet_peer_send( enetPeer, 0, packet ) != 0 )
+		if( enet_peer_send( &enetPeer, 0, packet ) != 0 )
 			throw std::runtime_error("SEND FAIL");
 	}
 
