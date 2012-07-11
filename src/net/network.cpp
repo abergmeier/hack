@@ -68,21 +68,6 @@ namespace {
 
 		return server;
 	}
-/*
-	ENetHost* createClient() {
-		auto client = enet_host_create( nullptr, // create a client host
-			                            31, // allowed outgoing connections
-			                            2, // allow up 2 channels to be used, 0 and 1
-			                            0, // any downstream bandwidth
-			                            0  // any upstream bandwidth
-		);
-
-		if( client == nullptr )
-			throw std::runtime_error("An error occurred while trying to create an ENet client.");
-
-		return client;
-	}
-*/
 }
 
 Network::Network( std::string uuid ) :
