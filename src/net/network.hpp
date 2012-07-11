@@ -46,7 +46,7 @@ public:
 		Address( ENetAddress address, std::string uuid );
 		Address( Address&& other );
 		Address& operator=( Address&& other );
-		std::string uuid;
+		const std::string uuid;
 		const std::string ipAddress;
 		bool operator < (const Address& other) const;
 	};
