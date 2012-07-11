@@ -43,7 +43,6 @@ public:
 
 	struct Address : public ENetAddress {
 		Address( const std::string& host, enet_uint16 port, std::string uuid );
-		Address( ENetAddress address, std::string uuid );
 		Address( Address&& other );
 		Address& operator=( Address&& other );
 		const std::string uuid;

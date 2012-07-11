@@ -198,12 +198,6 @@ Network::Address::Address( const std::string& host, enet_uint16 port, std::strin
 	}
 }
 
-Network::Address::Address( ENetAddress address, std::string uuid ) :
-	ENetAddress( std::forward<ENetAddress>(address) ),
-	uuid( std::forward<std::string>(uuid) )
-{
-}
-
 Network::Address::Address( Address&& other ) :
 	ENetAddress( other ),
 	uuid( std::move(other.uuid) ),
