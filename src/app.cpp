@@ -125,41 +125,6 @@ namespace {
 			//TODO: Implement attack
 		};
 	}
-
-	bool IsFirstNode( const hack::logic::Player& player, Network& network ) {
-
-		std::map<Registration::Element::timestamp_type, std::string> timeMap;
-
-		const auto& localUUID =  player.GetUUID();
-
-//fix for visual studio
-#undef max
-		auto ourTime = std::numeric_limits<Registration::Element::timestamp_type>::max();
-
-		// Create a map with key of all timestamps sorted
-		for( auto& other : Registration::GetAll() ) {
-			if( other.uuid == localUUID )
-				ourTime = other.time;
-
-			timeMap.insert( std::make_pair(other.time, other.uuid) );
-		}
-
-		if( timeMap.empty() )
-			return true;
-
-		auto it = timeMap.find( ourTime );
-
-		// Process in reverse, so chance of
-		// near timeout entries are less
-		do {
-			--it;
-			if( network.WaitUntilConnected( (*it).second ) )
-				return true;
-		}
-		while( it != timeMap.begin() );
-
-		return false;
-	}
 }
 
 using namespace hack::logic;

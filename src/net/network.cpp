@@ -164,27 +164,6 @@ void Network::SetDisconnectCallback(std::function<void(hack::net::Network::Peer&
 	_disconnectCallback = callback;
 }
 
-#if 0
-void Network::Receive() {
-	Poco::Net::SocketAddress address("other", 514);
-	Poco::Net::MulticastSocket socket(Poco::Net::IPAddress(), address.port());
-
-	// to receive any data you must join
-	socket.joinGroup(address.host());
-
-	char buffer[1024];
-
-	for (;;)
-	{
-		Poco::Net::SocketAddress sender;
-		int n = socket.receiveFrom(buffer, sizeof(buffer)-1, sender);
-		buffer[n] = '\0';
-		std::cout << sender.toString() << ": " << buffer << std::endl;
-	}
-}
-
-#endif
-
 Network::Address::Address( const std::string& host, enet_uint16 port, std::string uuid ) :
 	ENetAddress(),
 	uuid(uuid),
@@ -252,58 +231,6 @@ Network::Peer::Receive(const ENetPacket& packet) {
 	data.reserve(packet.dataLength);
 	data.assign(packet.data, packet.data + packet.dataLength);
 	receiveCallback(data);
-}
-#if 0
-const std::string&
-Network::Peer::GetUUID() const {
-	return _uuid;
-}
-
-#endif
-
-bool
-Network::IsConnecting( const std::string& uuid ) const {
-	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-
-	for( const auto& element : _peers.unconnected ) {
-		if( element.uuid == uuid )
-			return true;
-	}
-
-	for( const auto& element : _peers.awaitingConnection ) {
-		if( element.second == uuid )
-			return true;
-	}
-
-	for( const auto& element : _peers.awaitingHandshake ) {
-		if( element.second == uuid )
-			return true;
-	}
-
-	return false;
-}
-
-bool
-Network::IsConnected( const std::string& uuid) const {
-	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-
-	for( const auto& element : _peers.connected ) {
-		if( element.first.uuid == uuid )
-			return true;
-	}
-
-	return false;
-}
-
-bool
-Network::WaitUntilConnected( const std::string& uuid ) const {
-	static const std::chrono::milliseconds SLEEP_MS( 5 );
-
-	// Wait for outstanding connection phase
-	while( IsConnecting( uuid ) )
-		std::this_thread::sleep_for( SLEEP_MS );
-
-	return IsConnected( uuid );
 }
 
 void Network::CreatePeer( ENetPeer& peer, std::string uuid ) {
