@@ -99,6 +99,7 @@ private:
 
 	std::function<void(std::shared_ptr<Peer>)> _connectCallback;
 	std::function<void(hack::net::Network::Peer&)> _disconnectCallback;
+	std::function<void(const std::string&, size_t)> _connectFailedCallback;
 	void Destroy();
 	void CreatePeer( ENetPeer& event, std::string uuid );
 
@@ -178,6 +179,7 @@ public:
 	// block the network communication!
 	void SetReceiveCallback(std::function<void(buffer_type)> callback);
 	void SetConnectCallback(std::function<void(std::shared_ptr<hack::net::Network::Peer>)> callback);
+	void SetConnectFailedCallback(std::function<void(const std::string&, size_t)> callback);
 	void SetDisconnectCallback(std::function<void(hack::net::Network::Peer&)> callback);
 	void ConnectTo( const std::string& host, enet_uint16 port, std::string uuid );
 	const std::string& GetIPAddress() const;

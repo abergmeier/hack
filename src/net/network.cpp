@@ -171,6 +171,10 @@ void Network::SetConnectCallback(std::function<void(std::shared_ptr<hack::net::N
 	_connectCallback = callback;
 }
 
+void Network::SetConnectFailedCallback(std::function<void(const std::string&, size_t)> callback) {
+	_connectFailedCallback = callback;
+}
+
 void Network::SetDisconnectCallback(std::function<void(hack::net::Network::Peer&)> callback) {
 	_disconnectCallback = callback;
 }
