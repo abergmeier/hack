@@ -91,8 +91,8 @@ namespace {
 	static const auto ASYNC_POLICY = std::launch::async;
 
 	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  hack::logic::Objects &obj) {
-		auto& lastMousePosition = ::lastMousePosition;
-		return [&lastMousePosition, sharedAvatar, &obj]( int x, int y ) {
+		auto& localMousePosition = lastMousePosition;
+		return [&localMousePosition, sharedAvatar, &obj]( int x, int y ) {
 
 			int xx = sharedAvatar->getX() + x;
 			int yy = sharedAvatar->getY() + y;
@@ -103,20 +103,20 @@ namespace {
 			}
 			//DEBUG.LOG_ENTRY(std::stringstream() << "Avatar Pos: " << sharedAvatar->getX() << ':' << sharedAvatar->getY());
 
-			UpdateRotation( lastMousePosition, *sharedAvatar );
+			UpdateRotation( localMousePosition, *sharedAvatar );
 		};
 	}
 
 	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar ) {
-		auto& lastMousePosition = ::lastMousePosition;
-		return [&lastMousePosition, sharedAvatar]( int absx, int absy ) {
+		auto& localMousePosition = lastMousePosition;
+		return [&localMousePosition, sharedAvatar]( int absx, int absy ) {
 			// Save for further processing
-			lastMousePosition[0] = absx;
-			lastMousePosition[1] = absy;
+			localMousePosition[0] = absx;
+			localMousePosition[1] = absy;
 
 			//DEBUG.LOG_ENTRY(std::stringstream() << "Mouse Pos: " << absx << ':' << absy);
 
-			UpdateRotation( lastMousePosition, *sharedAvatar );
+			UpdateRotation( localMousePosition, *sharedAvatar );
 		};
 	}
 
@@ -132,6 +132,8 @@ namespace {
 
 		const auto& localUUID =  player.GetUUID();
 
+//fix for visual studio
+#undef max
 		auto ourTime = std::numeric_limits<Registration::Element::timestamp_type>::max();
 
 		// Create a map with key of all timestamps sorted
