@@ -249,8 +249,20 @@ int main() {
 	network->SetConnectFailedCallback(playerConnectedFailed);
 	network->SetDisconnectCallback(playerDisconnected);
 
-	for( auto& other : others ) {
-		network->ConnectTo( other.host, other.port, other.uuid );
+	// Connect to all already registered hosts
+	for( auto it = others.cbegin(); it != others.cend(); ) {
+		if( network->ConnectTo( it->host, it->port, it->uuid ) )
+			++it;
+		else {
+			// Save current iterator which
+			// will be invalidated
+			auto current = it;
+			++it;
+			others.erase( current );
+			// current is invalidated, which
+			// does not matter, since it was copied
+			// and is no longer used
+		}
 	}
 
 	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, objects ),

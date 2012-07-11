@@ -537,14 +537,15 @@ void Network::StopWorker() {
 	_state = HALTING;
 }
 
-void Network::ConnectTo( const std::string& host, enet_uint16 port, std::string uuid ) {
+bool Network::ConnectTo( const std::string& host, enet_uint16 port, std::string uuid ) {
 
 	if( host == GetIPAddress() && port == GetIncomingPort() )
-		return; // No sense in connecting to ourselves
+		return false; // No sense in connecting to ourselves
 
 	// Make sure we are the only thread accessing object
 	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
 	_peers.unconnected.insert( Address( host, port, uuid ) );
+	return true;
 }
 
 enet_uint16 Network::GetIncomingPort() const {
