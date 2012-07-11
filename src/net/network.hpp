@@ -117,9 +117,6 @@ private:
 		// Mutex to be used when object is accessed
 		mutable std::recursive_mutex lock;
 
-		// All timeouts to the Peers
-		std::map<ENetPeer*, std::future<void>> connectionTimeout;
-
 		// All known addresses of other peers
 		std::set<Address> unconnected;
 

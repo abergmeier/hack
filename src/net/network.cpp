@@ -131,12 +131,8 @@ Network::~Network() {
 
 	std::lock_guard<std::recursive_mutex> peersLock( _peers.lock );
 
-	// First wait on all timeouts
-	for( auto& timeout : _peers.connectionTimeout ) {
-		timeout.second.wait();
 	}
 
-	_peers.connectionTimeout.clear();
 	SaveStopWorker();
 
 	Destroy();
@@ -276,12 +272,6 @@ void Network::Peers::AbortWait( ENetPeer& peer ) {
 	awaitingConnection.erase( &peer );
 	awaitingHandshake .erase( &peer );
 
-	auto timeoutIt = connectionTimeout.find( &peer );
-
-	if( timeoutIt != connectionTimeout.end() ) {
-		timeoutIt->second.wait();
-		connectionTimeout.erase( timeoutIt );
-	}
 
 	// We could not set up a connection before
 	// (for whatever reason). Clean up peer.
