@@ -84,6 +84,17 @@ namespace {
 		playerAvatar.setAngle( rot );
 	};
 
+	void updateWeaponPosition(hack::logic::Avatar& avatar, hack::logic::Weapon& weapon) {
+		float angle = avatar.getAngle() * M_PI / 180;
+		float xx = avatar.getRadius();
+		float yy = 0;
+		xx = xx * std::cos(angle) + yy * -std::sin(angle);
+		yy = xx * std::sin(angle) + yy * std::cos(angle);
+
+		weapon.setX(xx+avatar.getX());
+		weapon.setY(yy+avatar.getY());
+	}
+
 	static const int WINDOW_WIDTH = 640;
 	static const int WINDOW_HEIGHT = 480;
 
@@ -100,19 +111,16 @@ namespace {
 			vector2<int> possibleChange(xx,yy);
 
 			if (obj.movementCheck(*sharedAvatar,possibleChange)) {
+				//player position
 				sharedAvatar->setX(xx);
 				sharedAvatar->setY(yy);
 				
-				float angle = sharedAvatar->getAngle() * M_PI / 180;
-				xx = sharedAvatar->getRadius();
-				yy = 0;
-				xx = xx * std::cos(angle) + yy * -std::sin(angle);
-				yy = yy * std::sin(angle) + yy * std::cos(angle);
-				sharedWeapon->setX(xx+sharedAvatar->getX());
-				sharedWeapon->setY(yy+sharedAvatar->getY());
+				//sword position in relation to player
+				updateWeaponPosition(*sharedAvatar,*sharedWeapon);
 			}
 			//DEBUG.LOG_ENTRY(std::stringstream() << "Avatar Pos: " << sharedAvatar->getX() << ':' << sharedAvatar->getY());
 
+			//update rotations
 			UpdateRotation( localMousePosition, *sharedAvatar );
 			sharedWeapon->setAngle(sharedAvatar->getAngle());
 		};
@@ -128,6 +136,11 @@ namespace {
 			//DEBUG.LOG_ENTRY(std::stringstream() << "Mouse Pos: " << absx << ':' << absy);
 
 			UpdateRotation( localMousePosition, *sharedAvatar );
+
+			//sword position in relation to player
+			updateWeaponPosition(*sharedAvatar,*sharedWeapon);
+
+			//sword angle
 			sharedWeapon->setAngle(sharedAvatar->getAngle());
 		};
 	}
