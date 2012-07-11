@@ -131,6 +131,8 @@ Network::~Network() {
 
 	std::lock_guard<std::recursive_mutex> peersLock( _peers.lock );
 
+	for( auto& element : _peers.connected ) {
+		enet_peer_disconnect_later( element.second->enetPeer, 0 );
 	}
 
 	SaveStopWorker();
