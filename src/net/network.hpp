@@ -63,6 +63,7 @@ public:
 
 		const std::string uuid;
 		const ENetAddress address;
+		const std::string ipAddress;
 	private:
 		// Make sure we can only be created by the network
 		friend class Network;
@@ -155,6 +156,7 @@ private:
 	bool IsConnected ( const std::string& uuid ) const;
 
 	void HandleTimeout();
+	static std::string GetIPAddress( const ENetPeer& peer );
 public:
 	Network( std::string uuid );
 

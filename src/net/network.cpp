@@ -229,6 +229,7 @@ Network::Peer::Peer( ENetPeer& peer, std::string uuid ) :
 	uuid    ( uuid ),
 	address ( peer.address ),
 	enetPeer( &peer )
+	ipAddress( GetIPAddress( peer ) ),
 {
 }
 
@@ -449,7 +450,7 @@ bool Network::_ExecuteWorker() {
 			case ENET_EVENT_TYPE_NONE:
 				break;
 			case ENET_EVENT_TYPE_CONNECT: {
-				const auto peerHost = event.peer->address.host;
+				const auto peerHost = GetIPAddress( *event.peer );
 				const auto peerPort = event.peer->address.port;
 				DEBUG.LOG_ENTRY( std::stringstream() << "Peer connected from "
 				                 << peerHost << ':'
@@ -482,7 +483,7 @@ bool Network::_ExecuteWorker() {
 				break;
 			}
 			case ENET_EVENT_TYPE_RECEIVE: {
-				const auto peerHost = event.peer->address.host;
+				const auto peerHost = GetIPAddress( *event.peer );
 				const auto peerPort = event.peer->address.port;
 				DEBUG.LOG_ENTRY( std::stringstream() << "Packet received." << std::endl
 				                  << "\tLength: " << event.packet->dataLength
@@ -523,7 +524,7 @@ bool Network::_ExecuteWorker() {
 			}
 			case ENET_EVENT_TYPE_DISCONNECT: {
 				auto peer = event.peer;
-				auto host = event.peer->address.host;
+				auto host = GetIPAddress( *event.peer );
 				auto port = event.peer->address.port;
 				std::cout << "A client disconnected: " << peer->address.host
 						  << ":" << peer->address.port
@@ -628,4 +629,17 @@ enet_uint16 Network::GetIncomingPort() const {
 
 const std::string& Network::GetIPAddress() const {
 	return _host;
+}
+
+std::string Network::GetIPAddress( const ENetPeer& peer ) {
+
+	std::string hostName(100, '\0');
+	if( enet_address_get_host_ip( &peer.address,
+								  &hostName.front(), hostName.length() ) < 0 )
+		hostName.clear();
+	else {
+		// Validate size of string
+		hostName.resize( strnlen(hostName.data(), hostName.length()) );
+	}
+	return hostName;
 }
