@@ -217,7 +217,6 @@ int main() {
 		objects.Register( stone );
 		states.Commit( *stone );
 	};
-	createObjects();
 
 	auto playerConnected = [&](std::shared_ptr<hack::net::Network::Peer> peer) mutable {
 		auto shared = std::make_shared<RemotePlayer>(peer, "Unnamed");
