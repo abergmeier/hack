@@ -58,7 +58,6 @@ namespace {
 
 	vector2<float> rotateVector(float x, float y, float px, float py, float angle) {
 		angle = angle * M_PI / 180;
-		std::cout << x - px << std::endl;
 		float dx = x - px;
 		float dy = y - py;
 		x = (dx * std::cos(angle) + dy * -std::sin(angle)) + px;
@@ -70,7 +69,7 @@ namespace {
 	bool intersectAll(const Objects::value_type& obj, const Avatar& avatar, const vector2<int>& possibleChange) {
 		
 		//player intersection
-		if (obj->ClassName == hack::logic::Avatar::NAME) {
+		if (obj->ClassName() == hack::logic::Avatar::NAME) {
 			float dx = avatar.getX() - obj->getX();
 			float dy = avatar.getY() - obj->getY();
 			float length = std::sqrt(dy * dy + dy * dy);

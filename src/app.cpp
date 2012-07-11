@@ -22,6 +22,7 @@
 #include "debug.hpp"
 #include "net/registration.hpp"
 #include "logic/avatar.hpp"
+#include "logic/weapon.hpp"
 
 #ifdef _MSC_VER
 #define _USE_MATH_DEFINES // for C++
@@ -90,9 +91,9 @@ namespace {
 
 	static const auto ASYNC_POLICY = std::launch::async;
 
-	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  hack::logic::Objects &obj) {
+	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar, std::shared_ptr<hack::logic::Weapon> sharedWeapon,  hack::logic::Objects &obj) {
 		auto& localMousePosition = lastMousePosition;
-		return [&localMousePosition, sharedAvatar, &obj]( int x, int y ) {
+		return [&localMousePosition, sharedAvatar, sharedWeapon, &obj]( int x, int y ) {
 
 			int xx = sharedAvatar->getX() + x;
 			int yy = sharedAvatar->getY() + y;
@@ -101,16 +102,25 @@ namespace {
 			if (obj.movementCheck(*sharedAvatar,possibleChange)) {
 				sharedAvatar->setX(xx);
 				sharedAvatar->setY(yy);
+				
+				float angle = sharedAvatar->getAngle() * M_PI / 180;
+				xx = sharedAvatar->getRadius();
+				yy = 0;
+				xx = xx * std::cos(angle) + yy * -std::sin(angle);
+				yy = yy * std::sin(angle) + yy * std::cos(angle);
+				sharedWeapon->setX(xx+sharedAvatar->getX());
+				sharedWeapon->setY(yy+sharedAvatar->getY());
 			}
 			//DEBUG.LOG_ENTRY(std::stringstream() << "Avatar Pos: " << sharedAvatar->getX() << ':' << sharedAvatar->getY());
 
 			UpdateRotation( localMousePosition, *sharedAvatar );
+			sharedWeapon->setAngle(sharedAvatar->getAngle());
 		};
 	}
 
-	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar, hack::logic::Objects &obj) {
+	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar, std::shared_ptr<hack::logic::Weapon> sharedWeapon,hack::logic::Objects &obj) {
 		auto& localMousePosition = lastMousePosition;
-		return [&localMousePosition, sharedAvatar, &obj]( int absx, int absy ) {
+		return [&localMousePosition, sharedAvatar, sharedWeapon, &obj]( int absx, int absy ) {
 			// Save for further processing
 			localMousePosition[0] = absx;
 			localMousePosition[1] = absy;
@@ -118,6 +128,7 @@ namespace {
 			//DEBUG.LOG_ENTRY(std::stringstream() << "Mouse Pos: " << absx << ':' << absy);
 
 			UpdateRotation( localMousePosition, *sharedAvatar );
+			sharedWeapon->setAngle(sharedAvatar->getAngle());
 		};
 	}
 
@@ -166,6 +177,20 @@ int main() {
 		states.Commit( *sharedAvatar );
 
 		return sharedAvatar;
+	}();
+
+
+	auto sharedWeapon = [&objects, &states, &sharedAvatar]() -> std::shared_ptr<Weapon> {
+		// Create our player representation
+		auto sharedWeapon = std::make_shared<Weapon>();
+		sharedWeapon->setX((int)sharedAvatar->getX()+sharedAvatar->getRadius());
+		sharedWeapon->setY((int)sharedAvatar->getY());
+		sharedWeapon->setWidth(26);
+		sharedWeapon->setHeight(74);
+		objects.Register( sharedWeapon );
+		states.Commit( *sharedWeapon );
+
+		return sharedWeapon;
 	}();
 
 	bool hasData = false;
@@ -270,8 +295,8 @@ int main() {
 
 	attemptCreateObjects();
 
-	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, objects ),
-											getMouseMoveHandler   ( sharedAvatar ),
+	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, sharedWeapon ,objects ),
+											getMouseMoveHandler   ( sharedAvatar, sharedWeapon ,objects ),
 											getAvatarAttackHandler( sharedAvatar ) );
 
 	r->run();

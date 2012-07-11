@@ -36,6 +36,8 @@ public:
 	void setX(int value);
 	void setY(int value);
 	void setAngle(float value);
+	void setWidth(size_t value);
+	void setHeight(size_t value);
 
 
 private:
@@ -48,8 +50,6 @@ private:
 	size_t height;
 
 	void Set(std::istream& stream);
-	void setWidth(size_t value);
-	void setHeight(size_t value);
 
 protected:
 	Object();

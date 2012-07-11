@@ -1,6 +1,7 @@
 #include "assetmanager.hpp"
 #include "../logic/stone.hpp"
 #include "../logic/avatar.hpp"
+#include "../logic/weapon.hpp"
 #include <iostream>
 #include <string>
 
@@ -60,6 +61,9 @@ void assetmanager::init() {
 	
 	//stone texture
 	addTexture(Stone::NAME.c_str(),"resources/stone.png");
+
+	//weapon
+	addTexture(Weapon::NAME.c_str(),"resources/weapon.png");
 }
 
 void assetmanager::addTexture(const char* name, const char* path) {
