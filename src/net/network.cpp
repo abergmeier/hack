@@ -304,23 +304,6 @@ void Network::HandleUnconnected() {
 			continue;
 		}
 
-#if 0
-		static const auto ASYNC_POLICY = std::launch::async;
-
-		// Setup connection timeout
-		auto timeoutHandler = [peer, this]() {
-			static const std::chrono::milliseconds TIMEOUT_MS( 2000 );
-
-			std::this_thread::sleep_for( TIMEOUT_MS );
-
-			auto& peerObject = *peer;
-
-			std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-			_peers.AbortWait( peerObject );
-		};
-
-		_peers.connectionTimeout.insert( std::make_pair( peer, std::async( ASYNC_POLICY, timeoutHandler ) ) );
-#endif
 		_peers.awaitingConnection.insert( std::make_pair(peer, entry.uuid) );
 		DEBUG.ERR_ENTRY(std::stringstream() << "Trying to establish connection with " << ipAddress << ':' << peer->address.port);
 	}
