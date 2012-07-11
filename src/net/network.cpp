@@ -187,7 +187,8 @@ void Network::Receive() {
 
 Network::Address::Address( const std::string& host, enet_uint16 port, std::string uuid ) :
 	ENetAddress(),
-	uuid(uuid)
+	uuid(uuid),
+	ipAddress(host)
 {
 	this->port = port;
 
@@ -205,7 +206,8 @@ Network::Address::Address( ENetAddress address, std::string uuid ) :
 
 Network::Address::Address( Address&& other ) :
 	ENetAddress( other ),
-	uuid( std::move(other.uuid) )
+	uuid( std::move(other.uuid) ),
+	ipAddress( std::move(other.ipAddress) )
 {
 }
 
@@ -321,12 +323,13 @@ void Network::CreatePeer( ENetPeer& peer, std::string uuid ) {
 
 	{
 		std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-		auto insertPair = _peers.connected.insert( std::make_pair( Address(sharedPeer->address, uuid), std::shared_ptr<Peer>(sharedPeer) ) );
+		const auto ipAddress = GetIPAddress( *sharedPeer->enetPeer );
+		auto insertPair = _peers.connected.insert( std::make_pair( Address(ipAddress, sharedPeer->address.port, uuid), std::shared_ptr<Peer>(sharedPeer) ) );
 
 		if( !insertPair.second )
 			return; // Already present and connected!?
 
-		Address address(sharedPeer->address, uuid);
+		Address address(ipAddress, sharedPeer->address.port, uuid);
 		_peers.unconnected.erase( address );
 		_peers.AbortWait( peer );
 
@@ -375,7 +378,7 @@ void Network::HandleUnconnected() {
 
 	for( auto& entry : _peers.unconnected ) {
 
-		DEBUG.LOG_ENTRY(std::stringstream() << "Connecting to " << entry.host << ':' << entry.port);
+		DEBUG.LOG_ENTRY(std::stringstream() << "Connecting to " << entry.ipAddress << ':' << entry.port);
 		// Initiate the connection, allocating the two channels 0 and 1. */
 		auto peer = enet_host_connect( _server, &entry, 2, 0);
 
@@ -391,8 +394,9 @@ void Network::HandleUnconnected() {
 		);
 
 		// Check whether it is already in
+		auto ipAddress = GetIPAddress( *peer );
 		if( _peers.awaitingHandshake.find( peer ) != _peers.awaitingHandshake.end()
-		 || _peers.connected.find( Address(peer->address, entry.uuid) ) != _peers.connected.end() ) {
+		 || _peers.connected.find( Address(ipAddress, peer->address.port, entry.uuid) ) != _peers.connected.end() ) {
 			// Found in later stage
 			continue;
 		}
@@ -415,7 +419,7 @@ void Network::HandleUnconnected() {
 		_peers.connectionTimeout.insert( std::make_pair( peer, std::async( ASYNC_POLICY, timeoutHandler ) ) );
 #endif
 		_peers.awaitingConnection.insert( std::make_pair(peer, entry.uuid) );
-		DEBUG.ERR_ENTRY(std::stringstream() << "Trying to establish connection with " << peer->address.host << ':' << peer->address.port);
+		DEBUG.ERR_ENTRY(std::stringstream() << "Trying to establish connection with " << ipAddress << ':' << peer->address.port);
 	}
 
 	_peers.unconnected.clear();
