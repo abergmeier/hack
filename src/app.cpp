@@ -169,7 +169,18 @@ int main() {
 	}();
 
 	bool hasData = false;
-	auto createObjects = [&]() {
+	auto attemptCreateObjects = [&]() {
+		DEBUG.LOG_ENTRY(std::stringstream() << "Regknown: " << others.size() );
+		for( auto& obj : others ) {
+			DEBUG.LOG_ENTRY(std::stringstream() << "Reg " << obj.host << ':' << obj.port );
+		}
+
+		if( !others.empty() || hasData )
+			return;
+
+		// No other peer before us
+		// so we have to create the objects
+
 		hasData = true;
 		others.clear();
 		// We need to create the basic objects
@@ -198,11 +209,7 @@ int main() {
 			}
 		}
 
-		if( others.empty() && !hasData ) {
-			// No other peer before us
-			// so we have to create the objects
-			createObjects();
-		}
+		attemptCreateObjects();
 		
 		auto sharedPlayer = std::static_pointer_cast<Player>( shared );
 
@@ -223,11 +230,7 @@ int main() {
 			}
 		}
 
-		if( others.empty() && !hasData ) {
-			// No other peer before us
-			// so we have to create the objects
-			createObjects();
-		}
+		attemptCreateObjects();
 	};
 
 	auto playerDisconnected = [&_players](Network::Peer& peer) {
@@ -264,6 +267,8 @@ int main() {
 			// and is no longer used
 		}
 	}
+
+	attemptCreateObjects();
 
 	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, objects ),
 											getMouseMoveHandler   ( sharedAvatar ),
