@@ -151,10 +151,6 @@ Registration::~Registration() {
 		DEBUG.ERR_ENTRY(std::stringstream() << "Deleting registration failed: " << e.what());
 	}
 
-
-	// Wakeup next possible waiting condition
-	_sleepCondition.notify_one();
-
 	SaveStopWorker();
 }
 
@@ -233,6 +229,9 @@ void Registration::ExecuteWorker() {
 void Registration::StopWorker() {
 	DEBUG.LOG_ENTRY( "[Worker] Stopping..." );
 	_isPinging = false;
+
+	// Wakeup next possible waiting condition
+	_sleepCondition.notify_one();
 }
 
 bool Registration::Element::operator <(const Element& other) const {
