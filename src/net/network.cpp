@@ -56,9 +56,10 @@ namespace {
 
 	    address.host = ENET_HOST_ANY;
 	    address.port = incomingPort;
+
 		auto server = enet_host_create( &address, // create a server host
 		                                32, // allowed 32 clients
-					                    2, // allow up 2 channels to be used, 0 and 1
+		                                0, // allow as many simultaneous connections as possible
 					                    0, // any downstream bandwidth
 					                    0  // any upstream bandwidth
 		);
