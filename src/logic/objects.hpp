@@ -80,7 +80,7 @@ public:
 		}
 	};
 
-	bool movementCheck(const hack::logic::Avatar &avatar);
+	bool movementCheck(const hack::logic::Avatar &avatar, const vector2<int>& possibleChange);
 private:
 	typedef value_type                                                   key_type;
 	typedef object_map_type::size_type                                   size_type;

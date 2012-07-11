@@ -50,7 +50,7 @@ namespace {
 		return false;	
 	}
 
-	bool intersectAll(const Objects::value_type& obj, const Avatar& avatar) {
+	bool intersectAll(const Objects::value_type& obj, const Avatar& avatar, const vector2<int>& possibleChange) {
 		
 		float x1 = obj->getX() - (float)obj->getWidth() / 2;
 		float y1 = obj->getY() - (float)obj->getHeight() / 2;
@@ -60,12 +60,31 @@ namespace {
 		float y3 = obj->getY() + (float)obj->getHeight() / 2;
 		float x4 = obj->getX() - (float)obj->getWidth() / 2;
 		float y4 = obj->getY() + (float)obj->getHeight() / 2;
+		std::cout << obj->getX() << " " << obj->getY() << " " << possibleChange[0] << " " << possibleChange[1] <<  std::endl;
+
+		/*float x1 = possibleChange[0] - (float)obj->getWidth() / 2;
+		float y1 = possibleChange[1] - (float)obj->getHeight() / 2;
+		float x2 = possibleChange[0] + (float)obj->getWidth() / 2;
+		float y2 = possibleChange[1] - (float)obj->getHeight() / 2;
+		float x3 = possibleChange[0] + (float)obj->getWidth() / 2;
+		float y3 = possibleChange[1] + (float)obj->getHeight() / 2;
+		float x4 = possibleChange[0] - (float)obj->getWidth() / 2;
+		float y4 = possibleChange[1] + (float)obj->getHeight() / 2;
+
+		float x1 = possibleChange[0];
+		float y1 = possibleChange[1];
+		float x2 = possibleChange[0] + (float)obj->getWidth();
+		float y2 = possibleChange[1];
+		float x3 = possibleChange[0] + (float)obj->getWidth();
+		float y3 = possibleChange[1] + (float)obj->getHeight();
+		float x4 = possibleChange[0];
+		float y4 = possibleChange[1] + (float)obj->getHeight();*/
 
 		vector2<float> A(x1,y1);
 		vector2<float> B(x2,y2);
 		vector2<float> C(x3,x3);
 		vector2<float> D(x4,x4);
-		vector2<float> pos(avatar.getX(),avatar.getY());
+		vector2<float> pos((float)possibleChange[0],(float)possibleChange[1]);
 
 		if(intersect(A,B,pos,avatar.getRadius()) 
 			|| intersect(B,C,pos,avatar.getRadius())
@@ -177,11 +196,11 @@ Objects::const_iterator::const_iterator( object_map_type::const_iterator it ) :
 
 }
 
-bool Objects::movementCheck(const hack::logic::Avatar &avatar)  {
+bool Objects::movementCheck(const hack::logic::Avatar &avatar, const vector2<int>& possibleChange)  {
 	for(auto &e : _objectMap) {
 		//world collision
 		if(e.second->ClassName() == hack::logic::Stone::NAME) {
-			if(intersectAll(e.second,avatar))
+			if(intersectAll(e.second,avatar,possibleChange))
 				return false;
 		}
 		//player collision

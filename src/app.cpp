@@ -96,8 +96,9 @@ namespace {
 
 			int xx = sharedAvatar->getX() + x;
 			int yy = sharedAvatar->getY() + y;
+			vector2<int> possibleChange(xx,yy);
 
-			if (obj.movementCheck(*sharedAvatar)) {
+			if (obj.movementCheck(*sharedAvatar,possibleChange)) {
 				sharedAvatar->setX(xx);
 				sharedAvatar->setY(yy);
 			}
@@ -174,9 +175,12 @@ int main() {
 		// We need to create the basic objects
 
 		auto stone = std::make_shared<Stone>();
+		stone->setX(200);
+		stone->setY(200);
 		objects.Register( stone );
 		states.Commit( *stone );
 	};
+	createObjects();
 
 	auto playerConnected = [&](std::shared_ptr<hack::net::Network::Peer> peer) mutable {
 		auto shared = std::make_shared<RemotePlayer>(peer, "Unnamed");
@@ -198,7 +202,7 @@ int main() {
 			// so we have to create the objects
 			createObjects();
 		}
-
+		
 		auto sharedPlayer = std::static_pointer_cast<Player>( shared );
 
 		_players.insert(shared);
