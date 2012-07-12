@@ -183,7 +183,7 @@ int main() {
 		objects.Deserialize( stream );
 	});
 
-	auto sharedAvatar = [&objects, &states]() -> std::shared_ptr<Avatar> {
+	auto sharedAvatar = [&]() -> std::shared_ptr<Avatar> {
 		// Create our player representation
 		auto sharedAvatar = std::make_shared<Avatar>();
 		sharedAvatar->setX( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_WIDTH) );
@@ -195,7 +195,7 @@ int main() {
 	}();
 
 
-	auto sharedWeapon = [&objects, &states, &sharedAvatar]() -> std::shared_ptr<Weapon> {
+	auto sharedWeapon = [&]() -> std::shared_ptr<Weapon> {
 		// Create our player representation
 		auto sharedWeapon = std::make_shared<Weapon>();
 		sharedWeapon->setX((int)sharedAvatar->getX()+sharedAvatar->getRadius());
