@@ -313,13 +313,9 @@ void Network::HandleUnconnected() {
 
 bool Network::_ExecuteWorker() {
 
-	ENetEvent event;
-
 	HandleUnconnected();
 
-	//
-	// Do input handling
-	//
+	ENetEvent event;
 
 	auto extractPeer = [&event]() -> std::shared_ptr<Peer> {
 		// We save an address to shared_ptr inside event
