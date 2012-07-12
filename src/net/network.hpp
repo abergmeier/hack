@@ -95,6 +95,7 @@ private:
 		auto packet = _createPacket( buffer );
 		if( enet_peer_send( &enetPeer, 0, packet ) != 0 )
 			throw std::runtime_error("SEND FAIL");
+		enet_host_flush( enetPeer.host );
 	}
 
 	std::function<void(std::shared_ptr<Peer>)>      _connectCallback;
@@ -169,6 +170,7 @@ public:
 	void Send(const T& buffer) {
 		auto packet = _createPacket(buffer);
 		enet_host_broadcast( _server, 0, packet );
+		enet_host_flush( _server );
 	}
 
 	bool WaitUntilConnected( const std::string& uuid ) const;
