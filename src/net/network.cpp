@@ -177,9 +177,9 @@ Network::Address::Address( const std::string& host, enet_uint16 port, std::strin
 }
 
 Network::Address::Address( Address&& other ) :
-	ENetAddress( other ),
-	uuid( std::move(other.uuid) ),
-	ipAddress( std::move(other.ipAddress) )
+	ENetAddress( std::forward<ENetAddress>(other) ),
+	uuid       ( std::move(other.uuid) ),
+	ipAddress  ( std::move(other.ipAddress) )
 {
 }
 
