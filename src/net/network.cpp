@@ -473,23 +473,14 @@ bool Network::_ExecuteWorker() {
 }
 
 void Network::ExecuteWorker() {
-	static const std::chrono::milliseconds DURATION( 1 );
-
 	_state = RUNNING;
 
 	DEBUG.LOG_ENTRY("[Worker] Start...");
 
 	while( _ExecuteWorker() ) {
-
-		auto queue = _atomicQueues[0].load();
-		if( queue == nullptr )
-			// Should never happen but paranoia is so sweet
-			continue;
-
-		if( queue->empty() )
-			// If there is nothing to do - do not spam
-			// the CPU
-			std::this_thread::sleep_for( DURATION );
+		// We do not sleep here because we
+		// internally already use enet's query
+		// mechanism
 	}
 
 	_state = STOPPED;
