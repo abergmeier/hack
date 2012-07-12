@@ -8,10 +8,11 @@
 #include "object.hpp"
 #include "../include.hpp"
 
+namespace {
+	size_t NEXT_ID = 1;
+}
+
 using namespace hack::logic;
-
-
-size_t Object::NEXT_ID = 1;
 
 Object::Object(std::string siteID) :
 	entity(),

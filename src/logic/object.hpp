@@ -41,7 +41,6 @@ public:
 
 
 private:
-	static size_t NEXT_ID;
 	id_type id;
 	int x;
 	int y;
