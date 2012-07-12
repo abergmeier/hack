@@ -14,8 +14,9 @@ RemotePlayer::ClassName() const {
 	return NAME;
 }
 
-RemotePlayer::RemotePlayer(std::shared_ptr<Network::Peer> peer, std::string name) :
+RemotePlayer::RemotePlayer(std::weak_ptr<Network> network, std::shared_ptr<Network::Peer> peer, std::string name) :
 	hack::logic::Player(name),
+	_network     ( network ),
 	_receiveQueue(),
 	_receiver([this](buffer_type buffer) {
 		// Transforms network to deserializable format

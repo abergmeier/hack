@@ -21,11 +21,12 @@ class RemotePlayer : public hack::logic::Player, public Endpoint {
 	void Deserialize(std::istream& stream);
 
 	static const std::string NAME;
+	std::weak_ptr<Network> _network;
 	std::queue<buffer_type> _receiveQueue;
 	std::function<void(buffer_type)> _receiver;
 	std::weak_ptr<Network::Peer> _peer;
 public:
-	RemotePlayer(std::shared_ptr<Network::Peer> peer, std::string name);
+	RemotePlayer(std::weak_ptr<Network> network, std::shared_ptr<Network::Peer> peer, std::string name);
 	~RemotePlayer();
 	bool operator==(const Network::Peer& peer) const;
 

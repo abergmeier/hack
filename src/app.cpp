@@ -244,7 +244,7 @@ int main() {
 
 		attemptCreateObjects();
 
-		auto shared = std::make_shared<RemotePlayer>(peer, "Unnamed");
+		auto shared = std::make_shared<RemotePlayer>( network, peer, "Unnamed");
 		_players.insert(shared);
 
 		for( const auto& object : objects ) {
