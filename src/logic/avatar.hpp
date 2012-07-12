@@ -12,7 +12,7 @@ namespace logic {
 class Avatar : public Object {
 public:
 	Object& operator = (std::istream& stream) override;
-	Avatar(); 
+	Avatar(std::string siteID);
 	Avatar(std::istream& stream);
 	static const std::string NAME;
 	const std::string& ClassName() const override;

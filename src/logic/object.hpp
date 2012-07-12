@@ -52,7 +52,7 @@ private:
 	void Set(std::istream& stream);
 
 protected:
-	Object();
+	Object(std::string siteID);
 	// Use this constructor to deserialize object
 	Object(std::istream& stream);
 	virtual std::ostream& SerializeContent(std::ostream& stream) const override;

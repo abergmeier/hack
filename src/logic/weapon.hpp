@@ -11,7 +11,7 @@ namespace logic {
 
 class Weapon : public Object {
 public:
-	Weapon() : Object() {};
+	Weapon(std::string siteID) : Object(std::move(siteID)) {};
 	Weapon(std::istream& stream);
 	static const std::string NAME;
 	const std::string& ClassName() const override;

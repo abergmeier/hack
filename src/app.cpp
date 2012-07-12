@@ -185,7 +185,7 @@ int main() {
 
 	auto sharedAvatar = [&]() -> std::shared_ptr<Avatar> {
 		// Create our player representation
-		auto sharedAvatar = std::make_shared<Avatar>();
+		auto sharedAvatar = std::make_shared<Avatar>( sharedLocalPlayer->GetUUID() );
 		sharedAvatar->setX( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_WIDTH) );
 		sharedAvatar->setY( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_HEIGHT) );
 		objects.Register( sharedAvatar );
@@ -197,7 +197,7 @@ int main() {
 
 	auto sharedWeapon = [&]() -> std::shared_ptr<Weapon> {
 		// Create our player representation
-		auto sharedWeapon = std::make_shared<Weapon>();
+		auto sharedWeapon = std::make_shared<Weapon>( sharedLocalPlayer->GetUUID() );
 		sharedWeapon->setX((int)sharedAvatar->getX()+sharedAvatar->getRadius());
 		sharedWeapon->setY((int)sharedAvatar->getY());
 		sharedWeapon->setWidth(26);
@@ -221,7 +221,7 @@ int main() {
 		others.clear();
 		// We need to create the basic objects
 
-		auto stone = std::make_shared<Stone>();
+		auto stone = std::make_shared<Stone>( sharedLocalPlayer->GetUUID() );
 		stone->setX(200);
 		stone->setY(200);
 		stone->setAngle(45);

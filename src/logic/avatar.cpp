@@ -11,8 +11,8 @@ Avatar::ClassName() const {
 	return NAME;
 }
 
-Avatar::Avatar()
-	: Object(), radius(40), weaponRange(50)
+Avatar::Avatar(std::string siteID)
+	: Object(std::move(siteID)), radius(40), weaponRange(50)
 {};
 
 

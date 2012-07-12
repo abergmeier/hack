@@ -18,7 +18,7 @@ namespace logic {
 
 class Stone : public Object {
 public:
-	Stone() : Object() {};
+	Stone(std::string siteID) : Object(std::move(siteID)) {};
 	Stone(std::istream& stream);
 	static const std::string NAME;
 	const std::string& ClassName() const override;
