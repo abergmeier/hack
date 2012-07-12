@@ -210,10 +210,6 @@ int main() {
 
 	bool hasData = false;
 	auto attemptCreateObjects = [&]() {
-		DEBUG.LOG_ENTRY(std::stringstream() << "Regknown: " << others.size() );
-		for( auto& obj : others ) {
-			DEBUG.LOG_ENTRY(std::stringstream() << "Reg " << obj.host << ':' << obj.port );
-		}
 
 		if( !others.empty() || hasData )
 			return;
