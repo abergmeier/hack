@@ -230,7 +230,6 @@ int main() {
 	};
 
 	auto playerConnected = [&](std::shared_ptr<hack::net::Network::Peer> peer) mutable {
-		auto shared = std::make_shared<RemotePlayer>(peer, "Unnamed");
 
 		for( auto it = others.begin(); it != others.end(); ++it ) {
 			if( it->uuid == peer->uuid ) {
@@ -245,14 +244,13 @@ int main() {
 		}
 
 		attemptCreateObjects();
-		
-		auto sharedPlayer = std::static_pointer_cast<Player>( shared );
 
+		auto shared = std::make_shared<RemotePlayer>(peer, "Unnamed");
 		_players.insert(shared);
 
 		for( const auto& object : objects ) {
 			auto serializable = std::dynamic_pointer_cast<hack::state::Serializable>(object);
-			states.CommitTo( *serializable, sharedPlayer );
+			states.CommitTo( *serializable, shared );
 		}
 	};
 
