@@ -234,7 +234,6 @@ int main() {
 		for( auto it = others.begin(); it != others.end(); ++it ) {
 			if( it->uuid == peer->uuid ) {
 				others.erase( it );
-				DEBUG.LOG_ENTRY(std::stringstream() << "PREVIOUS: " << others.size() );
 				// Other peer has data
 				hasData = true;
 				// We no longer need others
@@ -258,7 +257,6 @@ int main() {
 		for( auto it = others.begin(); it != others.end(); ++it ) {
 			if( it->host == ip && it->port == port ) {
 				others.erase( it );
-				DEBUG.LOG_ENTRY(std::stringstream() << "PREVIOUS: " << others.size() );
 				break;
 			}
 		}
