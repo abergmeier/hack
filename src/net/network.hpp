@@ -73,10 +73,11 @@ public:
 private:
 	template <typename T>
 	static ENetPacket* _createPacket(const T& buffer) {
+		static const auto FLAGS = ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE;
 		const size_t byteCount = buffer.size() * sizeof(typename T::value_type);
 		auto packet = enet_packet_create( buffer.data(),
 		                                  byteCount,
-		                                  ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE
+		                                  FLAGS
 		);
 
 		if( packet == nullptr )
