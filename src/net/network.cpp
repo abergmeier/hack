@@ -514,13 +514,15 @@ const std::string& Network::GetIPAddress() const {
 
 std::string Network::GetIPAddress( const ENetPeer& peer ) {
 
-	std::string hostName(100, '\0');
+	// Normally 128 should be sufficient even when representing
+	// IPv6 in binary (+7 delimiter)
+	std::string ip(128 + 7, '\0');
 	if( enet_address_get_host_ip( &peer.address,
-								  &hostName.front(), hostName.length() ) < 0 )
-		hostName.clear();
+								  &ip.front(), ip.length() ) < 0 )
+		ip.clear();
 	else {
 		// Validate size of string
-		hostName.resize( strnlen(hostName.data(), hostName.length()) );
+		ip.resize( strnlen(ip.data(), ip.length()) );
 	}
-	return hostName;
+	return ip;
 }
