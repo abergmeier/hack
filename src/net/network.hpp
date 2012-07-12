@@ -8,7 +8,6 @@
 #ifndef NETWORK_HPP_
 #define NETWORK_HPP_
 
-#include <atomic>
 #include <memory>
 #include <map>
 #include <array>
@@ -56,11 +55,6 @@ public:
 		bool operator ==(const Peer& other) const;
 		std::function<void(buffer_type)> receiveCallback;
 
-		template <typename T>
-		void Send(const T& buffer) {
-			SendTo( *enetPeer, buffer );
-		}
-
 		const std::string uuid;
 		const ENetAddress address;
 		const std::string ipAddress;
@@ -91,9 +85,9 @@ private:
 	}
 
 	template <typename T>
-	static void SendTo(ENetPeer& enetPeer, const T& buffer) {
+	static void _SendTo( ENetPeer& enetPeer, const T& buffer ) {
 		auto packet = _createPacket( buffer );
-		SendPacket( enetPeer, std::move( *packet ) );
+		SendPacket( enetPeer, packet );
 	}
 
 	std::function<void(std::shared_ptr<Peer>)>      _connectCallback;
@@ -105,12 +99,13 @@ private:
 	struct queue_element_type {
 		// Destination of data - broadcast if peer is null
 		std::shared_ptr<Peer> peer;
-		buffer_type buffer;
-		 std::function<void()> callback;
+		ENetPacket*           packet;
 	};
 
-	std::array<std::unique_ptr<std::deque<queue_element_type>>, 2> _queues;
-	std::array<std::atomic<std::deque<queue_element_type>*>, 2> _atomicQueues;
+	struct {
+		mutable std::recursive_mutex lock;
+		std::deque<queue_element_type> input;
+	} _queues;
 
 	struct Peers {
 		// Mutex to be used when object is accessed
@@ -150,6 +145,9 @@ private:
 	// Process all known peers that are not yet connected
 	void HandleUnconnected();
 
+	// Send all previously unsent packets
+	void HandleUnsent();
+
 	bool IsConnecting( const std::string& uuid ) const;
 	bool IsConnected ( const std::string& uuid ) const;
 
@@ -157,9 +155,11 @@ private:
 	static std::string GetIPAddress( const ENetPeer& peer );
 
 	// Immediately sends Packet to all connected Peers
-	static void SendPacket( ENetHost& host, ENetPacket&& packet );
+	static void SendPacket( ENetHost& host, ENetPacket* packet );
 	// Immediately sends Packet to Peer
-	static void SendPacket( ENetPeer& peer, ENetPacket&& packet );
+	static void SendPacket( ENetPeer& peer, ENetPacket* packet );
+
+	void Enqueue( std::shared_ptr<Peer> peer, ENetPacket* packet );
 public:
 	Network( std::string uuid );
 
@@ -170,9 +170,16 @@ public:
 	void ExecuteWorker() override;
 
 	template <typename T>
-	void Send(const T& buffer) {
-		auto packet = _createPacket(buffer);
-		SendPacket( *_server, std::move( *packet ) );
+	void SendTo(const T& buffer) {
+		auto packet = _createPacket( buffer );
+		Enqueue( nullptr, packet );
+	}
+
+	template <typename T>
+	void SendTo( std::shared_ptr<Peer> peer, const T& buffer) {
+		auto packet = _createPacket( buffer );
+		Enqueue( peer, packet );
+
 	}
 
 	bool WaitUntilConnected( const std::string& uuid ) const;

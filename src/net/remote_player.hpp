@@ -31,13 +31,18 @@ public:
 	bool operator==(const Network::Peer& peer) const;
 
 	template <typename T>
-	void SendTo(const T& buffer) {
+	void SendTo( const T& buffer ) {
 		auto peer = _peer.lock();
 
 		if( !peer )
 			return;
 
-		peer->Send( buffer );
+		auto sharedNetwork = _network.lock();
+
+		if( !sharedNetwork )
+			return;
+
+		sharedNetwork->SendTo( peer, buffer );
 	}
 	std::queue<buffer_type> GetFrom() override;
 	void Commit();

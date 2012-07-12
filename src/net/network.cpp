@@ -75,12 +75,6 @@ Network::Network( std::string uuid ) :
 	_state(STOPPED),
 	uuid  (uuid)
 {
-	_queues[0] = std::unique_ptr<std::deque<queue_element_type>>(new std::deque<queue_element_type>());
-	_queues[1] = std::unique_ptr<std::deque<queue_element_type>>(new std::deque<queue_element_type>());
-
-	_atomicQueues[0] = _queues[0].get();
-	_atomicQueues[1] = _queues[1].get();
-
 	if( enet_initialize() != 0 )
 		throw std::runtime_error("Could not initialize ENET.");
 
@@ -311,9 +305,28 @@ void Network::HandleUnconnected() {
 	_peers.unconnected.clear();
 }
 
+void Network::HandleUnsent() {
+	typedef decltype(_queues.input) queue_type;
+	queue_type inputQueue;
+
+	{
+		std::lock_guard<std::recursive_mutex> lock( _queues.lock );
+		inputQueue.swap( _queues.input );
+	}
+
+	for( auto& element : inputQueue ) {
+		if( element.peer )
+			SendPacket( *element.peer->enetPeer, element.packet );
+		else
+			SendPacket( *_server, element.packet );
+	}
+}
+
 bool Network::_ExecuteWorker() {
 
 	HandleUnconnected();
+
+	HandleUnsent();
 
 	ENetEvent event;
 
@@ -338,7 +351,7 @@ bool Network::_ExecuteWorker() {
 				DEBUG.LOG_ENTRY( std::stringstream() << "Peer connected from "
 				                 << peerHost << ':' << peerPort);
 
-				SendTo( *event.peer, uuid );
+				_SendTo( *event.peer, uuid );
 				DEBUG.LOG_ENTRY( std::stringstream() << "Sent Handshake to "
 				                 << peerHost << ':' << peerPort);
 
@@ -439,32 +452,6 @@ bool Network::_ExecuteWorker() {
 		}
 	}
 
-	//
-	// Do output handling
-	//
-
-	// Exchange public with private queue so other
-	// threads may fill the external queue without
-	// need to do complicated locking
-	_atomicQueues[0].exchange(_atomicQueues[1]);
-
-	// We now can process the new private queue
-	// since it is no longer used by another thread
-
-	//auto& currentQueue = *_atomicQueues[1].load();
-	//TODO: introduce locking
-	// Process everything we have in the queue
-#if 0
-	for( auto& element : currentQueue ) {
-		if( element.peer )
-			// Send to peer
-			element.peer->Send( element.buffer, element.callback );
-		else
-			// Do broadcast
-			Send( element.buffer, element.callback );
-	}
-#endif
-
 	return _state == RUNNING;
 }
 
@@ -523,17 +510,25 @@ std::string Network::GetIPAddress( const ENetPeer& peer ) {
 	return ip;
 }
 
-void Network::SendPacket( ENetPeer& peer, ENetPacket&& packet ) {
-	if( enet_peer_send( &peer, 0, &packet ) != 0 )
+void Network::SendPacket( ENetPeer& peer, ENetPacket* packet ) {
+	if( enet_peer_send( &peer, 0, packet ) != 0 )
 		throw std::runtime_error("SEND FAIL");
 	// enet_peer_send handles enet_packet_destroy()
 
 	enet_host_flush( peer.host );
 }
 
-void Network::SendPacket( ENetHost& host, ENetPacket&& packet ) {
-	enet_host_broadcast( &host, 0, &packet );
+void Network::SendPacket( ENetHost& host, ENetPacket* packet ) {
+	enet_host_broadcast( &host, 0, packet );
 	// enet_peer_send handles enet_packet_destroy()
 
 	enet_host_flush( &host );
+}
+
+void Network::Enqueue( std::shared_ptr<Peer> peer, ENetPacket* packet ) {
+	queue_element_type element;
+	element.packet = packet;
+	element.peer = std::move(peer);
+	std::lock_guard<std::recursive_mutex> lock( _queues.lock );
+	_queues.input.push_back( std::move(element) );
 }

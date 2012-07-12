@@ -74,7 +74,7 @@ bool States::PassToNetwork( const std::string& data ) {
 	if( !sharedNetwork )
 		return false;
 
-	sharedNetwork->Send( data );
+	sharedNetwork->SendTo( data );
 	return true;
 }
 
