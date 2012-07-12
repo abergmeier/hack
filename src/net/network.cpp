@@ -522,3 +522,18 @@ std::string Network::GetIPAddress( const ENetPeer& peer ) {
 	}
 	return ip;
 }
+
+void Network::SendPacket( ENetPeer& peer, ENetPacket&& packet ) {
+	if( enet_peer_send( &peer, 0, &packet ) != 0 )
+		throw std::runtime_error("SEND FAIL");
+	// enet_peer_send handles enet_packet_destroy()
+
+	enet_host_flush( peer.host );
+}
+
+void Network::SendPacket( ENetHost& host, ENetPacket&& packet ) {
+	enet_host_broadcast( &host, 0, &packet );
+	// enet_peer_send handles enet_packet_destroy()
+
+	enet_host_flush( &host );
+}

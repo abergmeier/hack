@@ -93,9 +93,7 @@ private:
 	template <typename T>
 	static void SendTo(ENetPeer& enetPeer, const T& buffer) {
 		auto packet = _createPacket( buffer );
-		if( enet_peer_send( &enetPeer, 0, packet ) != 0 )
-			throw std::runtime_error("SEND FAIL");
-		enet_host_flush( enetPeer.host );
+		SendPacket( enetPeer, std::move( *packet ) );
 	}
 
 	std::function<void(std::shared_ptr<Peer>)>      _connectCallback;
@@ -157,6 +155,11 @@ private:
 
 	void HandleTimeout();
 	static std::string GetIPAddress( const ENetPeer& peer );
+
+	// Immediately sends Packet to all connected Peers
+	static void SendPacket( ENetHost& host, ENetPacket&& packet );
+	// Immediately sends Packet to Peer
+	static void SendPacket( ENetPeer& peer, ENetPacket&& packet );
 public:
 	Network( std::string uuid );
 
@@ -169,8 +172,7 @@ public:
 	template <typename T>
 	void Send(const T& buffer) {
 		auto packet = _createPacket(buffer);
-		enet_host_broadcast( _server, 0, packet );
-		enet_host_flush( _server );
+		SendPacket( *_server, std::move( *packet ) );
 	}
 
 	bool WaitUntilConnected( const std::string& uuid ) const;
