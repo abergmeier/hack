@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <iostream>
+#include <memory>
 #include "objects.hpp"
 #include "stone.hpp"
 #ifdef _MSC_VER
@@ -66,33 +67,28 @@ namespace {
 		return vector2<float>(x,y);
 	}
 
-	bool intersectAll(const Objects::value_type& obj, const Avatar& avatar, const vector2<int>& possibleChange) {
-		
-		//player intersection
-		if (obj->ClassName() == hack::logic::Avatar::NAME) {
-			float dx = avatar.getX() - obj->getX();
-			float dy = avatar.getY() - obj->getY();
-			float length = std::sqrt(dy * dy + dy * dy);
-
-			return length < avatar.getRadius()*2;
-		}
-
+	bool intersectAll(const entity& obj, const Avatar& avatar, const vector2<int>& possibleChange) {
 		//static object intersection
-		float x1 = obj->getX() - (float)obj->getWidth() / 2;
-		float y1 = obj->getY() - (float)obj->getHeight() / 2;
-		float x2 = obj->getX() + (float)obj->getWidth() / 2;
-		float y2 = obj->getY() - (float)obj->getHeight() / 2;
-		float x3 = obj->getX() + (float)obj->getWidth() / 2;
-		float y3 = obj->getY() + (float)obj->getHeight() / 2;
-		float x4 = obj->getX() - (float)obj->getWidth() / 2;
-		float y4 = obj->getY() + (float)obj->getHeight() / 2;
+		//calculating corners of the object
+		float x1 = obj.getX() - (float)obj.getWidth() / 2;
+		float y1 = obj.getY() - (float)obj.getHeight() / 2;
+		float x2 = obj.getX() + (float)obj.getWidth() / 2;
+		float y2 = obj.getY() - (float)obj.getHeight() / 2;
+		float x3 = obj.getX() + (float)obj.getWidth() / 2;
+		float y3 = obj.getY() + (float)obj.getHeight() / 2;
+		float x4 = obj.getX() - (float)obj.getWidth() / 2;
+		float y4 = obj.getY() + (float)obj.getHeight() / 2;
 
-		vector2<float> A = rotateVector(x1,y1,obj->getX(),obj->getY(),obj->getAngle());
-		vector2<float> B = rotateVector(x2,y2,obj->getX(),obj->getY(),obj->getAngle());
-		vector2<float> C = rotateVector(x3,y3,obj->getX(),obj->getY(),obj->getAngle());
-		vector2<float> D = rotateVector(x4,y4,obj->getX(),obj->getY(),obj->getAngle());
+		std::cout << avatar.getRadius() << std::endl;
+
+		//rotate the corners to their original place
+		vector2<float> A = rotateVector(x1,y1,obj.getX(),obj.getY(),obj.getAngle());
+		vector2<float> B = rotateVector(x2,y2,obj.getX(),obj.getY(),obj.getAngle());
+		vector2<float> C = rotateVector(x3,y3,obj.getX(),obj.getY(),obj.getAngle());
+		vector2<float> D = rotateVector(x4,y4,obj.getX(),obj.getY(),obj.getAngle());
 		vector2<float> pos((float)possibleChange[0],(float)possibleChange[1]);
 
+		//check if lines between the corners intersect with the player
 		if(intersect(A,B,pos,avatar.getRadius()) 
 			|| intersect(B,C,pos,avatar.getRadius())
 			|| intersect(C,D,pos,avatar.getRadius())
@@ -207,20 +203,27 @@ bool Objects::movementCheck(const hack::logic::Avatar &avatar, const vector2<int
 	for(auto &e : _objectMap) {
 		//world collision
 		if(e.second->ClassName() == hack::logic::Stone::NAME) {
-			if(intersectAll(e.second,avatar,possibleChange))
+			if(intersectAll(*e.second,avatar,possibleChange))
 				return false;
+		}
+		//player intersection
+		if (e.second->ClassName() == hack::logic::Avatar::NAME) {
+			float dx = avatar.getX() - e.second->getX();
+			float dy = avatar.getY() - e.second->getY();
+			float length = std::sqrt(dy * dy + dy * dy);
+	
+			return length < avatar.getRadius()*2;
 		}
 	}
 	return true;
 }
 
 bool Objects::attackCheck(const hack::logic::Weapon &weapon) {
-	//TODO: implement me
-	/*for(auto &e : _objectMap) {
+	for(auto &e : _objectMap) {
 		if(e.second->ClassName() == hack::logic::Avatar::NAME) {
-			if(intersectAll(e.second,avatar,possibleChange))
+			if(intersectAll(weapon,dynamic_cast<Avatar&>(*e.second),vector2<int>(e.second->getX(),e.second->getY())))
 				return true;
 		}
 	}
-	return false;*/
+	return false;
 }
