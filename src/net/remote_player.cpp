@@ -14,17 +14,22 @@ RemotePlayer::ClassName() const {
 	return NAME;
 }
 
-RemotePlayer::RemotePlayer(std::weak_ptr<Network> network, std::shared_ptr<Network::Peer> peer, std::string name) :
+RemotePlayer::RemotePlayer(std::weak_ptr<Network> network, std::weak_ptr<hack::state::States> states, std::shared_ptr<Network::Peer> peer, std::string name) :
 	hack::logic::Player(name),
 	_network     ( network ),
 	_receiveQueue(),
-	_receiver([this](buffer_type buffer) {
+	_receiver([&](buffer_type buffer) {
 		// Transforms network to deserializable format
 
+		auto sharedStates = _states.lock();
+
+		if( !sharedStates )
+			return;
 		// Forward this to objects
-		hack::state::States::Get().ReceiveFrom( std::move(buffer), *this );
+		sharedStates->ReceiveFrom( std::move(buffer), *this );
 	}),
-	_peer(peer)
+	_peer(peer),
+	_states(states)
 {
 	peer->receiveCallback = _receiver;
 }

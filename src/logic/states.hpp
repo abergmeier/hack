@@ -39,17 +39,18 @@ class States : public hack::Subsystem {
 
 	bool PassToNetwork( const std::string& data );
 	bool PassToNetwork( const std::string& data, hack::logic::Player& player );
-	States();
 	bool _ExecuteWorker();
 	void ProcessInput();
 	void ProcessOutput();
 public:
+	States( std::weak_ptr<hack::net::Network> network );
 	~States();
-	static States& Get();
 	void Commit( const Serializable& object );
 	void CommitTo( const Serializable& object, std::shared_ptr<hack::logic::Player> player);
+#if 0
 	//std::map< std::weak_ptr<void>, std::unique_ptr<void> > _state;
 	void SetNetwork( std::weak_ptr<hack::net::Network> network );
+#endif
 	void SetDeserializer( std::function<void(std::istream&)> );
 	void ReceiveFrom( std::string&& serialized, hack::logic::Player& player );
 

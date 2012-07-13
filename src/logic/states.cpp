@@ -22,13 +22,8 @@ namespace {
 	const Debug DEBUG;
 }
 
-States& States::Get() {
-	static States INSTANCE;
-	return INSTANCE;
-}
-
-States::States() :
-	_network( std::shared_ptr<hack::net::Network>() )
+States::States( std::weak_ptr<hack::net::Network> network) :
+	_network( network )
 {
 	worker = [this]() {
 		auto worker = std::bind(&hack::state::States::ExecuteWorker, std::ref(*this));
@@ -60,7 +55,9 @@ void States::CommitTo( const Serializable& object, std::shared_ptr<hack::logic::
 	// Only send if it Player is remote
 
 	std::stringstream stream;
+	stream.flush();
 	object.Serialize( stream );
+	stream.flush();
 
 	auto weakPlayer = std::weak_ptr<hack::logic::Player>( player );
 	_output.queue.push_back( std::make_pair( weakPlayer, stream.str() ) );
@@ -88,9 +85,11 @@ bool States::PassToNetwork( const std::string& data, hack::logic::Player& player
 	return true;
 }
 
+#if 0
 void States::SetNetwork( std::weak_ptr<hack::net::Network> network ) {
 	_network = network;
 }
+#endif
 
 void States::ReceiveFrom( std::string&& serialized, hack::logic::Player& player ) {
 	std::lock_guard<std::mutex> lock( _input.mutex );

@@ -177,9 +177,8 @@ int main() {
 	Registration registration( sharedLocalPlayer->GetUUID(), network->GetIPAddress(), network->GetIncomingPort() );
 
 	// Setup states
-	auto& states = States::Get();
-	states.SetNetwork( network );
-	states.SetDeserializer( [&objects]( std::istream& stream ) {
+	auto states = std::make_shared<States>( network );
+	states->SetDeserializer( [&objects]( std::istream& stream ) {
 		objects.Deserialize( stream );
 	});
 
@@ -189,7 +188,7 @@ int main() {
 		sharedAvatar->setX( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_WIDTH) );
 		sharedAvatar->setY( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_HEIGHT) );
 		objects.Register( sharedAvatar );
-		states.Commit( *sharedAvatar );
+		states->Commit( *sharedAvatar );
 
 		return sharedAvatar;
 	}();
@@ -203,7 +202,7 @@ int main() {
 		sharedWeapon->setWidth(26);
 		sharedWeapon->setHeight(74);
 		objects.Register( sharedWeapon );
-		states.Commit( *sharedWeapon );
+		states->Commit( *sharedWeapon );
 
 		return sharedWeapon;
 	}();
@@ -226,7 +225,7 @@ int main() {
 		stone->setY(200);
 		stone->setAngle(45);
 		objects.Register( stone );
-		states.Commit( *stone );
+		states->Commit( *stone );
 	};
 
 	auto playerConnected = [&](std::shared_ptr<hack::net::Network::Peer> peer) mutable {
@@ -244,12 +243,12 @@ int main() {
 
 		attemptCreateObjects();
 
-		auto shared = std::make_shared<RemotePlayer>( network, peer, "Unnamed");
+		auto shared = std::make_shared<RemotePlayer>( network, states, peer, "Unnamed");
 		_players.insert(shared);
 
 		for( const auto& object : objects ) {
 			auto serializable = std::dynamic_pointer_cast<hack::state::Serializable>(object);
-			states.CommitTo( *serializable, shared );
+			states->CommitTo( *serializable, shared );
 		}
 	};
 

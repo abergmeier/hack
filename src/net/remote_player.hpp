@@ -13,6 +13,7 @@
 #include "endpoint.hpp"
 #include "../logic/player.hpp"
 #include "../logic/serializable.hpp"
+#include "../logic/states.hpp"
 
 namespace hack {
 namespace net {
@@ -25,8 +26,9 @@ class RemotePlayer : public hack::logic::Player, public Endpoint {
 	std::queue<buffer_type> _receiveQueue;
 	std::function<void(buffer_type)> _receiver;
 	std::weak_ptr<Network::Peer> _peer;
+	std::weak_ptr<hack::state::States> _states;
 public:
-	RemotePlayer(std::weak_ptr<Network> network, std::shared_ptr<Network::Peer> peer, std::string name);
+	RemotePlayer(std::weak_ptr<Network> network, std::weak_ptr<hack::state::States> states, std::shared_ptr<Network::Peer> peer, std::string name);
 	~RemotePlayer();
 	bool operator==(const Network::Peer& peer) const;
 

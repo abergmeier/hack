@@ -60,31 +60,32 @@ namespace {
 }
 
 void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>& ) {
-	if( _socket.available() < sizeof(Poco::UInt32)  )
-		return; // Cannot yet read the size
-
 	SocketStream stream( _socket );
 	auto position = stream.tellg();
-	Poco::UInt32 packetSize = 0;
-	stream.read(reinterpret_cast<char*>(&packetSize), sizeof(packetSize));
+
+	Poco::UInt32 packetSize;
+	stream >> packetSize;
+
+	// Skip seperator
+	stream.get();
 
 	if( !stream.good() ) {
 		stream.seekg( position );
 		return;
 	}
 
-	if( _socket.available() < (sizeof(Poco::UInt32) + packetSize) ) {
-		// Revert what we did to the stream
-		stream.seekg( position );
-		return; // Cannot swallow whole package yet
-	}
-
 	std::string buffer(packetSize, '\0');
 	stream.read( &buffer.front(), buffer.size() );
+
+	if( !stream.good() ) {
+		stream.seekg( position );
+		return;
+	}
 
 	// Validate size of buffer
 	buffer.resize( strnlen(buffer.data(), buffer.size()) );
 
+	std::lock_guard<std::recursive_mutex> lock( _network._peers.lock );
 	auto removeCount = _network._peers.awaitingHandshake.erase( _socket );
 
 	if( removeCount == 0 ) {
@@ -92,13 +93,25 @@ void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>
 		_peer->receiveCallback( std::move(buffer) );
 	} else {
 		_peer = _network.FinishHandshake( _socket, _reactor, std::move(buffer) );
-		const auto address = GetAddressString( _socket.address() );
-		DEBUG.LOG_ENTRY( "Received Handshake from and established Connection with " + address );
 	}
 }
 
 void Network::PeerWrapper::OnWriteable( const Poco::AutoPtr<WritableNotification>& ) {
 	_network.HandleUnsent();
+}
+
+void Network::PeerWrapper::OnTimeout( const Poco::AutoPtr<TimeoutNotification>& ) {
+	std::lock_guard<std::recursive_mutex> lock( _network._peers.lock );
+
+	if( _peer ) {
+		DEBUG.ERR_ENTRY( std::stringstream() << "Connection timed out " << _peer->uuid );
+		_network._peers.connected.erase( Address(_peer->GetSocket().address(), _peer->uuid) );
+	} else {
+		DEBUG.ERR_ENTRY( std::stringstream() << "Connection timed out "
+		                 << GetAddressString( _socket.address()) );
+	}
+
+	_network._peers.awaitingHandshake.erase( _socket );
 }
 
 void Network::PeerWrapper::OnShutdown( const Poco::AutoPtr<ShutdownNotification>& ) {
@@ -119,15 +132,17 @@ Network::PeerWrapper::PeerWrapper(Network& network, Poco::Net::StreamSocket& soc
 	_reactor(reactor),
 	_network(network)
 {
-	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, ReadableNotification>(*this, &PeerWrapper::OnReadable));
+	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, ReadableNotification>(*this, &PeerWrapper::OnReadable ));
 	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, WritableNotification>(*this, &PeerWrapper::OnWriteable));
-	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, ShutdownNotification>(*this, &PeerWrapper::OnShutdown));
+	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, ShutdownNotification>(*this, &PeerWrapper::OnShutdown ));
+	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, TimeoutNotification >(*this, &PeerWrapper::OnTimeout  ));
 }
 
 Network::PeerWrapper::~PeerWrapper() {
-	_reactor.removeEventHandler(_socket, Poco::NObserver<PeerWrapper, ReadableNotification>(*this, &PeerWrapper::OnReadable));
-	_reactor.removeEventHandler(_socket, Poco::NObserver<PeerWrapper, WritableNotification>(*this, &PeerWrapper::OnWriteable));
-	_reactor.removeEventHandler(_socket, Poco::NObserver<PeerWrapper, ShutdownNotification>(*this, &PeerWrapper::OnShutdown));
+	_reactor.removeEventHandler( _socket, Poco::NObserver<PeerWrapper, ReadableNotification>(*this, &PeerWrapper::OnReadable ));
+	_reactor.removeEventHandler( _socket, Poco::NObserver<PeerWrapper, WritableNotification>(*this, &PeerWrapper::OnWriteable));
+	_reactor.removeEventHandler( _socket, Poco::NObserver<PeerWrapper, ShutdownNotification>(*this, &PeerWrapper::OnShutdown ));
+	_reactor.removeEventHandler( _socket, Poco::NObserver<PeerWrapper, TimeoutNotification >(*this, &PeerWrapper::OnTimeout  ));
 }
 
 Network::Network( std::string uuid ) :
@@ -311,7 +326,7 @@ void Network::HandleUnconnected() {
 		DEBUG.LOG_ENTRY( std::string("Sending Handshake to ") + addressStr );
 
 		auto packet = _createPacket( uuid );
-		DEBUG.LOG_ENTRY(std::stringstream() << "sent: " << socket.sendBytes( packet.data(), (packet.length() + 1) * sizeof(packet_type::value_type) ) );
+		socket.sendBytes( packet.data(), (packet.length() + 1) * sizeof(packet_type::value_type) );
 
 		DEBUG.LOG_ENTRY( std::string("Waiting on Handshake from ") + addressStr);
 	}
@@ -359,8 +374,8 @@ void Network::OnConnect( StreamSocket& socket, SocketReactor& reactor ) {
 std::shared_ptr<Network::Peer> Network::FinishHandshake( StreamSocket& socket, SocketReactor& reactor, std::string otherUuid ) {
 	const auto peerHost = socket.address().host().toString();
 	const auto peerPort = socket.address().port();
-	DEBUG.LOG_ENTRY( std::stringstream() << "Received handshake from "
-	                 << peerHost << ':' << peerPort );
+	const auto address = GetAddressString( socket.address() );
+	DEBUG.LOG_ENTRY( "Received Handshake from and established Connection with " + address );
 
 	return CreatePeer( socket, reactor, otherUuid );
 }

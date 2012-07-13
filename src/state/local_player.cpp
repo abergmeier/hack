@@ -33,11 +33,6 @@ const std::string& LocalPlayer::GetUUID() const {
 	return _uuid;
 }
 
-void LocalPlayer::Commit() {
-	States::Get().Commit(*this);
-	//TODO: Commit to be displayed
-}
-
 bool LocalPlayer::IsProcessLocal() const {
 	return true;
 }

@@ -21,6 +21,7 @@
 #include <mutex>
 #include <future>
 #include <sstream>
+#include <iomanip>
 #include <Poco/Net/SocketReactor.h>
 #include <Poco/Net/SocketNotification.h>
 #include <Poco/Net/StreamSocket.h>
@@ -77,15 +78,19 @@ public:
 		Network&       _network;
 	};
 
+	friend struct Peer;
+private:
+
 	class PeerWrapper {
 		std::shared_ptr<Network::Peer> _peer;
 		StreamSocket   _socket;
 		SocketReactor& _reactor;
 		Network&       _network;
 	public:
-		void OnReadable( const Poco::AutoPtr<ReadableNotification>& );
+		void OnReadable ( const Poco::AutoPtr<ReadableNotification>& );
 		void OnWriteable( const Poco::AutoPtr<WritableNotification>& );
-		void OnShutdown( const Poco::AutoPtr<ShutdownNotification>& );
+		void OnShutdown ( const Poco::AutoPtr<ShutdownNotification>& );
+		void OnTimeout  ( const Poco::AutoPtr<TimeoutNotification>& );
 
 		PeerWrapper(Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor);
 		PeerWrapper(Network& network, Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor);
@@ -93,15 +98,13 @@ public:
 		~PeerWrapper();
 	};
 
-
-	friend struct Peer;
 	friend class PeerWrapper;
-private:
+
 	template <typename T>
 	static packet_type _createPacket(const T& buffer) {
 		std::stringstream stream;
-		Poco::UInt32 length = buffer.length() + 1;
-		stream << length << buffer;
+		Poco::UInt32 length = buffer.length();
+		stream << length << '\n' << buffer;
 		return stream.str();
 	}
 
