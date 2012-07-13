@@ -12,7 +12,6 @@
 #include <Poco/Net/NetworkInterface.h>
 #include <Poco/AutoPtr.h>
 #include <Poco/Net/ServerSocket.h>
-#include <Poco/Net/SocketAcceptor.h>
 #include <Poco/Net/SocketStream.h>
 #include <Poco/NObserver.h>
 #include <Poco/Net/NetException.h>
@@ -114,6 +113,11 @@ void Network::PeerWrapper::OnTimeout( const Poco::AutoPtr<TimeoutNotification>& 
 	_network._peers.awaitingHandshake.erase( _socket );
 }
 
+void Network::PeerWrapper::OnError( const Poco::AutoPtr<ErrorNotification>& ) {
+	DEBUG.ERR_ENTRY( std::stringstream() << "Error with "
+	                 << GetAddressString( _socket.address() ) );
+}
+
 void Network::PeerWrapper::OnShutdown( const Poco::AutoPtr<ShutdownNotification>& ) {
 	_network.OnDisconnect( _socket );
 	delete this;
@@ -136,6 +140,7 @@ Network::PeerWrapper::PeerWrapper(Network& network, Poco::Net::StreamSocket& soc
 	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, WritableNotification>(*this, &PeerWrapper::OnWriteable));
 	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, ShutdownNotification>(*this, &PeerWrapper::OnShutdown ));
 	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, TimeoutNotification >(*this, &PeerWrapper::OnTimeout  ));
+	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, ErrorNotification   >(*this, &PeerWrapper::OnError    ));
 }
 
 Network::PeerWrapper::~PeerWrapper() {
@@ -143,6 +148,7 @@ Network::PeerWrapper::~PeerWrapper() {
 	_reactor.removeEventHandler( _socket, Poco::NObserver<PeerWrapper, WritableNotification>(*this, &PeerWrapper::OnWriteable));
 	_reactor.removeEventHandler( _socket, Poco::NObserver<PeerWrapper, ShutdownNotification>(*this, &PeerWrapper::OnShutdown ));
 	_reactor.removeEventHandler( _socket, Poco::NObserver<PeerWrapper, TimeoutNotification >(*this, &PeerWrapper::OnTimeout  ));
+	_reactor.removeEventHandler( _socket, Poco::NObserver<PeerWrapper, ErrorNotification   >(*this, &PeerWrapper::OnError    ));
 }
 
 Network::Network( std::string uuid ) :
@@ -167,9 +173,6 @@ Network::Network( std::string uuid ) :
 				continue;
 			}
 
-			// Server was successfully created
-			auto interface = findActiveNetworkInterface();
-			_ipAddress = interface.address().toString();
 			break;
 		}
 
@@ -178,6 +181,12 @@ Network::Network( std::string uuid ) :
 		// Invoke cleanup
 		std::rethrow_exception( eptr );
 	}
+
+	// Server was successfully created
+	auto interface = findActiveNetworkInterface();
+	_ipAddress = interface.address().toString();
+
+	_acceptor = std::unique_ptr<Acceptor>( new Acceptor(*this, *_server, _reactor) );
 
 	worker = [this]() -> std::future<void> {
 		// Start Networking
@@ -305,7 +314,7 @@ StreamSocket& Network::Peer::GetSocket() {
 	return _socket;
 }
 
-void Network::HandleUnconnected() {
+void Network::ConnectOutstanding() {
 
 	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
 
@@ -329,6 +338,8 @@ void Network::HandleUnconnected() {
 		socket.sendBytes( packet.data(), (packet.length() + 1) * sizeof(packet_type::value_type) );
 
 		DEBUG.LOG_ENTRY( std::string("Waiting on Handshake from ") + addressStr);
+
+		_acceptor->createServiceHandler( socket );
 	}
 
 	_peers.unconnected.clear();
@@ -474,23 +485,6 @@ void Network::ExecuteWorker() {
 
 	DEBUG.LOG_ENTRY("[Worker] Start...");
 
-	struct Acceptor : public SocketAcceptor<PeerWrapper> {
-		Network& network;
-		Acceptor( Network& network, ServerSocket& socket, SocketReactor& reactor ) :
-			SocketAcceptor<PeerWrapper>(socket, reactor),
-			network(network)
-		{
-		}
-
-		PeerWrapper* createServiceHandler( StreamSocket& socket ) override {
-			auto wrapper = new PeerWrapper( network, socket, *reactor() );
-			network.OnConnect( socket, *reactor() );
-			return wrapper;
-		}
-	};
-
-	// Accept incoming packets
-	Acceptor acceptor( *this, *_server, _reactor );
 	_reactor.setTimeout( Poco::Timespan(0, 2000) );
 	_reactor.addEventHandler( *_server, Poco::NObserver<Network, Poco::Net::TimeoutNotification>(*this, &Network::OnTimeout));
 
@@ -501,7 +495,7 @@ void Network::ExecuteWorker() {
 }
 
 void Network::OnTimeout( const Poco::AutoPtr<TimeoutNotification>& ) {
-	HandleUnconnected();
+	ConnectOutstanding();
 }
 
 void Network::StopWorker() {

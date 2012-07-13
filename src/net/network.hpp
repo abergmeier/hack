@@ -26,6 +26,7 @@
 #include <Poco/Net/SocketNotification.h>
 #include <Poco/Net/StreamSocket.h>
 #include <Poco/Net/ServerSocket.h>
+#include <Poco/Net/SocketAcceptor.h>
 #ifdef _MSC_VER 
 #ifndef WIN32
 #define WIN32
@@ -91,6 +92,7 @@ private:
 		void OnWriteable( const Poco::AutoPtr<WritableNotification>& );
 		void OnShutdown ( const Poco::AutoPtr<ShutdownNotification>& );
 		void OnTimeout  ( const Poco::AutoPtr<TimeoutNotification>& );
+		void OnError    ( const Poco::AutoPtr<ErrorNotification>& );
 
 		PeerWrapper(Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor);
 		PeerWrapper(Network& network, Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor);
@@ -151,18 +153,34 @@ private:
 #endif
 	};
 
+	struct Acceptor : public Poco::Net::SocketAcceptor<PeerWrapper> {
+		Network& network;
+		Acceptor( Network& network, Poco::Net::ServerSocket& socket, Poco::Net::SocketReactor& reactor ) :
+			Poco::Net::SocketAcceptor<PeerWrapper>(socket, reactor),
+			network(network)
+		{
+		}
+
+		PeerWrapper* createServiceHandler( Poco::Net::StreamSocket& socket ) override {
+			auto wrapper = new PeerWrapper( network, socket, *reactor() );
+			network.OnConnect( socket, *reactor() );
+			return wrapper;
+		}
+	};
+
 	Peers _peers;
 	std::string _ipAddress;
 
 	SocketReactor _reactor;
 	std::unique_ptr<ServerSocket> _server;
+	std::unique_ptr<Acceptor> _acceptor;
 
 	void onReadable ( const Poco::AutoPtr<ReadableNotification>& notifiction );
 
 	// Processes a filled queue
 	bool _ExecuteWorker();
 	// Process all known peers that are not yet connected
-	void HandleUnconnected();
+	void ConnectOutstanding();
 
 	// Send all previously unsent packets
 	void HandleUnsent();
