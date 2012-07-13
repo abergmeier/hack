@@ -20,33 +20,40 @@
 #include <ostream>
 #include <mutex>
 #include <future>
-//#include <Poco/Net/SocketAddress.h>
+#include <sstream>
+#include <Poco/Net/SocketReactor.h>
+#include <Poco/Net/SocketNotification.h>
+#include <Poco/Net/StreamSocket.h>
+#include <Poco/Net/ServerSocket.h>
 #ifdef _MSC_VER 
 #ifndef WIN32
 #define WIN32
 #endif
 #endif
-#include <enet/enet.h>
 #include <future>
 #include "../subsystem.hpp"
 #include "../debug.hpp"
 
-extern bool operator<(const ENetAddress& lhs, const ENetAddress& rhs);
-
 namespace hack {
 namespace net {
 
+using namespace Poco::Net;
+
 class Network : public hack::Subsystem {
 public:
-	typedef std::vector<enet_uint8> buffer_type;
+	typedef std::string packet_type;
+	typedef std::string buffer_type;
 
-	struct Address : public ENetAddress {
-		Address( const std::string& host, enet_uint16 port, std::string uuid );
+	struct Address : public SocketAddress {
+		Address( const std::string& host, Poco::UInt16 port, std::string uuid );
+		Address( const SocketAddress&, std::string uuid );
 		Address( Address&& other );
 		Address& operator=( Address&& other );
-		const std::string uuid;
-		const std::string ipAddress;
 		bool operator < (const Address& other) const;
+		const std::string& GetUUID() const;
+	private:
+		std::string uuid;
+		friend class Network;
 	};
 
 	struct Peer {
@@ -56,51 +63,47 @@ public:
 		std::function<void(buffer_type)> receiveCallback;
 
 		const std::string uuid;
-		const ENetAddress address;
-		const std::string ipAddress;
+		void OnReadable( const Poco::AutoPtr<ReadableNotification>& pNotify );
+		void OnShutdown( const Poco::AutoPtr<ShutdownNotification>& pNotify );
+		StreamSocket& GetSocket();
 	private:
 		// Make sure we can only be created by the network
 		friend class Network;
-		Peer( ENetPeer& peer, std::string uuid );
+		Peer( Network& network, StreamSocket& socket, SocketReactor& reactor, std::string uuid );
 		void Destroy();
 		//std::queue<std::tuple<buffer_type, std::function<void()>>> sendQueue;
 
-		ENetPeer* enetPeer;
-		ENetPeer* GetPeer();
-		void Disconnect();
-		void Receive(const ENetPacket& packet);
+		StreamSocket   _socket;
+		SocketReactor& _reactor;
+		Network&       _network;
 	};
+
+	friend struct Peer;
 private:
 	template <typename T>
-	static ENetPacket* _createPacket(const T& buffer) {
-		static const auto FLAGS = ENetPacketFlag::ENET_PACKET_FLAG_RELIABLE;
-		const size_t byteCount = buffer.size() * sizeof(typename T::value_type);
-		auto packet = enet_packet_create( buffer.data(),
-		                                  byteCount,
-		                                  FLAGS
-		);
-
-		if( packet == nullptr )
-			throw std::runtime_error("Could not create packet!");
-		return packet;
+	static packet_type _createPacket(const T& buffer) {
+		std::stringstream stream;
+		Poco::UInt32 length = buffer.length() + 1;
+		stream << length << buffer;
+		return stream.str();
 	}
 
 	template <typename T>
-	static void _SendTo( ENetPeer& enetPeer, const T& buffer ) {
+	static void _SendTo( StreamSocket& socket, const T& buffer ) {
 		auto packet = _createPacket( buffer );
-		SendPacket( enetPeer, packet );
+		SendPacket( socket, packet );
 	}
 
-	std::function<void(std::shared_ptr<Peer>)>      _connectCallback;
-	std::function<void(const std::string&, size_t)> _connectFailedCallback;
-	std::function<void(hack::net::Network::Peer&)>  _disconnectCallback;
+	std::function<void(std::shared_ptr<Peer>)>            _connectCallback;
+	std::function<void(const std::string&, Poco::UInt32)> _connectFailedCallback;
+	std::function<void(hack::net::Network::Peer&)>        _disconnectCallback;
 	void Destroy();
-	void CreatePeer( ENetPeer& event, std::string uuid );
+	std::shared_ptr<Peer> CreatePeer( StreamSocket& socket, SocketReactor& reactor, std::string uuid );
 
 	struct queue_element_type {
 		// Destination of data - broadcast if peer is null
 		std::shared_ptr<Peer> peer;
-		ENetPacket*           packet;
+		packet_type           packet;
 	};
 
 	struct {
@@ -114,32 +117,27 @@ private:
 
 		// All known addresses of other peers
 		std::set<Address> unconnected;
-
+#if 0
 		//
-		std::map<ENetPeer*, std::string> awaitingConnection;
+		std::map<StreamSocket, std::string> awaitingConnection;
 
 		// Not fully connected peers, that miss the handshake
 		// Use this special, mostly small or empty map for performance purposes.
-		std::map<ENetPeer*, std::string> awaitingHandshake;
-
+		std::map<StreamSocket, std::string> awaitingHandshake;
+#endif
 		// All peers which are connected
 		std::map<Address, std::shared_ptr<Peer>> connected;
-
-		static std::string ExtractUUID( ENetPacket* packet );
-		void AbortWait( ENetPeer& peer );
+#if 0
+		void AbortWait( const StreamSocket& socket );
+#endif
 	};
 
 	Peers _peers;
 
-	ENetHost* _server;
-	std::string _host;
-	enet_uint16 _port;
+	SocketReactor _reactor;
+	std::unique_ptr<ServerSocket> _server;
 
-	enum {
-		STOPPED,
-		RUNNING,
-		HALTING
-	} _state;
+	void onReadable(const Poco::AutoPtr<ReadableNotification>& notifiction);
 
 	// Processes a filled queue
 	bool _ExecuteWorker();
@@ -149,18 +147,23 @@ private:
 	// Send all previously unsent packets
 	void HandleUnsent();
 
+	std::shared_ptr<Peer> OnConnect( StreamSocket& socket, SocketReactor& reactor );
+	void OnTimeout( const Poco::AutoPtr<TimeoutNotification>& );
+	void OnDisconnect( StreamSocket& socket );
+
 	bool IsConnecting( const std::string& uuid ) const;
 	bool IsConnected ( const std::string& uuid ) const;
 
 	void HandleTimeout();
-	static std::string GetIPAddress( const ENetPeer& peer );
+	std::shared_ptr<Network::Peer> FinishHandshake( StreamSocket& socket, SocketReactor& reactor, std::string otherUuid );
 
 	// Immediately sends Packet to all connected Peers
-	static void SendPacket( ENetHost& host, ENetPacket* packet );
-	// Immediately sends Packet to Peer
-	static void SendPacket( ENetPeer& peer, ENetPacket* packet );
 
-	void Enqueue( std::shared_ptr<Peer> peer, ENetPacket* packet );
+	void SendPacket( const packet_type& packet );
+	// Immediately sends Packet to Peer
+	static void SendPacket( StreamSocket& socket, const packet_type& packet );
+
+	void Enqueue( std::shared_ptr<Peer> peer, packet_type packet );
 public:
 	Network( std::string uuid );
 
@@ -172,15 +175,12 @@ public:
 
 	template <typename T>
 	void SendTo(const T& buffer) {
-		auto packet = _createPacket( buffer );
-		Enqueue( nullptr, packet );
+		Enqueue( nullptr, _createPacket( buffer ) );
 	}
 
 	template <typename T>
 	void SendTo( std::shared_ptr<Peer> peer, const T& buffer) {
-		auto packet = _createPacket( buffer );
-		Enqueue( peer, packet );
-
+		Enqueue( peer, _createPacket( buffer ) );
 	}
 
 	bool WaitUntilConnected( const std::string& uuid ) const;
@@ -191,9 +191,9 @@ public:
 	void SetConnectCallback(std::function<void(std::shared_ptr<hack::net::Network::Peer>)> callback);
 	void SetConnectFailedCallback(std::function<void(const std::string&, size_t)> callback);
 	void SetDisconnectCallback(std::function<void(hack::net::Network::Peer&)> callback);
-	bool ConnectTo( const std::string& host, enet_uint16 port, std::string uuid );
-	const std::string& GetIPAddress() const;
-	enet_uint16 GetIncomingPort() const;
+	bool ConnectTo( const std::string& host, Poco::UInt32 port, std::string uuid );
+	std::string GetIPAddress() const;
+	Poco::UInt32 GetIncomingPort() const;
 	const std::string uuid;
 protected:
 	void StopWorker() override;

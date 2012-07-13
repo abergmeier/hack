@@ -20,16 +20,9 @@ RemotePlayer::RemotePlayer(std::weak_ptr<Network> network, std::shared_ptr<Netwo
 	_receiveQueue(),
 	_receiver([this](buffer_type buffer) {
 		// Transforms network to deserializable format
-		auto charPtr = reinterpret_cast<char*>(buffer.data());
 
-		const auto maxBytes = buffer.size() * sizeof(buffer_type::value_type);
-
-		// Do not trust the char
-		const auto charLength = strnlen( charPtr, maxBytes );
-
-		std::string strBuffer( charPtr, charLength );
 		// Forward this to objects
-		hack::state::States::Get().ReceiveFrom( std::move(strBuffer), *this );
+		hack::state::States::Get().ReceiveFrom( std::move(buffer), *this );
 	}),
 	_peer(peer)
 {
@@ -67,14 +60,6 @@ hack::net::operator ==(const Network::Peer& peer, const RemotePlayer& player) {
 
 std::queue<RemotePlayer::buffer_type> RemotePlayer::GetFrom() {
 	return std::move(_receiveQueue);
-}
-
-void RemotePlayer::Deserialize(std::istream& stream) {
-//	Poco::Base64Decoder decoder(stream);
-}
-
-void RemotePlayer::Commit() {
-	//TODO: commit to be displayed
 }
 
 bool RemotePlayer::IsProcessLocal() const {

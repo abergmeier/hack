@@ -2,14 +2,21 @@
 #include <algorithm>
 #include <vector>
 #include <string>
-//#include <Poco/Net/MulticastSocket.h>
 #include <chrono>
 #include <exception>
 #include <iostream>
 #include <sstream>
 #include <tuple>
 #include <string.h> //for strnlen
+#include <Poco/Net/SocketReactor.h>
 #include <Poco/Net/NetworkInterface.h>
+#include <Poco/AutoPtr.h>
+#include <Poco/Net/ServerSocket.h>
+#include <Poco/Net/SocketAcceptor.h>
+#include <Poco/Net/SocketStream.h>
+#include <Poco/NObserver.h>
+#include <Poco/Net/NetException.h>
+
 #include "network.hpp"
 
 using namespace hack::net;
@@ -42,51 +49,25 @@ namespace {
 	}
 }
 
-bool operator<(const ENetAddress& lhs, const ENetAddress& rhs) {
-	if( lhs.host == rhs.host )
-		return lhs.port < rhs.port;
-
-	return lhs.host < rhs.host;
-}
-
 namespace {
-	ENetHost* createServer( enet_uint16 incomingPort ) {
-		// Create Server
-		ENetAddress address;
-
-	    address.host = ENET_HOST_ANY;
-	    address.port = incomingPort;
-
-		auto server = enet_host_create( &address, // create a server host
-		                                32, // allowed 32 clients
-		                                0, // allow as many simultaneous connections as possible
-					                    0, // any downstream bandwidth
-					                    0  // any upstream bandwidth
-		);
-
-		if( server == nullptr )
-			throw std::runtime_error("An error occurred while trying to create an ENet server.");
-
-		return server;
+	std::unique_ptr<ServerSocket> createServer( Poco::UInt16 incomingPort ) {
+		return std::unique_ptr<ServerSocket>( new ServerSocket( incomingPort ) );
 	}
 }
 
 Network::Network( std::string uuid ) :
-	_state(STOPPED),
+	_reactor(),
 	uuid  (uuid)
 {
-	if( enet_initialize() != 0 )
-		throw std::runtime_error("Could not initialize ENET.");
-
 	try {
-		static const enet_uint16 START_PORT = 50123;
+		static const Poco::UInt32 START_PORT = 50123;
 		size_t try_count = 100;
 		for( auto port = START_PORT; true; ++port ) {
 			try {
 				// Try to register a server instance on a
 				// particular port
 				_server = createServer( port );
-			} catch( const std::runtime_error& error ) {
+			} catch( const NetException& error ) {
 				if( try_count == 0 )
 					// Stop trying
 					throw error;
@@ -98,8 +79,6 @@ Network::Network( std::string uuid ) :
 
 			// Server was successfully created
 			auto interface = findActiveNetworkInterface();
-			_host = interface.address().toString();
-			_port = port;
 			break;
 		}
 
@@ -118,8 +97,6 @@ Network::Network( std::string uuid ) :
 }
 
 void Network::Destroy() {
-	_server = nullptr;
-	enet_deinitialize();
 }
 
 Network::~Network() {
@@ -127,7 +104,7 @@ Network::~Network() {
 	std::lock_guard<std::recursive_mutex> peersLock( _peers.lock );
 
 	for( auto& element : _peers.connected ) {
-		enet_peer_disconnect_later( element.second->enetPeer, 0 );
+		//element.Disconnect();
 	}
 
 	SaveStopWorker();
@@ -157,24 +134,33 @@ void Network::SetDisconnectCallback(std::function<void(hack::net::Network::Peer&
 	_disconnectCallback = callback;
 }
 
-Network::Address::Address( const std::string& host, enet_uint16 port, std::string uuid ) :
-	ENetAddress(),
-	uuid(uuid),
-	ipAddress(host)
-{
-	this->port = port;
 
-	// Connect to other peer
-	if( enet_address_set_host( this, host.c_str() ) != 0 ) {
-		throw std::runtime_error("Could no set address");
-	}
+Network::Address::Address( const std::string& host, Poco::UInt16 port, std::string uuid ) :
+	SocketAddress( host, port ),
+	uuid          ( std::move(uuid) )
+{
+}
+
+Network::Address::Address( const SocketAddress& address, std::string uuid) :
+	SocketAddress( address ),
+	uuid         ( uuid )
+{
 }
 
 Network::Address::Address( Address&& other ) :
-	ENetAddress( std::forward<ENetAddress>(other) ),
-	uuid       ( std::move(other.uuid) ),
-	ipAddress  ( std::move(other.ipAddress) )
+	SocketAddress( other ),
+	uuid          ( std::move(other.uuid) )
 {
+}
+
+Network::Address& Network::Address::operator=( Address&& other ) {
+	SocketAddress::operator=( other );
+	uuid = std::move(other.uuid);
+	return *this;
+}
+
+const std::string& Network::Address::GetUUID() const {
+	return uuid;
 }
 
 bool
@@ -182,29 +168,57 @@ Network::Address::operator <(const Address& other) const {
 	return uuid < other.uuid;
 }
 
-Network::Peer::Peer( ENetPeer& peer, std::string uuid ) :
+Network::Peer::Peer( Network& network, StreamSocket& socket, SocketReactor& reactor, std::string uuid ) :
 	uuid     ( uuid ),
-	address  ( peer.address ),
-	ipAddress( GetIPAddress( peer ) ),
-	enetPeer ( &peer )
+	_socket  ( socket ),
+	_reactor ( reactor ),
+	_network ( network )
 {
+    _reactor.addEventHandler( _socket, Poco::NObserver<Peer, ReadableNotification>(*this, &Peer::OnReadable));
+    _reactor.addEventHandler( _socket, Poco::NObserver<Peer, ShutdownNotification>(*this, &Peer::OnShutdown));
+}
+
+void Network::Peer::OnReadable( const Poco::AutoPtr<ReadableNotification>& ) {
+	if( _socket.available() < sizeof(Poco::UInt32)  )
+		return; // Cannot yet read the size
+
+	SocketStream stream( _socket );
+	auto position = stream.tellg();
+	Poco::UInt32 packetSize;
+	stream >> packetSize;
+
+	if( _socket.available() < (sizeof(Poco::UInt32) + packetSize) ) {
+		// Revert what we did to the stream
+		stream.seekg( position );
+		return; // Cannot swallow whole package yet
+	}
+
+	std::string buffer(packetSize, '\0');
+	stream.read( &buffer.front(), buffer.size() );
+
+	// Validate size of buffer
+	buffer.resize( strnlen(buffer.data(), buffer.size()) );
+	receiveCallback( std::move(buffer) );
+}
+
+void Network::Peer::OnShutdown( const Poco::AutoPtr<ShutdownNotification>& ) {
+	_network.OnDisconnect( _socket );
 }
 
 Network::Peer::~Peer() {
 
-	if( enetPeer == nullptr )
-		return; //already cleaned up
-
-	enet_peer_reset( enetPeer );
+    _reactor.removeEventHandler(_socket, Poco::NObserver<Peer, ReadableNotification>(*this, &Peer::OnReadable));
+    _reactor.removeEventHandler(_socket, Poco::NObserver<Peer, ShutdownNotification>(*this, &Peer::OnShutdown));
 }
 
 bool
 Network::Peer::operator <(const Peer& other) const {
-	if( address.host != other.address.host )
-		return address.host < other.address.host;
 
-	if( address.port != other.address.port )
-		return address.port < other.address.port;
+	if( _socket.address().host() != other._socket.address().host() )
+		return _socket.address().host() < other._socket.address().host();
+
+	if( _socket.address().port() != other._socket.address().port() )
+		return _socket.address().port() < other._socket.address().port();
 
 	return uuid < other.uuid;
 }
@@ -213,96 +227,80 @@ bool Network::Peer::operator ==(const Peer& other) const {
 	return uuid == other.uuid;
 }
 
-void
-Network::Peer::Disconnect() {
-	enet_peer_disconnect( enetPeer, 0 );
-}
-
-void
-Network::Peer::Receive(const ENetPacket& packet) {
-	buffer_type data;
-	data.reserve(packet.dataLength);
-	data.assign(packet.data, packet.data + packet.dataLength);
-	receiveCallback(data);
-}
-
-void Network::CreatePeer( ENetPeer& peer, std::string uuid ) {
+std::shared_ptr<Network::Peer> Network::CreatePeer( StreamSocket& socket, SocketReactor& reactor, std::string uuid ) {
 	// We have to build Peer manually on heap here because we only allow Network to
 	// instantiate Peer objects
-	std::shared_ptr<Peer> sharedPeer( new Peer( peer, uuid ) );
+	std::shared_ptr<Peer> sharedPeer( new Peer( *this, socket, reactor, uuid ) );
 
 	{
 		std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-		const auto ipAddress = GetIPAddress( *sharedPeer->enetPeer );
-		auto insertPair = _peers.connected.insert( std::make_pair( Address(ipAddress, sharedPeer->address.port, uuid), std::shared_ptr<Peer>(sharedPeer) ) );
+
+		Address address(socket.address(), uuid);
+		auto insertPair = _peers.connected.insert( std::make_pair( std::move(address), std::shared_ptr<Peer>(sharedPeer) ) );
 
 		if( !insertPair.second )
-			return; // Already present and connected!?
+			return insertPair.first->second; // Already present and connected!?
 
-		Address address(ipAddress, sharedPeer->address.port, uuid);
-		_peers.unconnected.erase( address );
-		_peers.AbortWait( peer );
-
-		// Make sure we have a pointer to our Peer Wrapper
-		std::shared_ptr<Peer>* peerPtr = &insertPair.first->second;
-		peer.data = peerPtr;
+		address = Address(socket.address(), uuid);
+		_peers.unconnected.erase( std::move(address) );
 	}
 
 	_connectCallback( sharedPeer );
+	return sharedPeer;
 }
-
-std::string Network::Peers::ExtractUUID( ENetPacket* packet ) {
-	// Assume we got a UUID sent
-	char* uuidPtr = reinterpret_cast<char*>( packet->data );
-	// Make sure we do not access invalid memory
-	// when data is corrupted
-	const auto uuidLen = strnlen( uuidPtr, packet->dataLength );
-	return std::string( uuidPtr, uuidLen );
-}
-
-void Network::Peers::AbortWait( ENetPeer& peer ) {
+#if 0
+void Network::Peers::AbortWait( const StreamSocket& socket ) {
 	std::lock_guard<std::recursive_mutex> lock( this->lock );
-	awaitingConnection.erase( &peer );
-	awaitingHandshake .erase( &peer );
+	awaitingConnection.erase( socket );
+	awaitingHandshake .erase( socket );
+}
+#endif
 
-	// We could not set up a connection before
-	// (for whatever reason). Clean up peer.
-	enet_peer_reset( &peer );
+StreamSocket& Network::Peer::GetSocket() {
+	return _socket;
 }
 
 void Network::HandleUnconnected() {
 
-	//
-	// Do connection handling
-	//
-	//typedef decltype(_peers.unconnected) connections_type;
-
 	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
 
-	for( auto& entry : _peers.unconnected ) {
+	std::vector<std::shared_ptr<Peer> > peers;
+	peers.reserve( _peers.unconnected.size() );
 
-		DEBUG.LOG_ENTRY(std::stringstream() << "Connecting to " << entry.ipAddress << ':' << entry.port);
-		// Initiate the connection, allocating the two channels 0 and 1. */
-		auto peer = enet_host_connect( _server, &entry, 2, 0);
+	// We need to make the manual it handling, so we properly handle
+	// iterator, so we can add and remove elements within the loop.
+	for( auto it = _peers.unconnected.begin(); it != _peers.unconnected.end(); ) {
+		auto& entry = *it;
+		auto ipAddress = entry.host().toString();
 
-		if (peer == nullptr) {
-		   DEBUG.ERR_ENTRY(std::stringstream() << "Setting up connection !FAILED!");
-		   exit (-1);
-		}
+		std::string addressStr = [&]() {
+			std::stringstream stream;
+			stream << ipAddress << ':' << entry.port();
+			return stream.str();
+		}();
 
-		// Check whether it is already in
-		auto ipAddress = GetIPAddress( *peer );
-		if( _peers.awaitingHandshake.find( peer ) != _peers.awaitingHandshake.end()
-		 || _peers.connected.find( Address(ipAddress, peer->address.port, entry.uuid) ) != _peers.connected.end() ) {
-			// Found in later stage
-			continue;
-		}
+		DEBUG.LOG_ENTRY( "Starting Connection to " + addressStr );
 
-		_peers.awaitingConnection.insert( std::make_pair(peer, entry.uuid) );
-		DEBUG.ERR_ENTRY(std::stringstream() << "Trying to establish connection with " << ipAddress << ':' << peer->address.port);
+		Poco::Net::StreamSocket socket( entry );
+		Poco::Net::SocketStream stream(socket);
+
+		DEBUG.LOG_ENTRY( "Sending Handshake to " + addressStr );
+
+		stream << _createPacket( uuid );
+		stream.flush(); // Make sure data is not in buffer
+
+		DEBUG.LOG_ENTRY( "Waiting on Handshake from " + addressStr);
+
+		std::string otherUuid(36, '\0');
+		stream.read( &otherUuid.front(), otherUuid.size() );
+
+		// We already have to advance here, so following code can modify
+		// _peers.unconnected
+		++it;
+		peers.push_back( FinishHandshake( socket, _reactor, std::move(otherUuid) ) );
+
+		DEBUG.LOG_ENTRY( "Received Handshake from and established Connection with " + addressStr );
 	}
-
-	_peers.unconnected.clear();
 }
 
 void Network::HandleUnsent() {
@@ -315,168 +313,185 @@ void Network::HandleUnsent() {
 	}
 
 	for( auto& element : inputQueue ) {
-		if( element.peer )
-			SendPacket( *element.peer->enetPeer, element.packet );
-		else
-			SendPacket( *_server, element.packet );
+
+		if( element.peer ) {
+			auto& socket = element.peer->GetSocket();
+			DEBUG.LOG_ENTRY( std::stringstream() << "Sending packet to "
+			                 << socket.address().host().toString() << ':'
+			                 << socket.address().port() );
+			SendPacket( socket, element.packet );
+		} else
+			SendPacket( element.packet );
 	}
 }
 
-bool Network::_ExecuteWorker() {
+std::shared_ptr<Network::Peer> Network::OnConnect( StreamSocket& socket, SocketReactor& reactor ) {
+	const auto peerHost = socket.address().host().toString();
+	const auto peerPort = socket.address().port();
 
-	HandleUnconnected();
+	SocketStream stream( socket );
+	DEBUG.LOG_ENTRY( std::stringstream() << "Received connection and wait for Handshake from "
+					 << peerHost << ':' << peerPort );
 
-	HandleUnsent();
+	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
+#if 0
+	_peers.awaitingConnection.erase( socket );
 
-	ENetEvent event;
+	_peers.awaitingHandshake.insert( std::make_pair( socket, std::move(otherUuid) ) );
+#endif
 
-	auto extractPeer = [&event]() -> std::shared_ptr<Peer> {
-		// We save an address to shared_ptr inside event
-		// Cast it to its original format
-		auto sharedPtr = static_cast<std::shared_ptr<Peer>*>(event.peer->data);
-		// Using shared_ptr is safest when copying - do that
-		auto copyOfSharedPtr = *sharedPtr;
-		// Pass out our copy
-		return std::move(copyOfSharedPtr);
-	};
+	std::string otherUuid(36, '\0');
+	stream.read( &otherUuid.front(), otherUuid.size() );
 
-	// Wait up to 5 milliseconds for an event.
-	if( enet_host_service( _server, &event, 5 ) > 0 ) {
-		switch( event.type ) {
-			case ENET_EVENT_TYPE_NONE:
-				break;
-			case ENET_EVENT_TYPE_CONNECT: {
-				const auto peerHost = GetIPAddress( *event.peer );
-				const auto peerPort = event.peer->address.port;
-				DEBUG.LOG_ENTRY( std::stringstream() << "Peer connected from "
-				                 << peerHost << ':' << peerPort);
+	return FinishHandshake( socket, reactor, std::move(otherUuid) );
+}
 
-				_SendTo( *event.peer, uuid );
-				DEBUG.LOG_ENTRY( std::stringstream() << "Sent Handshake to "
-				                 << peerHost << ':' << peerPort);
+std::shared_ptr<Network::Peer> Network::FinishHandshake( StreamSocket& socket, SocketReactor& reactor, std::string otherUuid ) {
+	const auto peerHost = socket.address().host().toString();
+	const auto peerPort = socket.address().port();
+	DEBUG.LOG_ENTRY( std::stringstream() << "Received handshake from "
+	                 << peerHost << ':' << peerPort );
 
-				std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-				auto it = _peers.awaitingConnection.find( event.peer );
+	return CreatePeer( socket, reactor, otherUuid );
+}
 
-				std::string otherUuid;
+#if 0
+void Network::OnReceive() {
+	const auto peerHost = GetIPAddress( *event.peer );
+	const auto peerPort = event.peer->address.port;
+	DEBUG.LOG_ENTRY( std::stringstream() << "Packet received." << std::endl
+					  << "\tLength: " << event.packet->dataLength
+					  << "\tFrom: " << peerHost << ":" << peerPort);
+	{
+		std::lock_guard<std::recursive_mutex> lock( _peers.lock );
+		bool isFullyConnected = [&]() -> bool {
+			// Check whether this is the first packet after
+			// starting the connection AKA Handshake
+			auto it = _peers.awaitingHandshake.begin();
 
-				// Add known UUID information
-				if( it != _peers.awaitingConnection.end() ) {
-					otherUuid = (*it).second;
-					_peers.awaitingConnection.erase( it );
+			for( ; it != _peers.awaitingHandshake.end(); ++it ) {
+				if( it->first->address.host == event.peer->address.host
+				 && it->first->address.port == peerPort ) {
+					break;
 				}
-
-				_peers.awaitingHandshake.insert( std::make_pair( event.peer, std::move(otherUuid) ) );
-
-				break;
 			}
-			case ENET_EVENT_TYPE_RECEIVE: {
-				const auto peerHost = GetIPAddress( *event.peer );
-				const auto peerPort = event.peer->address.port;
-				DEBUG.LOG_ENTRY( std::stringstream() << "Packet received." << std::endl
-				                  << "\tLength: " << event.packet->dataLength
-				                  << "\tFrom: " << peerHost << ":" << peerPort);
 
-				{
-					std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-					bool isFullyConnected = [&]() -> bool {
-						// Check whether this is the first packet after
-						// starting the connection AKA Handshake
-						auto it = _peers.awaitingHandshake.begin();
+			if( it == _peers.awaitingHandshake.end() )
+				return true;
 
-						for( ; it != _peers.awaitingHandshake.end(); ++it ) {
-							if( it->first->address.host == event.peer->address.host
-							 && it->first->address.port == peerPort ) {
-								break;
-							}
-						}
+			_peers.awaitingHandshake.erase( it );
+			return false;
+		}();
 
-						if( it == _peers.awaitingHandshake.end() )
-							return true;
+		if( isFullyConnected ) {
+			// Handshake was already done,
+			// continue with normal processing
+			auto peer = extractPeer();
+			peer->Receive( *event.packet );
+			DEBUG.LOG_ENTRY(std::stringstream() << "Received packet from " << peerHost << ':' << peerPort);
+		} else {
+			// Received Handshake
 
-						_peers.awaitingHandshake.erase( it );
-						return false;
-					}();
-
-					if( isFullyConnected ) {
-						// Handshake was already done,
-						// continue with normal processing
-						auto peer = extractPeer();
-						peer->Receive( *event.packet );
-					} else {
-						// Received Handshake
-
-						// Peer sent UUID
-						CreatePeer( *event.peer, Peers::ExtractUUID( event.packet ) );
-						DEBUG.LOG_ENTRY(std::stringstream() << "Received handshake from " << peerHost << ':' << peerPort);
-					}
-				}
-
-				// Clean up the packet now that we're done using it.
-				enet_packet_destroy(event.packet);
-				break;
-			}
-			case ENET_EVENT_TYPE_DISCONNECT: {
-				auto peer = event.peer;
-				auto host = GetIPAddress( *event.peer );
-				auto port = event.peer->address.port;
-
-				DEBUG.LOG_ENTRY(std::stringstream() << "Disconnected: " << host << ':' << peer->address.port);
-
-				{
-					std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-
-					typedef decltype(_peers.connected) connected_type;
-					auto isSame = [&]( const connected_type::value_type& element ) -> bool {
-						return element.first.host == event.peer->address.host && element.first.port == port;
-					};
-
-					auto it = std::find_if( _peers.connected.begin(),
-					                        _peers.connected.end(),
-					                        isSame );
-
-					if( it == _peers.connected.end() ) {
-						// Skip waiting for handshake
-						_peers.AbortWait( *event.peer );
-						// Handshake failed
-						_connectFailedCallback( host, port );
-					} else {
-						// The user data of Event is already set to null so
-						// we are allowed to remove the shared_ptr
-						_disconnectCallback( *(it->second) );
-						_peers.connected.erase ( it );
-					}
-				}
-				break;
-			}
+			// Peer sent UUID
+			CreatePeer( *event.peer, Peers::ExtractUUID( event.packet ) );
+			DEBUG.LOG_ENTRY(std::stringstream() << "Received handshake from " << peerHost << ':' << peerPort);
 		}
 	}
 
-	return _state == RUNNING;
+	// Clean up the packet now that we're done using it.
+	enet_packet_destroy(event.packet);
+}
+#endif
+
+void Network::OnDisconnect( StreamSocket& socket ) {
+	auto peerHost = socket.address().host();
+	auto peerHostStr = peerHost.toString();
+	auto peerPort = socket.address().port();
+
+	DEBUG.LOG_ENTRY(std::stringstream() << "Disconnected: " << peerHostStr << ':' << peerPort);
+
+	decltype(_peers.connected)::iterator it;
+
+	{
+		// Limit lock because later on we invoke callbacks and do not
+		// know how long they block
+		std::lock_guard<std::recursive_mutex> lock( _peers.lock );
+
+		typedef decltype(_peers.connected) connected_type;
+		auto isSame = [&]( const connected_type::value_type& element ) -> bool {
+			return element.first.host() == peerHost && element.first.port() == peerPort;
+		};
+
+		it = std::find_if( _peers.connected.begin(),
+		                   _peers.connected.end(),
+		                   isSame );
+#if 0
+		if( it == _peers.connected.end() ) {
+			// Skip waiting for handshake
+			_peers.AbortWait( socket );
+		} else {
+			// The user data of Event is already set to null so
+			// we are allowed to remove the shared_ptr
+#endif
+			_peers.connected.erase( it );
+#if 0
+		}
+#endif
+	}
+
+	if( it == _peers.connected.end() )
+		_connectFailedCallback( peerHostStr, peerPort );
+	else
+		_disconnectCallback( *(it->second) );
 }
 
 void Network::ExecuteWorker() {
-	_state = RUNNING;
 
 	DEBUG.LOG_ENTRY("[Worker] Start...");
 
-	while( _ExecuteWorker() ) {
-		// We do not sleep here because we
-		// internally already use enet's query
-		// mechanism
-	}
+	// Used to satisfy Poco interface needs
+	struct PeerWrapper {
+		std::shared_ptr<Peer> peer;
+		PeerWrapper(Poco::Net::StreamSocket&, Poco::Net::SocketReactor&) {}
+	};
 
-	_state = STOPPED;
+	struct Acceptor : public SocketAcceptor<PeerWrapper> {
+		Network& network;
+		Acceptor( Network& network, ServerSocket& socket, SocketReactor& reactor ) :
+			SocketAcceptor<PeerWrapper>(socket, reactor),
+			network(network)
+		{
+		}
+
+		PeerWrapper* createServiceHandler( StreamSocket& socket ) override {
+			auto wrapper = new PeerWrapper( socket, *reactor() );
+			wrapper->peer = network.OnConnect( socket, *reactor() );
+			return wrapper;
+		}
+	};
+
+	// Accept incoming packets
+	Acceptor acceptor( *this, *_server, _reactor );
+	_reactor.setTimeout( Poco::Timespan(0, 2000) );
+	_reactor.addEventHandler( *_server, Poco::NObserver<Network, Poco::Net::TimeoutNotification>(*this, &Network::OnTimeout));
+
+    // Run till reactor is stopped
+    _reactor.run();
 
 	DEBUG.LOG_ENTRY("[Worker] ...Stop");
 }
 
-void Network::StopWorker() {
-	DEBUG.LOG_ENTRY("[Worker] Stopping...");
-	_state = HALTING;
+void Network::OnTimeout( const Poco::AutoPtr<TimeoutNotification>& ) {
+	HandleUnconnected();
+	HandleUnsent();
 }
 
-bool Network::ConnectTo( const std::string& host, enet_uint16 port, std::string uuid ) {
+void Network::StopWorker() {
+	DEBUG.LOG_ENTRY("[Worker] Stopping...");
+	_reactor.stop();
+}
+
+bool Network::ConnectTo( const std::string& host, Poco::UInt32 port, std::string uuid ) {
 
 	if( host == GetIPAddress() && port == GetIncomingPort() )
 		return false; // No sense in connecting to ourselves
@@ -487,45 +502,32 @@ bool Network::ConnectTo( const std::string& host, enet_uint16 port, std::string 
 	return true;
 }
 
-enet_uint16 Network::GetIncomingPort() const {
-	return _port;
+Poco::UInt32 Network::GetIncomingPort() const {
+	return _server->address().port();
 }
 
-const std::string& Network::GetIPAddress() const {
-	return _host;
+std::string Network::GetIPAddress() const {
+	return _server->address().host().toString();
 }
 
-std::string Network::GetIPAddress( const ENetPeer& peer ) {
+void Network::SendPacket( StreamSocket& socket, const packet_type& packet ) {
+	SocketStream stream( socket );
+	stream << packet;
+	stream.flush();
+}
 
-	// Normally 128 should be sufficient even when representing
-	// IPv6 in binary (+7 delimiter)
-	std::string ip(128 + 7, '\0');
-	if( enet_address_get_host_ip( &peer.address,
-								  &ip.front(), ip.length() ) < 0 )
-		ip.clear();
-	else {
-		// Validate size of string
-		ip.resize( strnlen(ip.data(), ip.length()) );
+void Network::SendPacket( const packet_type& packet ) {
+	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
+
+	for( auto& peer : _peers.connected ) {
+		auto& peerSocket = peer.second->GetSocket();
+		SocketStream stream( peerSocket );
+		stream << packet;
+		stream.flush();
 	}
-	return ip;
 }
 
-void Network::SendPacket( ENetPeer& peer, ENetPacket* packet ) {
-	if( enet_peer_send( &peer, 0, packet ) != 0 )
-		throw std::runtime_error("SEND FAIL");
-	// enet_peer_send handles enet_packet_destroy()
-
-	enet_host_flush( peer.host );
-}
-
-void Network::SendPacket( ENetHost& host, ENetPacket* packet ) {
-	enet_host_broadcast( &host, 0, packet );
-	// enet_peer_send handles enet_packet_destroy()
-
-	enet_host_flush( &host );
-}
-
-void Network::Enqueue( std::shared_ptr<Peer> peer, ENetPacket* packet ) {
+void Network::Enqueue( std::shared_ptr<Peer> peer, packet_type packet ) {
 	queue_element_type element;
 	element.packet = packet;
 	element.peer = std::move(peer);
