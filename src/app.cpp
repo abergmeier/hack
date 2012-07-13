@@ -81,16 +81,16 @@ namespace {
 		if( vector[0] < 0 )
 			rot = -rot;
 
-		playerAvatar.setAngle( rot );
+		playerAvatar.setAngle( (float)rot );
 	};
 
 	float attack = 0;
 
 	void updateWeaponPosition(hack::logic::Avatar& avatar, hack::logic::Weapon& weapon) {
-		float angle = (avatar.getAngle()) * M_PI / 180;
-		float rad = avatar.getRadius();
-		float xx = rad * std::cos(angle) + attack * rad * -std::sin(angle);
-		float yy = rad * std::sin(angle) + attack * rad * std::cos(angle);
+		double angle = (avatar.getAngle()) * M_PI / 180;
+		double rad = avatar.getRadius();
+		int xx = (int)(rad * std::cos(angle) + attack * rad * -std::sin(angle));
+		int yy = (int)(rad * std::sin(angle) + attack * rad * std::cos(angle));
 		weapon.setX(xx+avatar.getX());
 		weapon.setY(yy+avatar.getY());
 	}
@@ -197,7 +197,7 @@ int main() {
 	auto sharedWeapon = [&]() -> std::shared_ptr<Weapon> {
 		// Create our player representation
 		auto sharedWeapon = std::make_shared<Weapon>( sharedLocalPlayer->GetUUID() );
-		sharedWeapon->setX((int)sharedAvatar->getX()+sharedAvatar->getRadius());
+		sharedWeapon->setX((int)sharedAvatar->getX()+(int)sharedAvatar->getRadius());
 		sharedWeapon->setY((int)sharedAvatar->getY());
 		sharedWeapon->setWidth(26);
 		sharedWeapon->setHeight(74);

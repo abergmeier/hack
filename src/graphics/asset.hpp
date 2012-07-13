@@ -1,3 +1,8 @@
+/**
+	asset.hpp
+
+	container for a sprite with a texture on it
+*/
 #pragma once
 #ifndef _ASSET_HPP_
 #define _ASSET_HPP_

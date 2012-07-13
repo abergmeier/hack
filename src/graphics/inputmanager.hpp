@@ -1,3 +1,10 @@
+/**
+	inputmanager.hpp
+
+	manages keyboard inputs.
+	also functions can be registered to be executed on move, attack and rotation inputs
+*/
+
 #pragma once
 #ifndef _INPUTMANAGER_HPP_
 #define _INPUTMANAGER_HPP_
@@ -29,6 +36,8 @@ private:
 
 	sf::RenderWindow* window;
 	std::map<sf::Keyboard::Key,bool> keys;
+	
+	//render window focussed or not
 	bool focus;
 };
 

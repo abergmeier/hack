@@ -1,3 +1,11 @@
+/**
+	renderer.hpp
+
+	renderer is used to render the scene in a loop of 60 frames per second
+	it also holds the inputmanager and the assetmanager.
+	you can register and remove entities from the renderer, which will create and destroy assets.
+	those assets will be drawn at the position, rotation and with the size of their registered entities.
+*/
 #pragma once
 #ifndef _RENDERER_HPP_
 #define _RENDERER_HPP_

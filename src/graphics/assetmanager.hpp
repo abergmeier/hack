@@ -1,3 +1,9 @@
+/**
+	assetmanager.hpp
+
+	manager where you can load and register textures with there designated name
+	it is also a factory to create asset objects out of the collected texture data
+*/
 #pragma once
 #ifndef _ASSETMANAGER_HPP_
 #define _ASSETMANAGER_HPP_
