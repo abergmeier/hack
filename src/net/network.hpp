@@ -34,6 +34,7 @@
 #include "../subsystem.hpp"
 #include "../debug.hpp"
 
+
 namespace hack {
 namespace net {
 
@@ -63,8 +64,6 @@ public:
 		std::function<void(buffer_type)> receiveCallback;
 
 		const std::string uuid;
-		void OnReadable( const Poco::AutoPtr<ReadableNotification>& pNotify );
-		void OnShutdown( const Poco::AutoPtr<ShutdownNotification>& pNotify );
 		StreamSocket& GetSocket();
 	private:
 		// Make sure we can only be created by the network
@@ -78,7 +77,25 @@ public:
 		Network&       _network;
 	};
 
+	class PeerWrapper {
+		std::shared_ptr<Network::Peer> _peer;
+		StreamSocket   _socket;
+		SocketReactor& _reactor;
+		Network&       _network;
+	public:
+		void OnReadable( const Poco::AutoPtr<ReadableNotification>& );
+		void OnWriteable( const Poco::AutoPtr<WritableNotification>& );
+		void OnShutdown( const Poco::AutoPtr<ShutdownNotification>& );
+
+		PeerWrapper(Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor);
+		PeerWrapper(Network& network, Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor);
+
+		~PeerWrapper();
+	};
+
+
 	friend struct Peer;
+	friend class PeerWrapper;
 private:
 	template <typename T>
 	static packet_type _createPacket(const T& buffer) {
@@ -97,7 +114,6 @@ private:
 	std::function<void(std::shared_ptr<Peer>)>            _connectCallback;
 	std::function<void(const std::string&, Poco::UInt32)> _connectFailedCallback;
 	std::function<void(hack::net::Network::Peer&)>        _disconnectCallback;
-	void Destroy();
 	std::shared_ptr<Peer> CreatePeer( StreamSocket& socket, SocketReactor& reactor, std::string uuid );
 
 	struct queue_element_type {
@@ -120,11 +136,11 @@ private:
 #if 0
 		//
 		std::map<StreamSocket, std::string> awaitingConnection;
-
+#endif
 		// Not fully connected peers, that miss the handshake
 		// Use this special, mostly small or empty map for performance purposes.
 		std::map<StreamSocket, std::string> awaitingHandshake;
-#endif
+
 		// All peers which are connected
 		std::map<Address, std::shared_ptr<Peer>> connected;
 #if 0
@@ -133,11 +149,12 @@ private:
 	};
 
 	Peers _peers;
+	std::string _ipAddress;
 
 	SocketReactor _reactor;
 	std::unique_ptr<ServerSocket> _server;
 
-	void onReadable(const Poco::AutoPtr<ReadableNotification>& notifiction);
+	void onReadable ( const Poco::AutoPtr<ReadableNotification>& notifiction );
 
 	// Processes a filled queue
 	bool _ExecuteWorker();
@@ -147,7 +164,7 @@ private:
 	// Send all previously unsent packets
 	void HandleUnsent();
 
-	std::shared_ptr<Peer> OnConnect( StreamSocket& socket, SocketReactor& reactor );
+	void OnConnect( StreamSocket& socket, SocketReactor& reactor );
 	void OnTimeout( const Poco::AutoPtr<TimeoutNotification>& );
 	void OnDisconnect( StreamSocket& socket );
 
@@ -168,7 +185,6 @@ public:
 	Network( std::string uuid );
 
 	virtual ~Network();
-	void Setup();
 
 	// Processes the queue indefinitely
 	void ExecuteWorker() override;

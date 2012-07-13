@@ -47,12 +47,87 @@ namespace {
 	    }
 	    throw Poco::IOException("No configured Ethernet interface found");
 	}
-}
 
-namespace {
 	std::unique_ptr<ServerSocket> createServer( Poco::UInt16 incomingPort ) {
 		return std::unique_ptr<ServerSocket>( new ServerSocket( incomingPort ) );
 	}
+
+	std::string GetAddressString( const SocketAddress& address ) {
+		std::stringstream stream;
+		stream << address.host().toString() << ':' << address.port();
+		return stream.str();
+	};
+}
+
+void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>& ) {
+	if( _socket.available() < sizeof(Poco::UInt32)  )
+		return; // Cannot yet read the size
+
+	SocketStream stream( _socket );
+	auto position = stream.tellg();
+	Poco::UInt32 packetSize = 0;
+	stream.read(reinterpret_cast<char*>(&packetSize), sizeof(packetSize));
+
+	if( !stream.good() ) {
+		stream.seekg( position );
+		return;
+	}
+
+	if( _socket.available() < (sizeof(Poco::UInt32) + packetSize) ) {
+		// Revert what we did to the stream
+		stream.seekg( position );
+		return; // Cannot swallow whole package yet
+	}
+
+	std::string buffer(packetSize, '\0');
+	stream.read( &buffer.front(), buffer.size() );
+
+	// Validate size of buffer
+	buffer.resize( strnlen(buffer.data(), buffer.size()) );
+
+	auto removeCount = _network._peers.awaitingHandshake.erase( _socket );
+
+	if( removeCount == 0 ) {
+		// Handshake already successfull
+		_peer->receiveCallback( std::move(buffer) );
+	} else {
+		_peer = _network.FinishHandshake( _socket, _reactor, std::move(buffer) );
+		const auto address = GetAddressString( _socket.address() );
+		DEBUG.LOG_ENTRY( "Received Handshake from and established Connection with " + address );
+	}
+}
+
+void Network::PeerWrapper::OnWriteable( const Poco::AutoPtr<WritableNotification>& ) {
+	_network.HandleUnsent();
+}
+
+void Network::PeerWrapper::OnShutdown( const Poco::AutoPtr<ShutdownNotification>& ) {
+	_network.OnDisconnect( _socket );
+	delete this;
+}
+
+Network::PeerWrapper::PeerWrapper(Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor) :
+	_reactor(*static_cast<SocketReactor*>(nullptr)),
+	_network(*static_cast<Network*>(nullptr))
+{
+	throw std::runtime_error("Wrong constructor");
+}
+
+Network::PeerWrapper::PeerWrapper(Network& network, Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor) :
+	_peer(),
+	_socket(socket),
+	_reactor(reactor),
+	_network(network)
+{
+	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, ReadableNotification>(*this, &PeerWrapper::OnReadable));
+	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, WritableNotification>(*this, &PeerWrapper::OnWriteable));
+	_reactor.addEventHandler( _socket, Poco::NObserver<PeerWrapper, ShutdownNotification>(*this, &PeerWrapper::OnShutdown));
+}
+
+Network::PeerWrapper::~PeerWrapper() {
+	_reactor.removeEventHandler(_socket, Poco::NObserver<PeerWrapper, ReadableNotification>(*this, &PeerWrapper::OnReadable));
+	_reactor.removeEventHandler(_socket, Poco::NObserver<PeerWrapper, WritableNotification>(*this, &PeerWrapper::OnWriteable));
+	_reactor.removeEventHandler(_socket, Poco::NObserver<PeerWrapper, ShutdownNotification>(*this, &PeerWrapper::OnShutdown));
 }
 
 Network::Network( std::string uuid ) :
@@ -79,13 +154,13 @@ Network::Network( std::string uuid ) :
 
 			// Server was successfully created
 			auto interface = findActiveNetworkInterface();
+			_ipAddress = interface.address().toString();
 			break;
 		}
 
 	} catch( ... ) {
 		auto eptr = std::current_exception();
 		// Invoke cleanup
-		Destroy();
 		std::rethrow_exception( eptr );
 	}
 
@@ -96,9 +171,6 @@ Network::Network( std::string uuid ) :
 	}();
 }
 
-void Network::Destroy() {
-}
-
 Network::~Network() {
 
 	std::lock_guard<std::recursive_mutex> peersLock( _peers.lock );
@@ -107,19 +179,9 @@ Network::~Network() {
 		//element.Disconnect();
 	}
 
+	_peers.connected.clear();
+
 	SaveStopWorker();
-
-	Destroy();
-}
-
-void Network::Setup() {
-#if 0
-	STUN_Request stunTask;
-	RegistrationRequest registryTask;
-	
-	registryTask.get();
-	stunTask.get();
-#endif
 }
 
 void Network::SetConnectCallback(std::function<void(std::shared_ptr<hack::net::Network::Peer>)> callback) {
@@ -174,41 +236,9 @@ Network::Peer::Peer( Network& network, StreamSocket& socket, SocketReactor& reac
 	_reactor ( reactor ),
 	_network ( network )
 {
-    _reactor.addEventHandler( _socket, Poco::NObserver<Peer, ReadableNotification>(*this, &Peer::OnReadable));
-    _reactor.addEventHandler( _socket, Poco::NObserver<Peer, ShutdownNotification>(*this, &Peer::OnShutdown));
-}
-
-void Network::Peer::OnReadable( const Poco::AutoPtr<ReadableNotification>& ) {
-	if( _socket.available() < sizeof(Poco::UInt32)  )
-		return; // Cannot yet read the size
-
-	SocketStream stream( _socket );
-	auto position = stream.tellg();
-	Poco::UInt32 packetSize;
-	stream >> packetSize;
-
-	if( _socket.available() < (sizeof(Poco::UInt32) + packetSize) ) {
-		// Revert what we did to the stream
-		stream.seekg( position );
-		return; // Cannot swallow whole package yet
-	}
-
-	std::string buffer(packetSize, '\0');
-	stream.read( &buffer.front(), buffer.size() );
-
-	// Validate size of buffer
-	buffer.resize( strnlen(buffer.data(), buffer.size()) );
-	receiveCallback( std::move(buffer) );
-}
-
-void Network::Peer::OnShutdown( const Poco::AutoPtr<ShutdownNotification>& ) {
-	_network.OnDisconnect( _socket );
 }
 
 Network::Peer::~Peer() {
-
-    _reactor.removeEventHandler(_socket, Poco::NObserver<Peer, ReadableNotification>(*this, &Peer::OnReadable));
-    _reactor.removeEventHandler(_socket, Poco::NObserver<Peer, ShutdownNotification>(*this, &Peer::OnShutdown));
 }
 
 bool
@@ -235,14 +265,14 @@ std::shared_ptr<Network::Peer> Network::CreatePeer( StreamSocket& socket, Socket
 	{
 		std::lock_guard<std::recursive_mutex> lock( _peers.lock );
 
-		Address address(socket.address(), uuid);
+		Address address( socket.address(), uuid );
 		auto insertPair = _peers.connected.insert( std::make_pair( std::move(address), std::shared_ptr<Peer>(sharedPeer) ) );
 
 		if( !insertPair.second )
 			return insertPair.first->second; // Already present and connected!?
 
-		address = Address(socket.address(), uuid);
-		_peers.unconnected.erase( std::move(address) );
+		address = Address( socket.address(), uuid );
+		_peers.unconnected.erase( address );
 	}
 
 	_connectCallback( sharedPeer );
@@ -264,43 +294,29 @@ void Network::HandleUnconnected() {
 
 	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
 
-	std::vector<std::shared_ptr<Peer> > peers;
-	peers.reserve( _peers.unconnected.size() );
-
 	// We need to make the manual it handling, so we properly handle
 	// iterator, so we can add and remove elements within the loop.
-	for( auto it = _peers.unconnected.begin(); it != _peers.unconnected.end(); ) {
-		auto& entry = *it;
-		auto ipAddress = entry.host().toString();
+	for( auto& entry : _peers.unconnected ) {
+		//auto ipAddress = entry.host().toString();
 
-		std::string addressStr = [&]() {
-			std::stringstream stream;
-			stream << ipAddress << ':' << entry.port();
-			return stream.str();
-		}();
+		const auto addressStr = GetAddressString( entry );
+		DEBUG.LOG_ENTRY( std::string("Starting Connection to ") + addressStr );
 
-		DEBUG.LOG_ENTRY( "Starting Connection to " + addressStr );
+		StreamSocket socket( entry );
 
-		Poco::Net::StreamSocket socket( entry );
-		Poco::Net::SocketStream stream(socket);
+		// Register Handshake wait so we handle
+		// the first packet
+		_peers.awaitingHandshake.insert( std::make_pair( socket, entry.uuid ) );
 
-		DEBUG.LOG_ENTRY( "Sending Handshake to " + addressStr );
+		DEBUG.LOG_ENTRY( std::string("Sending Handshake to ") + addressStr );
 
-		stream << _createPacket( uuid );
-		stream.flush(); // Make sure data is not in buffer
+		auto packet = _createPacket( uuid );
+		DEBUG.LOG_ENTRY(std::stringstream() << "sent: " << socket.sendBytes( packet.data(), (packet.length() + 1) * sizeof(packet_type::value_type) ) );
 
-		DEBUG.LOG_ENTRY( "Waiting on Handshake from " + addressStr);
-
-		std::string otherUuid(36, '\0');
-		stream.read( &otherUuid.front(), otherUuid.size() );
-
-		// We already have to advance here, so following code can modify
-		// _peers.unconnected
-		++it;
-		peers.push_back( FinishHandshake( socket, _reactor, std::move(otherUuid) ) );
-
-		DEBUG.LOG_ENTRY( "Received Handshake from and established Connection with " + addressStr );
+		DEBUG.LOG_ENTRY( std::string("Waiting on Handshake from ") + addressStr);
 	}
+
+	_peers.unconnected.clear();
 }
 
 void Network::HandleUnsent() {
@@ -325,7 +341,7 @@ void Network::HandleUnsent() {
 	}
 }
 
-std::shared_ptr<Network::Peer> Network::OnConnect( StreamSocket& socket, SocketReactor& reactor ) {
+void Network::OnConnect( StreamSocket& socket, SocketReactor& reactor ) {
 	const auto peerHost = socket.address().host().toString();
 	const auto peerPort = socket.address().port();
 
@@ -336,14 +352,8 @@ std::shared_ptr<Network::Peer> Network::OnConnect( StreamSocket& socket, SocketR
 	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
 #if 0
 	_peers.awaitingConnection.erase( socket );
-
-	_peers.awaitingHandshake.insert( std::make_pair( socket, std::move(otherUuid) ) );
 #endif
-
-	std::string otherUuid(36, '\0');
-	stream.read( &otherUuid.front(), otherUuid.size() );
-
-	return FinishHandshake( socket, reactor, std::move(otherUuid) );
+	_peers.awaitingHandshake.insert( std::make_pair( socket, std::string() ) );
 }
 
 std::shared_ptr<Network::Peer> Network::FinishHandshake( StreamSocket& socket, SocketReactor& reactor, std::string otherUuid ) {
@@ -449,12 +459,6 @@ void Network::ExecuteWorker() {
 
 	DEBUG.LOG_ENTRY("[Worker] Start...");
 
-	// Used to satisfy Poco interface needs
-	struct PeerWrapper {
-		std::shared_ptr<Peer> peer;
-		PeerWrapper(Poco::Net::StreamSocket&, Poco::Net::SocketReactor&) {}
-	};
-
 	struct Acceptor : public SocketAcceptor<PeerWrapper> {
 		Network& network;
 		Acceptor( Network& network, ServerSocket& socket, SocketReactor& reactor ) :
@@ -464,8 +468,8 @@ void Network::ExecuteWorker() {
 		}
 
 		PeerWrapper* createServiceHandler( StreamSocket& socket ) override {
-			auto wrapper = new PeerWrapper( socket, *reactor() );
-			wrapper->peer = network.OnConnect( socket, *reactor() );
+			auto wrapper = new PeerWrapper( network, socket, *reactor() );
+			network.OnConnect( socket, *reactor() );
 			return wrapper;
 		}
 	};
@@ -483,7 +487,6 @@ void Network::ExecuteWorker() {
 
 void Network::OnTimeout( const Poco::AutoPtr<TimeoutNotification>& ) {
 	HandleUnconnected();
-	HandleUnsent();
 }
 
 void Network::StopWorker() {
@@ -507,7 +510,7 @@ Poco::UInt32 Network::GetIncomingPort() const {
 }
 
 std::string Network::GetIPAddress() const {
-	return _server->address().host().toString();
+	return _ipAddress;
 }
 
 void Network::SendPacket( StreamSocket& socket, const packet_type& packet ) {
