@@ -41,6 +41,7 @@
 #include <Poco/Net/SocketStream.h>
 #include <Poco/NObserver.h>
 #include <Poco/Net/NetException.h>
+#include <Poco/Exception.h>
 #ifdef _MSC_VER 
 #ifndef WIN32
 #define WIN32

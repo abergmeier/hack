@@ -326,6 +326,7 @@ void Network::ConnectOutstanding() {
 		} catch( const InvalidAddressException&    ) {
 		} catch( const HostNotFoundException&      ) {
 		} catch( const NoAddressFoundException&    ) {
+		} catch( const Poco::TimeoutException&    ) {
 		// Log connection errors
 		} catch( const ConnectionAbortedException& ) {
 			DEBUG.ERR_ENTRY( std::string("Connection aborted to ") + addressStr );
