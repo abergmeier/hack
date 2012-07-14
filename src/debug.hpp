@@ -17,9 +17,11 @@ struct Debug {
 	std::ostream& LOG      ( std::ostream& stream ) const;
 	std::ostream& LOG      ( const std::string& str ) const;
 	std::ostream& ERR      ( std::ostream& stream ) const;
+	std::ostream& ERR      ( const std::string& str ) const;
 	void         LOG_ENTRY( std::ostream& stream) const;
 	void         LOG_ENTRY( const std::string& str) const;
 	void         ERR_ENTRY( std::ostream& stream) const;
+	void         ERR_ENTRY( const std::string& str) const;
 protected:
 	Debug(){};
 };
