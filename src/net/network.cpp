@@ -68,11 +68,6 @@ void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>
 	// Skip seperator
 	stream.get();
 
-	if( !stream.good() ) {
-		stream.seekg( position );
-		return;
-	}
-
 	std::string buffer(packetSize, '\0');
 	stream.read( &buffer.front(), buffer.size() );
 
