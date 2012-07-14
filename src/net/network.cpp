@@ -8,13 +8,6 @@
 #include <sstream>
 #include <tuple>
 #include <string.h> //for strnlen
-#include <Poco/Net/SocketReactor.h>
-#include <Poco/Net/NetworkInterface.h>
-#include <Poco/AutoPtr.h>
-#include <Poco/Net/ServerSocket.h>
-#include <Poco/Net/SocketStream.h>
-#include <Poco/NObserver.h>
-#include <Poco/Net/NetException.h>
 
 #include "network.hpp"
 

@@ -8,6 +8,13 @@
 #ifndef NETWORK_HPP_
 #define NETWORK_HPP_
 
+//disable insignificant compiler warning under vs2012 compiler
+//this problem only occurs in visual studio
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning(disable: 4250)
+#endif // _MSC_VER
+
 #include <memory>
 #include <map>
 #include <array>
@@ -27,6 +34,13 @@
 #include <Poco/Net/StreamSocket.h>
 #include <Poco/Net/ServerSocket.h>
 #include <Poco/Net/SocketAcceptor.h>
+#include <Poco/Net/SocketReactor.h>
+#include <Poco/Net/NetworkInterface.h>
+#include <Poco/AutoPtr.h>
+#include <Poco/Net/ServerSocket.h>
+#include <Poco/Net/SocketStream.h>
+#include <Poco/NObserver.h>
+#include <Poco/Net/NetException.h>
 #ifdef _MSC_VER 
 #ifndef WIN32
 #define WIN32
@@ -36,6 +50,10 @@
 #include "../subsystem.hpp"
 #include "../debug.hpp"
 
+//enable compiler warnings again
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif // _MSC_VER
 
 namespace hack {
 namespace net {
