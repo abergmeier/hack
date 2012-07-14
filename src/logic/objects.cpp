@@ -23,9 +23,13 @@ typename
 	Objects::class_map_type Objects::CLASS_MAP;
 
 namespace {
+	//intersection test of a line with a circle
+	//start and end are the to end points of the like, pos is the position if the circle and r is the radius
 	bool intersect(vector2<float> &start, vector2<float> &end, vector2<float> &pos, float r) {
+		//direction vector of the line
 		vector2<float> d = start.sub(end);
 		
+		//direction vector of the circle, starting the one point of the line
 		vector2<float> f(pos[0]-start[0],pos[1]-start[1]);
 		
 		float a = d.dot( d ) ;
@@ -53,10 +57,11 @@ namespace {
 		if( t2 >= 0 && t2 <= 1 ) {
 			return true;
 			// t2 solution on is ON THE RAY.
-		} 
+		}
 		return false;	
 	}
 
+	//rotates a vector around a specific position and return a vector2
 	vector2<float> rotateVector(float x, float y, float px, float py, float angle) {
 		angle = angle * M_PI / 180;
 		float dx = x - px;
@@ -78,8 +83,6 @@ namespace {
 		float y3 = obj.getY() + (float)obj.getHeight() / 2;
 		float x4 = obj.getX() - (float)obj.getWidth() / 2;
 		float y4 = obj.getY() + (float)obj.getHeight() / 2;
-
-		std::cout << avatar.getRadius() << std::endl;
 
 		//rotate the corners to their original place
 		vector2<float> A = rotateVector(x1,y1,obj.getX(),obj.getY(),obj.getAngle());
@@ -202,9 +205,7 @@ Objects::const_iterator::const_iterator( object_map_type::const_iterator it ) :
 bool Objects::movementCheck(const hack::logic::Avatar &avatar, const vector2<int>& possibleChange)  {
 	for(auto &e : _objectMap) {
 		//world collision
-		//std::cout << e.second->ClassName() << std::endl;
 		if(e.second->ClassName() == hack::logic::Stone::NAME) {
-			std::cout << e.second->getX() << " " << e.second->getWidth() << std::endl;
 			if(intersectAll(*e.second,avatar,possibleChange))
 				return false;
 		}
@@ -217,6 +218,7 @@ bool Objects::movementCheck(const hack::logic::Avatar &avatar, const vector2<int
 			return length < avatar.getRadius()*2;
 		}
 	}
+	//nothing in the way, can move on
 	return true;
 }
 
@@ -224,8 +226,9 @@ bool Objects::attackCheck(const hack::logic::Weapon &weapon) {
 	for(auto &e : _objectMap) {
 		if(e.second->ClassName() == hack::logic::Avatar::NAME) {
 			if(intersectAll(weapon,dynamic_cast<Avatar&>(*e.second),vector2<int>(e.second->getX(),e.second->getY())))
-				return true;
+				return true; //another avatar got hit
 		}
 	}
+	//noting is hit
 	return false;
 }
