@@ -1,6 +1,5 @@
 var application_root = __dirname,
-	express = require("express"),
-	uuid = require('node-uuid');
+	express = require("express");
 
 var app = express.createServer();
 
@@ -41,11 +40,18 @@ app.post('/:uuid', function (req, res) {
 	var client = {
 		uuid: req.params.uuid,
 		host: req.body.host,
-		port: req.body.port
+		port: Number(req.body.port),
+		time: new Date().getTime()
 	};
 	
 	clients[client.uuid] = client;
 	console.log("Added: " + client.uuid + " " + client.host + ":" + client.port);
+	res.send("");
+});
+
+app.del('/', function( req, res ) {
+	clients = {};
+	console.log("Removed all clients");
 	res.send("");
 });
 
@@ -69,6 +75,8 @@ app.del('/:uuid', function (req, res) {
 
 
 // Launch server
-
-app.listen(4242);
+var port = process.env.PORT || 4242;
+app.listen(port, function() {
+	console.log("Listening on " + port);
+});
 
