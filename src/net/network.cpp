@@ -350,7 +350,7 @@ void Network::ConnectOutstanding() {
 		DEBUG.LOG_ENTRY( std::string("Sending Handshake to ") + addressStr );
 
 		auto packet = _createPacket( uuid );
-		socket->sendBytes( packet.data(), (packet.length() + 1) * sizeof(packet_type::value_type) );
+		SendPacket( *socket, packet );
 
 		DEBUG.LOG_ENTRY( std::string("Waiting on Handshake from ") + addressStr);
 
@@ -547,10 +547,7 @@ void Network::SendPacket( const packet_type& packet ) {
 	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
 
 	for( auto& peer : _peers.connected ) {
-		auto& peerSocket = peer.second->GetSocket();
-		SocketStream stream( peerSocket );
-		stream << packet;
-		stream.flush();
+		SendPacket( peer.second->GetSocket(), packet );
 	}
 }
 
