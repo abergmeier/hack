@@ -460,40 +460,28 @@ void Network::OnDisconnect( StreamSocket& socket ) {
 	auto peerPort = socket.address().port();
 
 	DEBUG.LOG_ENTRY(std::stringstream() << "Disconnected: " << peerHostStr << ':' << peerPort);
-	typedef decltype(_peers.connected) connected_container;
-	connected_container::iterator it;
 
-	{
-		// Limit lock because later on we invoke callbacks and do not
-		// know how long they block
-		std::lock_guard<std::recursive_mutex> lock( _peers.lock );
+	// Limit lock because later on we invoke callbacks and do not
+	// know how long they block
+	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
 
-		typedef decltype(_peers.connected) connected_type;
-		auto isSame = [&]( const connected_type::value_type& element ) -> bool {
-			return element.first.host() == peerHost && element.first.port() == peerPort;
-		};
+	typedef decltype(_peers.connected) connected_type;
+	auto isSame = [&]( const connected_type::value_type& element ) -> bool {
+		return element.first.host() == peerHost && element.first.port() == peerPort;
+	};
 
-		it = std::find_if( _peers.connected.begin(),
-		                   _peers.connected.end(),
-		                   isSame );
-#if 0
-		if( it == _peers.connected.end() ) {
-			// Skip waiting for handshake
-			_peers.AbortWait( socket );
-		} else {
-			// The user data of Event is already set to null so
-			// we are allowed to remove the shared_ptr
-#endif
-			_peers.connected.erase( it );
-#if 0
-		}
-#endif
-	}
+	auto it = std::find_if( _peers.connected.begin(),
+	                        _peers.connected.end(),
+	                        isSame );
 
-	if( it == _peers.connected.end() )
+	if( it == _peers.connected.end() ) {
+		_peers.awaitingHandshake.erase( socket );
 		_connectFailedCallback( peerHostStr, peerPort );
-	else
-		_disconnectCallback( *(it->second) );
+	} else {
+		auto sharedPeer = std::move( it->second );
+		_peers.connected.erase( it );
+		_disconnectCallback( *sharedPeer );
+	}
 }
 
 void Network::ExecuteWorker() {
