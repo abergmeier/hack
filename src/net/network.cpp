@@ -177,6 +177,7 @@ Network::Network( std::string uuid ) :
 	_ipAddress = interface.address().toString();
 
 	_acceptor = std::unique_ptr<Acceptor>( new Acceptor(*this, *_server, _reactor) );
+	DEBUG.LOG_ENTRY(std::stringstream() << "Listening for incoming connections on " << _server->address().port() );
 
 	worker = [this]() -> std::future<void> {
 		// Start Networking
