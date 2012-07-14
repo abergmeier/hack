@@ -42,7 +42,8 @@ public:
 	virtual float getAngle() const = 0;
 	virtual size_t getHeight() const= 0;
 	virtual size_t getWidth() const = 0;
-
+	bool operator==(const entity& other) const;
+	bool operator!=(const entity& other) const;
 
 private:
 	virtual void setX(int value) = 0;

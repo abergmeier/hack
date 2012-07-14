@@ -74,4 +74,12 @@ std::istream& hack::logic::operator >>(std::istream& stream, id_type& id) {
 	return stream;
 }
 
+bool hack::logic::entity::operator==(const entity& other) const {
+	return getid() == other.getid();
+}
+
+bool hack::logic::entity::operator!=(const entity& other) const {
+	return getid() == other.getid();
+}
+
 
