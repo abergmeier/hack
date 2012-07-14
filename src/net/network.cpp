@@ -538,9 +538,7 @@ std::string Network::GetIPAddress() const {
 }
 
 void Network::SendPacket( StreamSocket& socket, const packet_type& packet ) {
-	SocketStream stream( socket );
-	stream << packet;
-	stream.flush();
+	socket.sendBytes( packet.data(), packet.length() * sizeof(packet_type::value_type) );
 }
 
 void Network::SendPacket( const packet_type& packet ) {
