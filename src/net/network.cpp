@@ -523,7 +523,7 @@ bool Network::ConnectTo( const std::string& host, Poco::UInt32 port, std::string
 
 	// Make sure we are the only thread accessing object
 	std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-	_peers.unconnected.insert( Address( host, port, uuid ) );
+	_peers.unconnected.insert( Address( host, port, std::move(uuid) ) );
 	return true;
 }
 
