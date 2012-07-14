@@ -18,6 +18,7 @@ RemotePlayer::RemotePlayer(std::weak_ptr<Network> network, std::weak_ptr<hack::s
 	hack::logic::Player(name),
 	_network     ( network ),
 	_receiveQueue(),
+	_states(states),
 	_receiver([&](buffer_type buffer) {
 		// Transforms network to deserializable format
 
@@ -28,8 +29,7 @@ RemotePlayer::RemotePlayer(std::weak_ptr<Network> network, std::weak_ptr<hack::s
 		// Forward this to objects
 		sharedStates->ReceiveFrom( std::move(buffer), *this );
 	}),
-	_peer(peer),
-	_states(states)
+	_peer(peer)
 {
 	peer->receiveCallback = _receiver;
 }
