@@ -92,7 +92,7 @@ private:
 		void OnWriteable( const Poco::AutoPtr<WritableNotification>& );
 		void OnShutdown ( const Poco::AutoPtr<ShutdownNotification>& );
 		void OnTimeout  ( const Poco::AutoPtr<TimeoutNotification>& );
-		void OnError    ( const Poco::AutoPtr<ErrorNotification>& );
+		void OnError    ( const Poco::AutoPtr<ErrorNotification>&   );
 
 		PeerWrapper(Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor);
 		PeerWrapper(Network& network, Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor);
