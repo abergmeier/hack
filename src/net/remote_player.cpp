@@ -3,7 +3,7 @@
 #include "remote_player.hpp"
 #include "../include.hpp"
 #include <string.h>
-#include "../logic/states.hpp"
+#include "../state/states.hpp"
 
 using namespace hack::net;
 

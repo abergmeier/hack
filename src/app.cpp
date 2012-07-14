@@ -17,7 +17,7 @@
 #include "logic/stone.hpp"
 #include "logic/objects.hpp"
 #include "net/remote_player.hpp"
-#include "logic/states.hpp"
+#include "state/states.hpp"
 #include "graphics/renderer.hpp"
 #include "debug.hpp"
 #include "net/registration.hpp"

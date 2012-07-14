@@ -1,7 +1,7 @@
 
 #include <istream>
 #include "entity.hpp"
-#include "serializable.hpp"
+#include "../state/serializable.hpp"
 
 using namespace hack::logic;
 

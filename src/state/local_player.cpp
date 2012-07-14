@@ -11,7 +11,7 @@
 #include <sstream>
 #include "local_player.hpp"
 #include "../include.hpp"
-#include "../logic/states.hpp"
+#include "../state/states.hpp"
 #include "uuid.hpp"
 
 using namespace hack::state;

@@ -12,8 +12,8 @@
 #include "network.hpp"
 #include "endpoint.hpp"
 #include "../logic/player.hpp"
-#include "../logic/serializable.hpp"
-#include "../logic/states.hpp"
+#include "../state/serializable.hpp"
+#include "../state/states.hpp"
 
 namespace hack {
 namespace net {

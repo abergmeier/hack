@@ -14,7 +14,7 @@
 #include <string>
 #include <cmath>
 #include "entity.hpp"
-#include "serializable.hpp"
+#include "../state/serializable.hpp"
 
 namespace hack {
 namespace logic {

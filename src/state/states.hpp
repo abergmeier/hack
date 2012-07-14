@@ -14,7 +14,7 @@
 #include <string>
 #include "../net/network.hpp"
 #include "serializable.hpp"
-#include "player.hpp"
+#include "../logic/player.hpp"
 
 namespace hack {
 namespace state {
