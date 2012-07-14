@@ -47,7 +47,7 @@ public:
 	typedef std::string packet_type;
 	typedef std::string buffer_type;
 
-	struct Address : public SocketAddress {
+	struct Address : public Poco::Net::SocketAddress {
 		Address( const std::string& host, Poco::UInt16 port, std::string uuid );
 		Address( const SocketAddress&, std::string uuid );
 		Address( Address&& other );
