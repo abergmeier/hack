@@ -16,7 +16,7 @@ void Serializable::Serialize( std::ostream& stream ) const {
 }
 
 std::ostream& Serializable::SerializeContent( std::ostream& stream ) const {
-	return stream << ClassName();
+	return String::Serialize( stream, ClassName() );
 }
 
 std::ostream& Serializable::String::Serialize( std::ostream& stream, const std::string& str ) {
