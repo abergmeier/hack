@@ -62,34 +62,35 @@ namespace {
 	}
 
 	//rotates a vector around a specific position and return a vector2
-	vector2<float> rotateVector(float x, float y, float px, float py, float angle) {
-		angle = angle * M_PI / 180;
-		float dx = x - px;
-		float dy = y - py;
-		x = (dx * std::cos(angle) + dy * -std::sin(angle)) + px;
-		y = (dx * std::sin(angle) + dy * std::cos(angle)) + py;
+	vector2<float> rotateVector(float x, float y, int px, int py, float angle) {
+		angle = static_cast<float>(angle * M_PI / 180);
+		float dx = x - static_cast<float>(px);
+		float dy = y - static_cast<float>(py);
+		x = (dx * std::cos(angle) + dy * -std::sin(angle)) + static_cast<float>(px);
+		y = (dx * std::sin(angle) + dy * std::cos(angle)) + static_cast<float>(py);
 
 		return vector2<float>(x,y);
 	}
 
+	//intersection test of a circle with all four lines of a square
 	bool intersectAll(const entity& obj, const Avatar& avatar, const vector2<int>& possibleChange) {
 		//static object intersection
 		//calculating corners of the object
-		float x1 = obj.getX() - (float)obj.getWidth() / 2;
-		float y1 = obj.getY() - (float)obj.getHeight() / 2;
-		float x2 = obj.getX() + (float)obj.getWidth() / 2;
-		float y2 = obj.getY() - (float)obj.getHeight() / 2;
-		float x3 = obj.getX() + (float)obj.getWidth() / 2;
-		float y3 = obj.getY() + (float)obj.getHeight() / 2;
-		float x4 = obj.getX() - (float)obj.getWidth() / 2;
-		float y4 = obj.getY() + (float)obj.getHeight() / 2;
+		float x1 = obj.getX() - static_cast<float>(obj.getWidth()) / 2;
+		float y1 = obj.getY() - static_cast<float>(obj.getHeight()) / 2;
+		float x2 = obj.getX() + static_cast<float>(obj.getWidth()) / 2;
+		float y2 = obj.getY() - static_cast<float>(obj.getHeight()) / 2;
+		float x3 = obj.getX() + static_cast<float>(obj.getWidth()) / 2;
+		float y3 = obj.getY() + static_cast<float>(obj.getHeight()) / 2;
+		float x4 = obj.getX() - static_cast<float>(obj.getWidth()) / 2;
+		float y4 = obj.getY() + static_cast<float>(obj.getHeight()) / 2;
 
 		//rotate the corners to their original place
 		vector2<float> A = rotateVector(x1,y1,obj.getX(),obj.getY(),obj.getAngle());
 		vector2<float> B = rotateVector(x2,y2,obj.getX(),obj.getY(),obj.getAngle());
 		vector2<float> C = rotateVector(x3,y3,obj.getX(),obj.getY(),obj.getAngle());
 		vector2<float> D = rotateVector(x4,y4,obj.getX(),obj.getY(),obj.getAngle());
-		vector2<float> pos((float)possibleChange[0],(float)possibleChange[1]);
+		vector2<float> pos(static_cast<float>(possibleChange[0]),static_cast<float>(possibleChange[1]));
 
 		//check if lines between the corners intersect with the player
 		if(intersect(A,B,pos,avatar.getRadius()) 
@@ -211,8 +212,8 @@ bool Objects::movementCheck(const hack::logic::Avatar &avatar, const vector2<int
 		}
 		//player intersection
 		if (e.second->ClassName() == hack::logic::Avatar::NAME) {
-			float dx = avatar.getX() - e.second->getX();
-			float dy = avatar.getY() - e.second->getY();
+			float dx = static_cast<float>(avatar.getX() - e.second->getX());
+			float dy = static_cast<float>(avatar.getY() - e.second->getY());
 			float length = std::sqrt(dy * dy + dy * dy);
 	
 			return length < avatar.getRadius()*2;

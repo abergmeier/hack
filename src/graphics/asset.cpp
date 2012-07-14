@@ -9,7 +9,7 @@ asset::asset(std::shared_ptr<Texture> texture)
 	//set texture visual
 	spr.setTexture(*tex,true);
 	//set new origin for rotation
-	spr.setOrigin(tex->getSize().x/2,tex->getSize().y/2);
+	spr.setOrigin(static_cast<float>(tex->getSize().x)/2,static_cast<float>(tex->getSize().y)/2);
 }
 
 asset::asset(const asset& a)
@@ -37,7 +37,7 @@ void asset::setRotation(float angle) {
 }
 void asset::setSize(float width, float height) {
 	//set new size
-	spr.scale(width/(float)tex->getSize().x,height/(float)tex->getSize().y);
+	spr.scale(width/static_cast<float>(tex->getSize().x),height/static_cast<float>(tex->getSize().y));
 	//set new origin for rotation
-	spr.setOrigin(tex->getSize().x/2,tex->getSize().y/2);
+	spr.setOrigin(static_cast<float>(tex->getSize().x)/2,static_cast<float>(tex->getSize().y)/2);
 }

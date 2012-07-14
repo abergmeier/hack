@@ -36,13 +36,15 @@ void inputmanager::tick() {
 			if (event.type == sf::Event::Closed) {
 				window->close();
 			}
-			//
+			//save all pressed keys
 			if (event.type == sf::Event::KeyPressed) {
 				keys[event.key.code] = true;
 			}
+			//set all released keys to false
 			if (event.type == sf::Event::KeyReleased) {
 				keys[event.key.code] = false;
 			}
+			//call callback for mouse movement if one is set
 			if (event.type == sf::Event::MouseMoved) {
 				//rotation
 				if(rotateCallback) rotateCallback(event.mouseMove.x,event.mouseMove.y);
@@ -60,7 +62,7 @@ void inputmanager::handleKeys() {
 		return;
 	}
 	
-	//movement
+	//keyboard movement
 	int x,y;
 	x = 0;
 	y = 0;
@@ -70,7 +72,7 @@ void inputmanager::handleKeys() {
 	if(keys[Keyboard::D]) x += 3;
 	if((x != 0.0 || y != 0.0) && moveCallback) moveCallback(x,y);
 
-	//attack
+	//attack on space key, also execute the attack callback with false to retract the weapon
 	if(keys[Keyboard::Space] && attackCallback) {
 		attackCallback(true);
 	} else if(!keys[Keyboard::Space] && attackCallback) {
@@ -80,6 +82,7 @@ void inputmanager::handleKeys() {
 }
 
 void inputmanager::registerCallbacks(std::function<void(int,int)> position,std::function<void(int,int)> rotation,std::function<void(bool)> attack) {
+	//set all callback functions
 	moveCallback = position;
 	rotateCallback = rotation;
 	attackCallback = attack;
