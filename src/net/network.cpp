@@ -337,6 +337,8 @@ void Network::ConnectOutstanding() {
 			DEBUG.ERR_ENTRY( std::string("Connection refused to ") + addressStr );
 		} catch( const Poco::Net::NetException& ex ) {
 			DEBUG.ERR_ENTRY( std::string("Connection failed to ") + addressStr + ": " + ex.displayText() );
+		} catch( const Poco::Exception& ex ) {
+			DEBUG.ERR_ENTRY( std::string("Connection failed to ") + addressStr + ": " + ex.displayText() );
 		}
 
 		if( !isConnected ) {
