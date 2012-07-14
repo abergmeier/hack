@@ -19,10 +19,11 @@ assetmanager::assetmanager(void)
 assetmanager::~assetmanager(void)
 {
 	textureMap.clear();
+	avatar_names.clear();
 }
 
 void assetmanager::init() {
-	//player sprites
+	//registration of different player textures
 	avatar_names.push_back("avatarpurple");
 	addTexture(avatar_names.back(),"resources/avatar-purple.png");
 
@@ -44,13 +45,13 @@ void assetmanager::init() {
 	avatar_names.push_back("avataryellow");
 	addTexture(avatar_names.back(),"resources/avatar-yellow.png");
 
-	//fallback if too many players
+	//fallback texture if too many players
 	addTexture(Avatar::NAME.c_str(),"resources/stone.png");
 	
 	//stone texture
 	addTexture(Stone::NAME.c_str(),"resources/stone.png");
 
-	//weapon
+	//weapon texture
 	addTexture(Weapon::NAME.c_str(),"resources/weapon.png");
 }
 
@@ -61,6 +62,8 @@ void assetmanager::addTexture(const char* name, const char* path) {
 }
 
 asset* assetmanager::get(const char* name) {
+	//if a avatar texture is asked for, return on of the colored of, if not or too many players registered return
+	//the designated texture of the name given
 	if(name == Avatar::NAME.c_str() && numPlayer < 8) 
 	{
 		return new asset(textureMap[avatar_names.at(numPlayer++)]);

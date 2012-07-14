@@ -17,8 +17,11 @@ inputmanager::~inputmanager(void)
 
 void inputmanager::tick() {
 	sf::Event event;
+
+	//pull all queued events out of the renderwindow
 	while (window->pollEvent(event))
 	{
+		//check if window is focussed
 		if(event.type == sf::Event::GainedFocus) {
 			focus = true;
 		}
@@ -29,9 +32,11 @@ void inputmanager::tick() {
 		//when the application has the focus, all events will be handled
 		if (focus) 
 		{
+			//window closed
 			if (event.type == sf::Event::Closed) {
 				window->close();
 			}
+			//
 			if (event.type == sf::Event::KeyPressed) {
 				keys[event.key.code] = true;
 			}
