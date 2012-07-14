@@ -68,16 +68,18 @@ void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>
 	// Skip seperator
 	stream.get();
 
+	// Use std::string directly as buffer
 	std::string buffer(packetSize, '\0');
-	stream.read( &buffer.front(), buffer.size() );
+	stream.read( &buffer.front(), buffer.length() );
 
 	if( !stream.good() ) {
 		stream.seekg( position );
 		return;
 	}
 
-	// Validate size of buffer
-	buffer.resize( strnlen(buffer.data(), buffer.size()) );
+	// Validate length of buffer - prevents accidental
+	// access to unallocated memory
+	buffer.resize( strnlen(buffer.data(), buffer.length()) );
 
 	std::lock_guard<std::recursive_mutex> lock( _network._peers.lock );
 	auto removeCount = _network._peers.awaitingHandshake.erase( _socket );
