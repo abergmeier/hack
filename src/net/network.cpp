@@ -324,9 +324,11 @@ void Network::ConnectOutstanding() {
 		DEBUG.LOG_ENTRY( std::string("Starting Connection to ") + addressStr );
 
 		std::unique_ptr<Poco::Net::StreamSocket> socket;
+		bool isConnected = false;
 		try {
 			const SocketAddress& addr = entry;
 			socket.reset( new Poco::Net::StreamSocket( addr ) );
+			isConnected = true;
 		// Ignore following exception
 		} catch( const InvalidAddressException&    ) {
 		} catch( const HostNotFoundException&      ) {
@@ -340,7 +342,12 @@ void Network::ConnectOutstanding() {
 			DEBUG.ERR_ENTRY( std::string("Connection refused to ") + addressStr );
 		} catch( const Poco::Net::NetException& ex ) {
 			DEBUG.ERR_ENTRY( std::string("Connection failed to ") + addressStr + ": " + ex.displayText() );
-			break;
+		}
+
+		if( !isConnected ) {
+			// Connecting was not successful
+			_connectFailedCallback( entry.host().toString(), entry.port() );
+			continue;
 		}
 
 		// Register Handshake wait so we handle
