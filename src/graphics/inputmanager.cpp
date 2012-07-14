@@ -20,11 +20,9 @@ void inputmanager::tick() {
 	while (window->pollEvent(event))
 	{
 		if(event.type == sf::Event::GainedFocus) {
-			cout << "focus gained" << endl;
 			focus = true;
 		}
 		if(event.type == sf::Event::LostFocus) {
-			cout << "focus lost" << endl;
 			focus = false;
 		}
 
@@ -68,10 +66,15 @@ void inputmanager::handleKeys() {
 	if((x != 0.0 || y != 0.0) && moveCallback) moveCallback(x,y);
 
 	//attack
-	if(keys[Keyboard::Space] && attackCallback) attackCallback();
+	if(keys[Keyboard::Space] && attackCallback) {
+		attackCallback(true);
+	} else if(!keys[Keyboard::Space] && attackCallback) {
+		attackCallback(false);
+	}
+
 }
 
-void inputmanager::registerCallbacks(std::function<void(int,int)> position,std::function<void(int,int)> rotation,std::function<void()> attack) {
+void inputmanager::registerCallbacks(std::function<void(int,int)> position,std::function<void(int,int)> rotation,std::function<void(bool)> attack) {
 	moveCallback = position;
 	rotateCallback = rotation;
 	attackCallback = attack;

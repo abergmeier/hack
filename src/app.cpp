@@ -89,8 +89,8 @@ namespace {
 	void updateWeaponPosition(hack::logic::Avatar& avatar, hack::logic::Weapon& weapon) {
 		double angle = (avatar.getAngle()) * M_PI / 180;
 		double rad = avatar.getRadius();
-		int xx = (int)(rad * std::cos(angle) + attack * rad * -std::sin(angle));
-		int yy = (int)(rad * std::sin(angle) + attack * rad * std::cos(angle));
+		int xx = (int)(rad * std::cos(angle) - attack * rad * -std::sin(angle));
+		int yy = (int)(rad * std::sin(angle) - attack * rad * std::cos(angle));
 		weapon.setX(xx+avatar.getX());
 		weapon.setY(yy+avatar.getY());
 	}
@@ -145,11 +145,14 @@ namespace {
 		};
 	}
 
-	std::function<void()> getAvatarAttackHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  std::shared_ptr<hack::logic::Weapon> sharedWeapon) {
-		return [sharedAvatar,sharedWeapon]() {
-			attack = -1;
+	std::function<void(bool)> getAvatarAttackHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  std::shared_ptr<hack::logic::Weapon> sharedWeapon) {
+		return [sharedAvatar,sharedWeapon](bool attacking) {
+			if (attacking) {
+				attack = 1;
+			} else {
+				attack = 0;
+			}
 			updateWeaponPosition(*sharedAvatar, *sharedWeapon);
-			attack = 0;
 		};
 	}
 }

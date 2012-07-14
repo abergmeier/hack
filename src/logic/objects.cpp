@@ -202,7 +202,9 @@ Objects::const_iterator::const_iterator( object_map_type::const_iterator it ) :
 bool Objects::movementCheck(const hack::logic::Avatar &avatar, const vector2<int>& possibleChange)  {
 	for(auto &e : _objectMap) {
 		//world collision
+		//std::cout << e.second->ClassName() << std::endl;
 		if(e.second->ClassName() == hack::logic::Stone::NAME) {
+			std::cout << e.second->getX() << " " << e.second->getWidth() << std::endl;
 			if(intersectAll(*e.second,avatar,possibleChange))
 				return false;
 		}

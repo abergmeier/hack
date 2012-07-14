@@ -20,24 +20,34 @@ namespace graphics {
 class inputmanager
 {
 public:
+	//constructor (with RenderWindow as parameter to get the current input events) and destructor
 	inputmanager(sf::RenderWindow* window);
 	~inputmanager(void);
 	
-	//handles given input for 1 rendertick
+	//this function registers which the inputs are used for further processing
+	//must be called once per frame
 	void tick();
 	
-	void registerCallbacks(std::function<void(int,int)>,std::function<void(int,int)>,std::function<void()>);
+	//registration function to register callback for further character manipulation
+	//these functions must be delivered by the logic or else they wont be executed
+	void registerCallbacks(std::function<void(int,int)>,std::function<void(int,int)>,std::function<void(bool)>);
 private:
+	//variables holding the function callbacks
 	std::function<void(int,int)> moveCallback;
 	std::function<void(int,int)> rotateCallback;
-	std::function<void()> attackCallback;
+	std::function<void(bool)> attackCallback;
 
+	//processes the inputs and executes their callbacks if they are registered
 	void handleKeys();
 
+	//pointer to the renderwindow
 	sf::RenderWindow* window;
+
+	//map that holds all keyboard inputs per tick
 	std::map<sf::Keyboard::Key,bool> keys;
 	
-	//render window focussed or not
+	//variable that is set true, if the renderwindow is focussed
+	//if it is not focussed, this will prevent inputs from being processed
 	bool focus;
 };
 

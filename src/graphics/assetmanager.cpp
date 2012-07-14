@@ -22,18 +22,6 @@ assetmanager::~assetmanager(void)
 }
 
 void assetmanager::init() {
-	//initializing all 8 playercolors
-	/*const char *player_colors[] = {"normal","red","blue","green","yellow","mono","brown","purple"};
-	std::string p = Avatar::NAME; 
-	std::string resource_start = "resources/avatar-";
-	std::string resource_end = ".png";
-	for(auto k : player_colors) {
-		std::string temp = p+k;
-		avatar_names.push_back(temp);
-		addTexture(avatar_names.back().c_str(),(resource_start+k+resource_end).c_str());
-		//std::cout << avatar_names.end()->c_str() << std::endl;
-	}*/
-	
 	//player sprites
 	avatar_names.push_back("avatarpurple");
 	addTexture(avatar_names.back(),"resources/avatar-purple.png");

@@ -445,8 +445,8 @@ void Network::OnDisconnect( StreamSocket& socket ) {
 	auto peerPort = socket.address().port();
 
 	DEBUG.LOG_ENTRY(std::stringstream() << "Disconnected: " << peerHostStr << ':' << peerPort);
-
-	decltype(_peers.connected)::iterator it;
+	typedef decltype(_peers.connected) connected_container;
+	connected_container::iterator it;
 
 	{
 		// Limit lock because later on we invoke callbacks and do not
