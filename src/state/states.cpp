@@ -98,40 +98,40 @@ void States::ReceiveFrom( std::string&& serialized, hack::logic::Player& player 
 }
 
 void States::ProcessInput() {
+	decltype(_input.queue) input_queue;
+
 	{
 		std::lock_guard<std::mutex> lock( _input.mutex );
 		// Save elements in the backup queue so that the
 		// front queue is accessible again
-		_input.queue.swap( _input.backup_queue );
+		_input.queue.swap( input_queue );
 	}
 
 	// Now we can safely work on the backup queue
-	for( auto& element : _input.backup_queue ) {
+	for( auto& element : input_queue ) {
 		std::istringstream stream( element );
 		_deserialize( stream );
 	}
-
-	_input.backup_queue.clear();
 }
 
 void States::ProcessOutput() {
+	decltype(_output.queue) output_queue;
+
 	{
 		std::lock_guard<std::mutex> lock( _output.mutex );
 		// Save elements in the backup queue so that the
 		// front queue is accessible again
-		_output.queue.swap( _output.backup_queue );
+		_output.queue.swap( output_queue );
 	}
 
 	// Now we can safely work on the backup queue
-	for( auto& element : _output.backup_queue ) {
+	for( auto& element : output_queue ) {
 		auto sharedPlayer = element.first.lock();
 		if( sharedPlayer )
 			PassToNetwork( element.second, *sharedPlayer );
 		else
 			PassToNetwork( element.second );
 	}
-
-	_output.backup_queue.clear();
 }
 
 bool States::_ExecuteWorker() {

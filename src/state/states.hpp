@@ -24,13 +24,11 @@ class States : public hack::Subsystem {
 	struct {
 		std::mutex mutex;
 		std::deque<std::string> queue;
-		std::deque<std::string> backup_queue;
 	} _input;
 	struct {
 		typedef std::pair<std::weak_ptr<hack::logic::Player>, std::string> value_type;
 		std::mutex mutex;
 		std::deque<value_type> queue;
-		std::deque<value_type> backup_queue;
 	} _output;
 	bool _isRunning;
 	std::function<void(std::istream&)> _deserialize;
