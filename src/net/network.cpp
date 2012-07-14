@@ -321,7 +321,8 @@ void Network::ConnectOutstanding() {
 		const auto addressStr = GetAddressString( entry );
 		DEBUG.LOG_ENTRY( std::string("Starting Connection to ") + addressStr );
 
-		StreamSocket socket( entry );
+		const SocketAddress& addr = entry;
+		Poco::Net::StreamSocket socket( addr );
 
 		// Register Handshake wait so we handle
 		// the first packet
