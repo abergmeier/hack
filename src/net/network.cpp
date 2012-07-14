@@ -321,21 +321,38 @@ void Network::ConnectOutstanding() {
 		const auto addressStr = GetAddressString( entry );
 		DEBUG.LOG_ENTRY( std::string("Starting Connection to ") + addressStr );
 
-		const SocketAddress& addr = entry;
-		Poco::Net::StreamSocket socket( addr );
+		std::unique_ptr<Poco::Net::StreamSocket> socket;
+		try {
+			const SocketAddress& addr = entry;
+			socket.reset( new Poco::Net::StreamSocket( addr ) );
+		// Ignore following exception
+		} catch( const InvalidAddressException&    ) {
+		} catch( const HostNotFoundException&      ) {
+		} catch( const NoAddressFoundException&    ) {
+		// Log connection errors
+		} catch( const ConnectionAbortedException& ) {
+			DEBUG.ERR_ENTRY( std::string("Connection aborted to ") + addressStr );
+		} catch( const ConnectionResetException&   ) {
+			DEBUG.ERR_ENTRY( std::string("Connection reset to ") + addressStr);
+		} catch( const ConnectionRefusedException& ) {
+			DEBUG.ERR_ENTRY( std::string("Connection refused to ") + addressStr );
+		} catch( const Poco::Net::NetException& ex ) {
+			DEBUG.ERR_ENTRY( std::string("Connection failed to ") + addressStr + ": " + ex.displayText() );
+			break;
+		}
 
 		// Register Handshake wait so we handle
 		// the first packet
-		_peers.awaitingHandshake.insert( std::make_pair( socket, entry.uuid ) );
+		_peers.awaitingHandshake.insert( std::make_pair( *socket, entry.uuid ) );
 
 		DEBUG.LOG_ENTRY( std::string("Sending Handshake to ") + addressStr );
 
 		auto packet = _createPacket( uuid );
-		socket.sendBytes( packet.data(), (packet.length() + 1) * sizeof(packet_type::value_type) );
+		socket->sendBytes( packet.data(), (packet.length() + 1) * sizeof(packet_type::value_type) );
 
 		DEBUG.LOG_ENTRY( std::string("Waiting on Handshake from ") + addressStr);
 
-		_acceptor->createServiceHandler( socket );
+		_acceptor->createServiceHandler( *socket );
 	}
 
 	_peers.unconnected.clear();
