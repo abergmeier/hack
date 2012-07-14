@@ -20,6 +20,8 @@ struct id_type {
 	id_type& operator=(const id_type& other);
 	id_type& operator=(id_type&& other      );
 	bool operator <(const id_type& other) const;
+	bool operator ==(const id_type& other) const;
+	bool operator !=(const id_type& other) const;
 	std::string global_id;
 	size_t local_id;
 };

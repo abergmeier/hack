@@ -16,10 +16,19 @@ id_type::id_type(std::istream& stream) {
 }
 
 bool id_type::operator <(const id_type& other) const {
-	if( global_id == other.global_id )
-		return local_id < other.local_id;
+	if( global_id != other.global_id )
+		return global_id < other.global_id;
 
-	return global_id < other.global_id;
+	return local_id < other.local_id;
+}
+
+bool id_type::operator ==(const id_type& other) const {
+	return global_id == other.global_id
+	    && local_id == other.local_id;
+}
+
+bool id_type::operator !=(const id_type& other) const {
+	return !( *this == other);
 }
 
 id_type::id_type(const id_type& other) :
