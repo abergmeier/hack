@@ -409,15 +409,15 @@ void Network::ConnectOutstanding() {
 }
 
 void Network::HandleUnsent() {
-	typedef decltype(_queues.input) queue_type;
-	queue_type inputQueue;
+	typedef decltype(_queues.output) queue_type;
+	queue_type outputQueue;
 
 	{
 		std::lock_guard<std::recursive_mutex> lock( _queues.lock );
-		inputQueue.swap( _queues.input );
+		outputQueue.swap( _queues.output );
 	}
 
-	for( auto& element : inputQueue ) {
+	for( auto& element : outputQueue ) {
 
 		auto sharedPeer = element.peer.lock();
 
@@ -611,5 +611,5 @@ void Network::Enqueue( std::weak_ptr<Peer> peer, packet_type packet ) {
 	element.packet = std::move(packet);
 	element.peer = std::move(peer);
 	std::lock_guard<std::recursive_mutex> lock( _queues.lock );
-	_queues.input.push_back( std::move(element) );
+	_queues.output.push_back( std::move(element) );
 }

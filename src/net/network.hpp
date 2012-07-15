@@ -157,7 +157,7 @@ private:
 
 	struct {
 		mutable std::recursive_mutex lock;
-		std::deque<queue_element_type> input;
+		std::deque<queue_element_type> output;
 	} _queues;
 
 	struct Peers {
