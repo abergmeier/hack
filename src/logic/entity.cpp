@@ -66,11 +66,11 @@ std::ostream& hack::logic::operator <<(std::ostream& stream, const id_type& id) 
 }
 
 std::istream& hack::logic::operator >>(std::istream& stream, id_type& id) {
-	stream.get(); //{
+	char extracted = stream.get(); // Skip {
 	id.global_id = hack::state::Serializable::String::Deserialize( stream );
-	stream.get(); //,
+	extracted = stream.get(); // Skip ,
 	stream >> id.local_id;
-	stream.get(); //}
+	extracted = stream.get(); // Skip }
 	return stream;
 }
 

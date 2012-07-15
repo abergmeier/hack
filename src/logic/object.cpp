@@ -26,6 +26,7 @@ Object::Object(std::string siteID) :
 Object::Object(std::istream& stream) :
 	id(stream)
 {
+	char extracted = stream.get(); // Skip ,
 	Set(stream);
 }
 
@@ -33,16 +34,16 @@ Object::~Object() {
 }
 
 void Object::Set(std::istream& stream) {
-	 stream.get();
-	 stream >> x;
-	 stream.get();
-	 stream >> y;
-	 stream.get();
-	 stream >> width;
-	 stream.get();
-	 stream >> height;
-	 stream.get();
-	 stream >> angle;
+	char extracted = stream.get(); // Skip ,
+	stream >> x;
+	extracted = stream.get(); // Skip ,
+	stream >> y;
+	extracted = stream.get(); // Skip ,
+	stream >> width;
+	extracted = stream.get(); // Skip ,
+	stream >> height;
+	extracted = stream.get(); // Skip ,
+	stream >> angle;
 }
 
 Object& Object::operator = (std::istream& stream) {
