@@ -13,6 +13,8 @@
 
 using namespace hack::net;
 
+const unsigned int Network::MAX_PACKET_LENGTH = 10;
+
 namespace {
 	struct Debug : public hack::Debug {
 		const std::string& GetCategory() const override {
@@ -57,6 +59,10 @@ namespace {
 
 void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>& ) {
 	try {
+		// We need to be able to read the length + 1
+		if( _socket.available() < MAX_PACKET_LENGTH + 1 )
+			return;
+
 		SocketStream stream( _socket );
 		auto position = stream.tellg();
 
@@ -64,13 +70,13 @@ void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>
 		stream >> packetSize;
 
 		// Skip seperator
-		stream.get();
+		char extracted = stream.get();
 
 		// Use std::string directly as buffer
 		std::string buffer(packetSize, '\0');
 		stream.read( &buffer.front(), buffer.length() );
 
-		if( !stream.good() ) {
+		if( !stream ) {
 			stream.seekg( position );
 			return;
 		}
@@ -309,6 +315,7 @@ void Network::Peer::SetReceiveCallback( std::function<void(buffer_type)> func ) 
 		_connectedCallback();
 
 }
+
 std::shared_ptr<Network::Peer> Network::CreatePeer( StreamSocket& socket, SocketReactor& reactor, std::string uuid, std::function<void()> connectedCallback ) {
 	// We have to build Peer manually here because we only allow Network to
 	// instantiate Peer objects
