@@ -590,7 +590,7 @@ void Network::ExecuteWorker() {
 
 	DEBUG.LOG_ENTRY("[Worker] Start...");
 
-	_reactor.setTimeout( Poco::Timespan(0, 2000) );
+	_reactor.setTimeout( Poco::Timespan(0, 100000) );
 	_reactor.addEventHandler( *_server, Poco::NObserver<Network, Poco::Net::TimeoutNotification>(*this, &Network::OnTimeout));
 
     // Run till reactor is stopped

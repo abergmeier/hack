@@ -20,16 +20,13 @@ public:
 	size_t getHitpoints();
 	size_t getDamage();
 	float getRadius();
-	float getWeaponRange();
 	float getRadius() const;
-	float getWeaponRange() const;
 	
 private:
 	void Set(std::istream& stream);
 	size_t hitpoints;
 	size_t damage;
 	float radius;
-	float weaponRange;
 	void setHitpoints(size_t value);
 	void setDamage(size_t value);
 	void hit(size_t value);
