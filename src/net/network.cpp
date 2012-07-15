@@ -49,58 +49,77 @@ namespace {
 		stream << address.host().toString() << ':' << address.port();
 		return stream.str();
 	};
+
+	void LOG_UNHANDLED( const Poco::Exception& e ) {
+		DEBUG.ERR_ENTRY( std::string("Unhandled exception of Poco: ") + e.displayText() );
+	}
 }
 
 void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>& ) {
-	SocketStream stream( _socket );
-	auto position = stream.tellg();
+	try {
+		SocketStream stream( _socket );
+		auto position = stream.tellg();
 
-	Poco::UInt32 packetSize;
-	stream >> packetSize;
+		Poco::UInt32 packetSize;
+		stream >> packetSize;
 
-	// Skip seperator
-	stream.get();
+		// Skip seperator
+		stream.get();
 
-	// Use std::string directly as buffer
-	std::string buffer(packetSize, '\0');
-	stream.read( &buffer.front(), buffer.length() );
+		// Use std::string directly as buffer
+		std::string buffer(packetSize, '\0');
+		stream.read( &buffer.front(), buffer.length() );
 
-	if( !stream.good() ) {
-		stream.seekg( position );
-		return;
-	}
+		if( !stream.good() ) {
+			stream.seekg( position );
+			return;
+		}
 
-	// Validate length of buffer - prevents accidental
-	// access to unallocated memory
-	buffer.resize( strnlen(buffer.data(), buffer.length()) );
+		// Validate length of buffer - prevents accidental
+		// access to unallocated memory
+		buffer.resize( strnlen(buffer.data(), buffer.length()) );
 
-	std::lock_guard<std::recursive_mutex> lock( _network._peers.lock );
-	auto removeCount = _network._peers.awaitingHandshake.erase( _socket );
+		std::lock_guard<std::recursive_mutex> lock( _network._peers.lock );
+		auto it = _network._peers.awaitingHandshake.find( _socket );
 
-	if( removeCount == 0 ) {
-		// Handshake already successfull
-		_peer->receiveCallback( std::move(buffer) );
-	} else {
-		_peer = _network.FinishHandshake( _socket, _reactor, std::move(buffer) );
+		if( it == _network._peers.awaitingHandshake.end() ) {
+			// Handshake already successfull
+			DEBUG.LOG_ENTRY(std::stringstream() << "Received package with content-size " << buffer.length() << " from " << GetAddressString(_socket.address()) );
+			_peer->GetReceiveCallback()( std::move(buffer) );
+		} else {
+			bool needsToConfirm = it->second.empty();
+			_peer = _network.FinishHandshake( _socket, _reactor, std::move(buffer), needsToConfirm );
+			_network._peers.awaitingHandshake.erase( it );
+		}
+	} catch( const Poco::Exception& e ) {
+		LOG_UNHANDLED( e );
 	}
 }
 
 void Network::PeerWrapper::OnWriteable( const Poco::AutoPtr<WritableNotification>& ) {
-	_network.HandleUnsent();
+	try {
+		_network.HandleUnsent();
+	} catch( const Poco::Exception& e ) {
+		LOG_UNHANDLED( e );
+	}
 }
 
 void Network::PeerWrapper::OnTimeout( const Poco::AutoPtr<TimeoutNotification>& ) {
-	std::lock_guard<std::recursive_mutex> lock( _network._peers.lock );
+	try {
+		std::lock_guard<std::recursive_mutex> lock( _network._peers.lock );
 
-	if( _peer ) {
-		DEBUG.ERR_ENTRY( std::stringstream() << "Connection timed out " << _peer->uuid );
-		_network._peers.connected.erase( Address(_peer->GetSocket().address(), _peer->uuid) );
-	} else {
-		DEBUG.ERR_ENTRY( std::stringstream() << "Connection timed out "
-		                 << GetAddressString( _socket.address()) );
+		if( _peer ) {
+			DEBUG.ERR_ENTRY( std::stringstream() << "Connection timed out " << _peer->uuid );
+			_network._peers.connected.erase( Address(_peer->GetSocket().address(), _peer->uuid) );
+		} else {
+			DEBUG.ERR_ENTRY( std::stringstream() << "Connection timed out "
+							 << GetAddressString( _socket.address()) );
+		}
+
+		_network._peers.awaitingHandshake.erase( _socket );
+	} catch( const Poco::Exception& e ) {
+		LOG_UNHANDLED( e );
 	}
-
-	_network._peers.awaitingHandshake.erase( _socket );
 }
 
 void Network::PeerWrapper::OnError( const Poco::AutoPtr<ErrorNotification>& ) {
@@ -109,8 +128,12 @@ void Network::PeerWrapper::OnError( const Poco::AutoPtr<ErrorNotification>& ) {
 }
 
 void Network::PeerWrapper::OnShutdown( const Poco::AutoPtr<ShutdownNotification>& ) {
-	_network.OnDisconnect( _socket );
-	delete this;
+	try {
+		_network.OnDisconnect( _socket );
+		delete this;
+	} catch( const Poco::Exception& e ) {
+		LOG_UNHANDLED( e );
+	}
 }
 
 Network::PeerWrapper::PeerWrapper(Poco::Net::StreamSocket& socket, Poco::Net::SocketReactor& reactor) :
