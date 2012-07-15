@@ -24,8 +24,6 @@ public:
 	virtual ~Object();
 	virtual Object& operator = (std::istream& stream);
 
-	// This has to be implemented in order to easily serialize an object
-	// Most times should just call the Serialize overload and pass the class name
 	const id_type& getid() const;
 	int getX() const;
 	int getY() const;
