@@ -59,8 +59,7 @@ void States::CommitTo( const Serializable& object, std::shared_ptr<hack::logic::
 	object.Serialize( stream );
 	stream.flush();
 
-	auto weakPlayer = std::weak_ptr<hack::logic::Player>( player );
-	_output.queue.push_back( std::make_pair( weakPlayer, stream.str() ) );
+	_output.queue.push_back( std::make_pair(  player , stream.str() ) );
 }
 
 //void CommitTo( const Serializable& object, Player& player);
