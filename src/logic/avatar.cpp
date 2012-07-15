@@ -19,7 +19,7 @@ Avatar::Avatar(std::string siteID)
 Avatar::Avatar(std::istream& stream) :
 	Object(stream)
 {
-	Set(stream);
+	SetNonConst(stream);
 }
 
 std::ostream& Avatar::SerializeContent(std::ostream& stream) const {
@@ -55,7 +55,7 @@ void Avatar::hit(size_t value) {
 	hitpoints -= std::min(hitpoints, value);
 }
 
-void Avatar::Set(std::istream& stream) {
+void Avatar::SetNonConst(std::istream& stream) {
 	 stream.get();
 	 stream >> hitpoints;
 	 stream.get();
@@ -67,6 +67,6 @@ void Avatar::Set(std::istream& stream) {
 
 Object& Avatar::operator = (std::istream& stream) {
 	Object::operator = (stream);
-	Set(stream);
+	SetNonConst(stream);
 	return *this;
 }

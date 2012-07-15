@@ -48,7 +48,8 @@ private:
 	size_t width;
 	size_t height;
 
-	void Set(std::istream& stream);
+	// Sets all non const fields
+	void SetNonConst(std::istream& stream);
 
 protected:
 	Object(std::string siteID);

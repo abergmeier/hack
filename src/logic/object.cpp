@@ -27,13 +27,13 @@ Object::Object(std::istream& stream) :
 	id(stream)
 {
 	char extracted = stream.get(); // Skip ,
-	Set(stream);
+	SetNonConst(stream);
 }
 
 Object::~Object() {
 }
 
-void Object::Set(std::istream& stream) {
+void Object::SetNonConst(std::istream& stream) {
 	char extracted = stream.get(); // Skip ,
 	stream >> x;
 	extracted = stream.get(); // Skip ,
@@ -48,6 +48,7 @@ void Object::Set(std::istream& stream) {
 
 Object& Object::operator = (std::istream& stream) {
 	Set(stream);
+	SetNonConst(stream);
 	return *this;
 }
 

@@ -23,7 +23,8 @@ public:
 	float getRadius() const;
 	
 private:
-	void Set(std::istream& stream);
+	// Extracts all non const fields
+	void SetNonConst(std::istream& stream);
 	size_t hitpoints;
 	size_t damage;
 	float radius;
