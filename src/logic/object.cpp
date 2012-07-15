@@ -26,7 +26,6 @@ Object::Object(std::string siteID) :
 Object::Object(std::istream& stream) :
 	id(stream)
 {
-	char extracted = stream.get(); // Skip ,
 	SetNonConst(stream);
 }
 
@@ -47,7 +46,11 @@ void Object::SetNonConst(std::istream& stream) {
 }
 
 Object& Object::operator = (std::istream& stream) {
-	Set(stream);
+	id_type tempId(stream); // Skip id
+
+	if( tempId == id )
+		throw std::runtime_error("Deserialize while ID does not match!");
+
 	SetNonConst(stream);
 	return *this;
 }

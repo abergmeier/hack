@@ -52,11 +52,11 @@ void Avatar::hit(size_t value) {
 }
 
 void Avatar::SetNonConst(std::istream& stream) {
-	 stream.get();
+	 char extracted = stream.get(); // Skip ,
 	 stream >> hitpoints;
-	 stream.get();
+	 extracted = stream.get();
 	 stream >> damage;
-	 stream.get();
+	 extracted = stream.get();
 	 stream >> radius;
 }
 
