@@ -31,7 +31,7 @@ RemotePlayer::RemotePlayer(std::weak_ptr<Network> network, std::weak_ptr<hack::s
 	}),
 	_peer(peer)
 {
-	peer->receiveCallback = _receiver;
+	peer->SetReceiveCallback( _receiver );
 }
 
 const std::string& RemotePlayer::GetUUID() const {
@@ -47,7 +47,7 @@ RemotePlayer::~RemotePlayer() {
 	auto peer = _peer.lock();
 
 	if( peer )
-		peer->receiveCallback = nullptr;
+		peer->SetReceiveCallback( nullptr );
 }
 
 bool

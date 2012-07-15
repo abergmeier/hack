@@ -82,20 +82,25 @@ public:
 		~Peer();
 		bool operator < (const Peer& other) const;
 		bool operator ==(const Peer& other) const;
-		std::function<void(buffer_type)> receiveCallback;
 
 		const std::string uuid;
 		StreamSocket& GetSocket();
+		std::function<void(buffer_type)> GetReceiveCallback();
+		void SetReceiveCallback( std::function<void(buffer_type)> func );
 	private:
 		// Make sure we can only be created by the network
 		friend class Network;
-		Peer( Network& network, StreamSocket& socket, SocketReactor& reactor, std::string uuid );
+		Peer( Network& network, StreamSocket& socket, SocketReactor& reactor, std::string uuid, std::function<void()> connectedCallback );
 		void Destroy();
 		//std::queue<std::tuple<buffer_type, std::function<void()>>> sendQueue;
 
 		StreamSocket   _socket;
 		SocketReactor& _reactor;
 		Network&       _network;
+		std::function<void(buffer_type)> _receiveCallback;
+		// Gets called once the Peer is connected in both
+		// directions
+		std::function<void()> _connectedCallback;
 	};
 
 	friend struct Peer;
@@ -138,7 +143,7 @@ private:
 	std::function<void(std::shared_ptr<Peer>)>            _connectCallback;
 	std::function<void(const std::string&, Poco::UInt32)> _connectFailedCallback;
 	std::function<void(hack::net::Network::Peer&)>        _disconnectCallback;
-	std::shared_ptr<Peer> CreatePeer( StreamSocket& socket, SocketReactor& reactor, std::string uuid );
+	std::shared_ptr<Peer> CreatePeer( StreamSocket& socket, SocketReactor& reactor, std::string uuid, std::function<void()> connectedCallback );
 
 	struct queue_element_type {
 		// Destination of data - broadcast if peer is null
@@ -212,7 +217,7 @@ private:
 	bool IsConnected ( const std::string& uuid ) const;
 
 	void HandleTimeout();
-	std::shared_ptr<Network::Peer> FinishHandshake( StreamSocket& socket, SocketReactor& reactor, std::string otherUuid );
+	std::shared_ptr<Network::Peer> FinishHandshake( StreamSocket& socket, SocketReactor& reactor, std::string otherUuid, bool isSlave );
 
 	// Immediately sends Packet to all connected Peers
 

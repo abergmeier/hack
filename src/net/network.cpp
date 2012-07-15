@@ -245,11 +245,12 @@ Network::Address::operator <(const Address& other) const {
 	return uuid < other.uuid;
 }
 
-Network::Peer::Peer( Network& network, StreamSocket& socket, SocketReactor& reactor, std::string uuid ) :
+Network::Peer::Peer( Network& network, StreamSocket& socket, SocketReactor& reactor, std::string uuid, std::function<void()> connectedCallback ) :
 	uuid     ( uuid ),
 	_socket  ( socket ),
 	_reactor ( reactor ),
-	_network ( network )
+	_network ( network ),
+	_connectedCallback( connectedCallback )
 {
 }
 
@@ -272,10 +273,21 @@ bool Network::Peer::operator ==(const Peer& other) const {
 	return uuid == other.uuid;
 }
 
-std::shared_ptr<Network::Peer> Network::CreatePeer( StreamSocket& socket, SocketReactor& reactor, std::string uuid ) {
-	// We have to build Peer manually on heap here because we only allow Network to
+std::function<void(Network::buffer_type)> Network::Peer::GetReceiveCallback() {
+	return _receiveCallback;
+}
+
+void Network::Peer::SetReceiveCallback( std::function<void(buffer_type)> func ) {
+	_receiveCallback = func;
+
+	if( _receiveCallback )
+		_connectedCallback();
+
+}
+std::shared_ptr<Network::Peer> Network::CreatePeer( StreamSocket& socket, SocketReactor& reactor, std::string uuid, std::function<void()> connectedCallback ) {
+	// We have to build Peer manually here because we only allow Network to
 	// instantiate Peer objects
-	std::shared_ptr<Peer> sharedPeer( new Peer( *this, socket, reactor, uuid ) );
+	std::shared_ptr<Peer> sharedPeer( new Peer( *this, socket, reactor, uuid, connectedCallback ) );
 
 	{
 		std::lock_guard<std::recursive_mutex> lock( _peers.lock );
@@ -401,13 +413,30 @@ void Network::OnConnect( StreamSocket& socket, SocketReactor& reactor ) {
 	_peers.awaitingHandshake.insert( std::make_pair( socket, std::string() ) );
 }
 
-std::shared_ptr<Network::Peer> Network::FinishHandshake( StreamSocket& socket, SocketReactor& reactor, std::string otherUuid ) {
+std::shared_ptr<Network::Peer> Network::FinishHandshake( StreamSocket& socket, SocketReactor& reactor, std::string otherUuid, bool isSlave ) {
 	const auto peerHost = socket.address().host().toString();
 	const auto peerPort = socket.address().port();
 	const auto address = GetAddressString( socket.address() );
 	DEBUG.LOG_ENTRY( "Received Handshake from and established Connection with " + address );
 
-	return CreatePeer( socket, reactor, otherUuid );
+	// Once we can process incoming packets,
+	//
+	std::function<void()> connectedFunc;
+
+	// The Handshake slave has to respond
+	if( isSlave ) {
+		auto sharedSocket = std::make_shared<StreamSocket>( socket );
+		connectedFunc = [this, sharedSocket]() {
+			auto packet = _createPacket( uuid );
+			SendPacket( *sharedSocket, packet );
+		};
+	} else {
+		connectedFunc = []() {
+
+		};
+	}
+
+	return CreatePeer( socket, reactor, otherUuid, connectedFunc );
 }
 
 #if 0
