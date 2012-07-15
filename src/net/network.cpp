@@ -140,6 +140,8 @@ Network::PeerWrapper::PeerWrapper(Poco::Net::StreamSocket& socket, Poco::Net::So
 	_reactor(*static_cast<SocketReactor*>(nullptr)),
 	_network(*static_cast<Network*>(nullptr))
 {
+	// Should never be used since we defined our own
+	// constructor and use it exclusively
 	throw std::runtime_error("Wrong constructor");
 }
 
