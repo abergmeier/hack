@@ -50,6 +50,7 @@ namespace {
 	void RegisterAllClasses() {
 		hack::logic::Objects::Register<hack::logic::Stone>();
 		hack::logic::Objects::Register<hack::logic::Avatar>();
+		hack::logic::Objects::Register<hack::logic::Weapon>();
 	}
 
 	void UpdateRotation(vector2<int>& mousePosition, hack::logic::Avatar& playerAvatar) {
