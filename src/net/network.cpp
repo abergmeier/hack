@@ -59,15 +59,39 @@ namespace {
 
 void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>& ) {
 	try {
-		// We need to be able to read the length + 1
-		if( _socket.available() < MAX_PACKET_LENGTH + 1 )
+		// No sense in doing anything
+		if( _socket.available() <= 0 )
 			return;
 
-		SocketStream stream( _socket );
+		const size_t bytesAvailable = _socket.available();
+
+		_input.resize( _input.length() + bytesAvailable );
+
+		_socket.receiveBytes( &_input.front(), bytesAvailable );
+
+		//DEBUG.LOG_ENTRY( std::string("BUFFER: ") + _input );
+	} catch( const Poco::Exception& e ) {
+		LOG_UNHANDLED( e );
+	}
+
+	//
+	// Buffering from Poco done here
+	//
+
+	// We need to be able to read the length + 1
+	while( _input.length() >= MAX_PACKET_LENGTH + 1 ) {
+		std::istringstream stream( _input );
+
 		auto position = stream.tellg();
 
 		Poco::UInt32 packetSize;
 		stream >> packetSize;
+
+		if( packetSize == 0 ) {
+			// No size or invalid string
+			stream.seekg( position );
+			break;
+		}
 
 		// Skip seperator
 		char extracted = stream.get();
@@ -78,8 +102,10 @@ void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>
 
 		if( !stream ) {
 			stream.seekg( position );
-			return;
+			break;
 		}
+
+		_input.erase( 0, MAX_PACKET_LENGTH + 1 + packetSize );
 
 		// Validate length of buffer - prevents accidental
 		// access to unallocated memory
@@ -90,15 +116,13 @@ void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>
 
 		if( it == _network._peers.awaitingHandshake.end() ) {
 			// Handshake already successfull
-			DEBUG.LOG_ENTRY(std::stringstream() << "Received package with content-size " << buffer.length() << " from " << GetAddressString(_socket.address()) );
+			//DEBUG.LOG_ENTRY(std::stringstream() << "Received package with content-size " << buffer.length() << " from " << GetAddressString(_socket.address()) );
 			_peer->GetReceiveCallback()( std::move(buffer) );
 		} else {
 			bool needsToConfirm = it->second.empty();
 			_peer = _network.FinishHandshake( _socket, _reactor, std::move(buffer), needsToConfirm );
 			_network._peers.awaitingHandshake.erase( it );
 		}
-	} catch( const Poco::Exception& e ) {
-		LOG_UNHANDLED( e );
 	}
 }
 

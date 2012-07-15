@@ -111,6 +111,7 @@ private:
 		StreamSocket   _socket;
 		SocketReactor& _reactor;
 		Network&       _network;
+		std::string    _input;
 	public:
 		void OnReadable ( const Poco::AutoPtr<ReadableNotification>& );
 		void OnWriteable( const Poco::AutoPtr<WritableNotification>& );
