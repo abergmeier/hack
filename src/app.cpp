@@ -103,9 +103,9 @@ namespace {
 
 	static const auto ASYNC_POLICY = std::launch::async;
 
-	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar, std::shared_ptr<hack::logic::Weapon> sharedWeapon,  hack::logic::Objects &obj) {
+	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar, std::shared_ptr<hack::logic::Weapon> sharedWeapon,  hack::logic::Objects &obj, hack::state::States& states ) {
 		auto& localMousePosition = lastMousePosition;
-		return [&localMousePosition, sharedAvatar, sharedWeapon, &obj]( int x, int y ) {
+		return [&localMousePosition, sharedAvatar, sharedWeapon, &states, &obj]( int x, int y ) {
 
 			int xx = sharedAvatar->getX() + x;
 			int yy = sharedAvatar->getY() + y;
@@ -123,13 +123,16 @@ namespace {
 
 			//update rotations
 			UpdateRotation( localMousePosition, *sharedAvatar );
-			sharedWeapon->setAngle(sharedAvatar->getAngle());
+			states.Commit( *sharedAvatar );
+
+			sharedWeapon->setAngle( sharedAvatar->getAngle() );
+			states.Commit( *sharedWeapon );
 		};
 	}
 
-	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar, std::shared_ptr<hack::logic::Weapon> sharedWeapon,hack::logic::Objects &obj) {
+	std::function<void(int x, int y)> getMouseMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar, std::shared_ptr<hack::logic::Weapon> sharedWeapon,hack::logic::Objects &obj, hack::state::States& states) {
 		auto& localMousePosition = lastMousePosition;
-		return [&localMousePosition, sharedAvatar, sharedWeapon, &obj]( int absx, int absy ) {
+		return [&localMousePosition, sharedAvatar, sharedWeapon, &obj, &states]( int absx, int absy ) {
 			// Save for further processing
 			localMousePosition[0] = absx;
 			localMousePosition[1] = absy;
@@ -137,12 +140,14 @@ namespace {
 			//DEBUG.LOG_ENTRY(std::stringstream() << "Mouse Pos: " << absx << ':' << absy);
 
 			UpdateRotation( localMousePosition, *sharedAvatar );
+			states.Commit( *sharedAvatar );
 
 			//sword position in relation to player
-			updateWeaponPosition(*sharedAvatar,*sharedWeapon);
+			updateWeaponPosition(*sharedAvatar, *sharedWeapon);
 
 			//sword angle
 			sharedWeapon->setAngle(sharedAvatar->getAngle());
+			states.Commit( *sharedWeapon );
 		};
 	}
 
@@ -307,8 +312,8 @@ int main() {
 
 	attemptCreateObjects();
 
-	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, sharedWeapon ,objects ),
-											getMouseMoveHandler   ( sharedAvatar, sharedWeapon ,objects ),
+	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, sharedWeapon ,objects, *states ),
+											getMouseMoveHandler   ( sharedAvatar, sharedWeapon ,objects, *states ),
 											getAvatarAttackHandler( sharedAvatar, sharedWeapon ) );
 
 	r->run();
