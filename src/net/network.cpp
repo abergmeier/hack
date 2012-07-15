@@ -390,12 +390,12 @@ void Network::ConnectOutstanding() {
 
 		DEBUG.LOG_ENTRY( std::string("Sending Handshake to ") + addressStr );
 
+		_acceptor->createServiceHandler( *socket );
+
 		auto packet = _createPacket( uuid );
 		SendPacket( *socket, packet );
 
 		DEBUG.LOG_ENTRY( std::string("Waiting on Handshake from ") + addressStr);
-
-		_acceptor->createServiceHandler( *socket );
 	}
 
 	_peers.unconnected.clear();
