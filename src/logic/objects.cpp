@@ -105,7 +105,10 @@ namespace {
 
 Objects::value_type
 Objects::Deserialize(std::istream& stream) {
+	char extracted = stream.get(); // Skip {
 	auto className = hack::state::Serializable::String::Deserialize( stream );
+
+	extracted = stream.get(); // Skip ,
 
 	// Remember position of id - we might
 	// need to jump back to it
@@ -145,6 +148,7 @@ Objects::Deserialize(std::istream& stream) {
 		}
 	}
 
+	extracted = stream.get(); //Ignore }
 	return object;
 }
 
