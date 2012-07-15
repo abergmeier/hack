@@ -204,19 +204,16 @@ Objects::const_iterator::const_iterator( object_map_type::const_iterator it ) :
 }
 
 bool Objects::movementCheck(const hack::logic::Avatar &avatar, const vector2<int>& possibleChange)  {
-	//	for(auto &e : _objectMap) {
-//		std::cout << e.second->ClassName() << std::endl;
-//	}
-	std::cout << "----------" << std::endl;
 	for(auto &e : _objectMap) {
+		//checking if its not yourself
 		if (*e.second == avatar) 
 			continue;
 
 		//world collision	
-		std::cout << e.second->ClassName() << std::endl;
 		if(e.second->ClassName() == hack::logic::Stone::NAME) {
 			if(intersectAll(*e.second,avatar,possibleChange))
 				return false;
+		//player collsision
 		} else if (e.second->ClassName() == hack::logic::Avatar::NAME) {
 			float dx = static_cast<float>(avatar.getX() - e.second->getX());
 			float dy = static_cast<float>(avatar.getY() - e.second->getY());
