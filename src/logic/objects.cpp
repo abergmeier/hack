@@ -135,6 +135,7 @@ Objects::Deserialize(std::istream& stream) {
 
 		auto& createFunc = (*classIt).second;
 		object = createFunc(stream);
+		Register( object );
 	} else {
 		// Set already present object
 		object = (*it).second;
