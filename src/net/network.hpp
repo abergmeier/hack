@@ -151,8 +151,8 @@ private:
 
 	struct queue_element_type {
 		// Destination of data - broadcast if peer is null
-		std::shared_ptr<Peer> peer;
-		packet_type           packet;
+		std::weak_ptr<Peer> peer;
+		packet_type         packet;
 	};
 
 	struct {
@@ -229,7 +229,7 @@ private:
 	// Immediately sends Packet to Peer
 	static void SendPacket( StreamSocket& socket, const packet_type& packet );
 
-	void Enqueue( std::shared_ptr<Peer> peer, packet_type packet );
+	void Enqueue( std::weak_ptr<Peer> peer, packet_type packet );
 public:
 	Network( std::string uuid );
 
@@ -240,7 +240,7 @@ public:
 
 	template <typename T>
 	void SendTo(const T& buffer) {
-		Enqueue( nullptr, _createPacket( buffer ) );
+		Enqueue( std::shared_ptr<Peer>(), _createPacket( buffer ) );
 	}
 
 	template <typename T>

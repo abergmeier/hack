@@ -419,11 +419,15 @@ void Network::HandleUnsent() {
 
 	for( auto& element : inputQueue ) {
 
-		if( element.peer ) {
-			auto& socket = element.peer->GetSocket();
+		auto sharedPeer = element.peer.lock();
+
+		if( sharedPeer ) {
+			auto& socket = sharedPeer->GetSocket();
+
 			DEBUG.LOG_ENTRY( std::stringstream() << "Sending packet to "
 			                 << socket.address().host().toString() << ':'
 			                 << socket.address().port() );
+
 			SendPacket( socket, element.packet );
 		} else
 			SendPacket( element.packet );
@@ -602,9 +606,9 @@ void Network::SendPacket( const packet_type& packet ) {
 	}
 }
 
-void Network::Enqueue( std::shared_ptr<Peer> peer, packet_type packet ) {
+void Network::Enqueue( std::weak_ptr<Peer> peer, packet_type packet ) {
 	queue_element_type element;
-	element.packet = packet;
+	element.packet = std::move(packet);
 	element.peer = std::move(peer);
 	std::lock_guard<std::recursive_mutex> lock( _queues.lock );
 	_queues.input.push_back( std::move(element) );
