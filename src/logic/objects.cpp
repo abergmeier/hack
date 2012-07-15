@@ -10,6 +10,7 @@
 #include <memory>
 #include "objects.hpp"
 #include "stone.hpp"
+#include "../debug.hpp"
 #ifdef _MSC_VER
 #define _USE_MATH_DEFINES // for C++
 #include <math.h>
@@ -23,6 +24,16 @@ typename
 	Objects::class_map_type Objects::CLASS_MAP;
 
 namespace {
+
+	struct Debug : public hack::Debug {
+		const std::string& GetCategory() const override {
+			static const std::string CATEGORY = "Objects";
+			return CATEGORY;
+		}
+	};
+
+	const Debug DEBUG;
+
 	//intersection test of a line with a circle
 	//start and end are the to end points of the like, pos is the position if the circle and r is the radius
 	bool intersect(vector2<float> &start, vector2<float> &end, vector2<float> &pos, float r) {
@@ -125,7 +136,7 @@ Objects::Deserialize(std::istream& stream) {
 		// Create new object
 		auto classIt = CLASS_MAP.find(className);
 		if( classIt == CLASS_MAP.cend() ) {
-			std::cerr << "No class registration with name " << className << " found.";
+			DEBUG.ERR_ENTRY( std::string("No class registration with name ") + className + " found." );
 			return nullptr;
 		}
 
