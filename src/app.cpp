@@ -47,6 +47,8 @@ namespace {
 
 	const Debug DEBUG;
 
+	// Register classes so that they may later on be
+	// deserialized
 	void RegisterAllClasses() {
 		hack::logic::Objects::Register<hack::logic::Stone>();
 		hack::logic::Objects::Register<hack::logic::Avatar>();
