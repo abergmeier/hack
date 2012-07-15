@@ -196,9 +196,10 @@ Network::PeerWrapper::~PeerWrapper() {
 	_reactor.removeEventHandler( _socket, Poco::NObserver<PeerWrapper, ErrorNotification   >(*this, &PeerWrapper::OnError    ));
 }
 
-Network::Network( std::string uuid ) :
+Network::Network( std::string uuid, const std::set<Registration::Element>& registrations ) :
 	_reactor(),
-	uuid  (uuid)
+	uuid  (uuid),
+	_ipAddress(findActiveNetworkInterface().address().toString())
 {
 	try {
 		static const Poco::UInt32 START_PORT = 50123;
@@ -207,7 +208,17 @@ Network::Network( std::string uuid ) :
 			try {
 				// Try to register a server instance on a
 				// particular port
-				_server = createServer( port );
+				auto server = createServer( port );
+
+				// Validate against registration
+				// Check needed for Windows
+				for( auto& reg : registrations ) {
+					if( reg.host == _ipAddress
+					 && reg.port == port )
+						throw NetException("Port already registered", 404);
+				}
+
+				_server = std::move( server );
 			} catch( const NetException& error ) {
 				if( try_count == 0 )
 					// Stop trying
@@ -228,8 +239,6 @@ Network::Network( std::string uuid ) :
 	}
 
 	// Server was successfully created
-	auto interface = findActiveNetworkInterface();
-	_ipAddress = interface.address().toString();
 
 	_acceptor = std::unique_ptr<Acceptor>( new Acceptor(*this, *_server, _reactor) );
 	DEBUG.LOG_ENTRY(std::stringstream() << "Listening for incoming connections on " << _server->address().port() );

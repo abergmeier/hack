@@ -50,6 +50,7 @@
 #include <future>
 #include "../subsystem.hpp"
 #include "../debug.hpp"
+#include "registration.hpp"
 
 //enable compiler warnings again
 #ifdef _MSC_VER
@@ -232,7 +233,9 @@ private:
 
 	void Enqueue( std::weak_ptr<Peer> peer, packet_type packet );
 public:
-	Network( std::string uuid );
+	// Constructs a Network and uses the registrations to determine an open port
+	// Registrations only needed on Windows
+	Network( std::string uuid, const std::set<Registration::Element>& registrations );
 
 	virtual ~Network();
 

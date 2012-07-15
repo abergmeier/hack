@@ -182,7 +182,7 @@ int main() {
 
 	auto others = Registration::GetAll();
 
-	auto network = std::make_shared<hack::net::Network>( sharedLocalPlayer->GetUUID() );
+	auto network = std::make_shared<hack::net::Network>( sharedLocalPlayer->GetUUID(), others );
 
 	// Before doing anything else, we first have to register with the Server
 	Registration registration( sharedLocalPlayer->GetUUID(), network->GetIPAddress(), network->GetIncomingPort() );
