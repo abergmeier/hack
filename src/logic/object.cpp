@@ -54,7 +54,7 @@ Object& Object::operator = (std::istream& stream) {
 
 std::ostream& Object::SerializeContent(std::ostream& stream) const {
 	return Serializable::SerializeContent( stream )
-		<< ',' << id << ',' << x << ',' << y << ',' << width << ',' << height << ',' << angle ;
+		<< ',' << id << ',' << x << ',' << y << ',' << width << ',' << height << ',' << angle;
 }
 
 int Object::getX() const {

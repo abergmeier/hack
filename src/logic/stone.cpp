@@ -18,6 +18,11 @@ Stone::ClassName() const {
 	return NAME;
 }
 
+Stone::Stone(std::string siteID) :
+	Object( std::move(siteID) )
+{
+}
+
 Stone::Stone(std::istream& stream) :
 	Object(stream)
 {

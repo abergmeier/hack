@@ -17,9 +17,8 @@ public:
 	static const std::string NAME;
 	const std::string& ClassName() const override;
 	std::ostream& SerializeContent(std::ostream& stream) const override;
-	size_t getHitpoints();
-	size_t getDamage();
-	float getRadius();
+	size_t getHitpoints() const;
+	size_t getDamage() const;
 	float getRadius() const;
 	
 private:

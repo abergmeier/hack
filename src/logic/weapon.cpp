@@ -11,8 +11,13 @@ Weapon::ClassName() const {
 	return NAME;
 }
 
+Weapon::Weapon(std::string siteID) :
+	Object( std::move(siteID) )
+{
+}
+
 Weapon::Weapon(std::istream& stream) :
-	Object(stream)
+	Object( stream )
 {
 }
 

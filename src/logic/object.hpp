@@ -41,7 +41,7 @@ public:
 
 
 private:
-	id_type id;
+	const id_type id;
 	int x;
 	int y;
 	float angle;

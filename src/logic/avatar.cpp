@@ -12,7 +12,7 @@ Avatar::ClassName() const {
 }
 
 Avatar::Avatar(std::string siteID)
-	: Object(std::move(siteID)), radius(40)
+	: Object(std::move(siteID)), hitpoints(100), damage(10), radius(40)
 {};
 
 
@@ -27,16 +27,12 @@ std::ostream& Avatar::SerializeContent(std::ostream& stream) const {
 		<< ',' << hitpoints << ',' << damage << ',' << radius;
 }
 
-size_t Avatar::getHitpoints(){
+size_t Avatar::getHitpoints() const {
 	return hitpoints;
 }
 
-size_t Avatar::getDamage(){
+size_t Avatar::getDamage() const {
 	return damage;
-}
-
-float Avatar::getRadius() {
-	return radius;
 }
 
 float Avatar::getRadius() const {
