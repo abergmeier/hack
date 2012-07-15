@@ -5,6 +5,8 @@
  *      Author: andreas
  */
 
+#include <stdexcept>
+#include <string.h> //for strnlen
 #include "serializable.hpp"
 
 using namespace hack::state;
@@ -25,17 +27,20 @@ std::ostream& Serializable::String::Serialize( std::ostream& stream, const std::
 
 std::string Serializable::String::Deserialize( std::istream& input ) {
 
-	input.get(); // Skip {
+	char extracted = input.get(); // Skip {
 
 	size_t size;
 	input >> size;
 
-	input.get(); // Skip ,
-	std::string buffer;
-	buffer.reserve( size );
-	input.read( &buffer.front(), size );
+	extracted = input.get(); // Skip ,
+	std::string buffer(size, '\0');
+	input.read( &buffer.front(), buffer.length() );
 
-	input.get(); // Skip }
+	buffer.resize( strnlen(buffer.data(), size) );
+	extracted = input.get(); // Skip }
+
+	if( input.bad() )
+		throw std::runtime_error("Invalid format");
 
 	return buffer;
 }
