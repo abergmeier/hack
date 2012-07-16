@@ -98,8 +98,8 @@ namespace {
 		weapon.setY(yy+avatar.getY());
 	}
 
-	static const int WINDOW_WIDTH = 640;
-	static const int WINDOW_HEIGHT = 480;
+	const int WINDOW_WIDTH = 640;
+	const int WINDOW_HEIGHT = 480;
 
 	vector2<int> lastMousePosition;
 
