@@ -153,14 +153,20 @@ namespace {
 		};
 	}
 
-	std::function<void(bool)> getAvatarAttackHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  std::shared_ptr<hack::logic::Weapon> sharedWeapon, hack::state::States& states ) {
-		return [sharedAvatar,sharedWeapon, &states](bool attacking) {
+	std::function<void(bool)> getAvatarAttackHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  std::shared_ptr<hack::logic::Weapon> sharedWeapon, hack::logic::Objects &obj, hack::state::States& states ) {
+		return [sharedAvatar,sharedWeapon, &obj, &states](bool attacking) {
 			if (attacking) {
 				attack = 1;
+				updateWeaponPosition(*sharedAvatar, *sharedWeapon);
+				//pseudo code:
+				/*vectorOfHitAvatars hitAvatars = obj.attackCheck(*sharedWeapon,*sharedAvatar);
+				if(hitAvatars.size() > 0)
+					processDamage(hitAvatars);*/
 			} else {
 				attack = 0;
+				updateWeaponPosition(*sharedAvatar, *sharedWeapon);
 			}
-			updateWeaponPosition(*sharedAvatar, *sharedWeapon);
+			
 			states.Commit( *sharedWeapon );
 		};
 	}
@@ -315,9 +321,9 @@ int main() {
 
 	attemptCreateObjects();
 
-	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, sharedWeapon ,objects, *states ),
-											getMouseMoveHandler   ( sharedAvatar, sharedWeapon ,objects, *states ),
-											getAvatarAttackHandler( sharedAvatar, sharedWeapon, *states ) );
+	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, sharedWeapon , objects, *states ),
+											getMouseMoveHandler   ( sharedAvatar, sharedWeapon , objects, *states ),
+											getAvatarAttackHandler( sharedAvatar, sharedWeapon , objects, *states ) );
 
 	r->run();
 	// Runs till window is closed

@@ -245,13 +245,16 @@ bool Objects::movementCheck(const hack::logic::Avatar &avatar, const vector2<int
 	return true;
 }
 
-bool Objects::attackCheck(const hack::logic::Weapon &weapon) {
-	for(auto &e : _objectMap) {
+//dont use this function like this
+//it contains unfinished implementation and pseudo code
+bool Objects::attackCheck(const hack::logic::Weapon &weapon, const hack::logic::Avatar &avatar) {
+	//vectorOfHitAvatars hitAvatars;
+	for(auto &e : _objectMap){ 
 		if(e.second->ClassName() == hack::logic::Avatar::NAME) {
 			if(intersectAll(weapon,dynamic_cast<Avatar&>(*e.second),vector2<int>(e.second->getX(),e.second->getY())))
-				return true; //another avatar got hit
+				/*hitAvatars.push_back(avatar);*/; //another avatar got hit
 		}
 	}
-	//noting is hit
+	//return hitAvatars;
 	return false;
 }

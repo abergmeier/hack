@@ -20,6 +20,7 @@ public:
 	size_t getHitpoints() const;
 	size_t getDamage() const;
 	float getRadius() const;
+	void hit(size_t value);
 	
 private:
 	// Extracts all non const fields
@@ -29,7 +30,7 @@ private:
 	float radius;
 	void setHitpoints(size_t value);
 	void setDamage(size_t value);
-	void hit(size_t value);
+	
 
 
 };
