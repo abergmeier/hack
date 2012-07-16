@@ -117,7 +117,8 @@ void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>
 		if( it == _network._peers.awaitingHandshake.end() ) {
 			// Handshake already successfull
 			//DEBUG.LOG_ENTRY(std::stringstream() << "Received package with content-size " << buffer.length() << " from " << GetAddressString(_socket.address()) );
-			_peer->GetReceiveCallback()( std::move(buffer) );
+			auto callback = _peer->GetReceiveCallback();
+			callback( std::move(buffer) );
 		} else {
 			bool needsToConfirm = it->second.empty();
 			_peer = _network.FinishHandshake( _socket, _reactor, std::move(buffer), needsToConfirm );
