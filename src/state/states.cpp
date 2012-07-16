@@ -152,11 +152,24 @@ void States::ExecuteWorker() {
 	_isRunning = true;
 
 	while( _ExecuteWorker() ) {
-		std::lock_guard<std::mutex> lock( _input.mutex );
-		if( _input.queue.empty() )
+
+		bool queueEmpty;
+
+		{
+			std::lock_guard<std::mutex> lock( _input.mutex );
+			queueEmpty = _input.queue.empty();
+		}
+
+		if( !queueEmpty ) {
+			std::lock_guard<std::mutex> lock( _output.mutex );
+			queueEmpty = _output.queue.empty();
+		}
+
+		if( queueEmpty ) {
 			// If there is nothing to do - do not spam
 			// the CPU
 			std::this_thread::sleep_for( SLEEP_DURATION );
+		}
 	}
 
 	DEBUG.LOG_ENTRY( "[Worker] ...Stop" );
