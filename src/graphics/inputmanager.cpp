@@ -32,6 +32,9 @@ void inputmanager::tick() {
 		//when the application has the focus, all events will be handled
 		if (focus) 
 		{
+			//reset attack check
+			attacking = false;
+
 			//window closed
 			if (event.type == sf::Event::Closed) {
 				window->close();
@@ -48,6 +51,13 @@ void inputmanager::tick() {
 			if (event.type == sf::Event::MouseMoved) {
 				//rotation
 				if(rotateCallback) rotateCallback(event.mouseMove.x,event.mouseMove.y);
+			}
+			if (event.type == sf::Event::MouseButtonPressed) {
+				attackCallback(true);
+				attacking = true;
+			}
+			if (event.type == sf::Event::MouseButtonReleased) {
+				attackCallback(false);
 			}
 		}
 	}
@@ -73,9 +83,9 @@ void inputmanager::handleKeys() {
 	if((x != 0.0 || y != 0.0) && moveCallback) moveCallback(x,y);
 
 	//attack on space key, also execute the attack callback with false to retract the weapon
-	if(keys[Keyboard::Space] && attackCallback) {
+	if(keys[Keyboard::Space] && attackCallback && !attacking) {
 		attackCallback(true);
-	} else if(!keys[Keyboard::Space] && attackCallback) {
+	} else if(!keys[Keyboard::Space] && attackCallback && !attacking) {
 		attackCallback(false);
 	}
 

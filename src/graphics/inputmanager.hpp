@@ -49,6 +49,9 @@ private:
 	//variable that is set true, if the renderwindow is focussed
 	//if it is not focussed, this will prevent inputs from being processed
 	bool focus;
+
+	//for checking purpose, that missing keyinput wont retract the attack even though the mousebutton is attacking
+	bool attacking;
 };
 
 }
