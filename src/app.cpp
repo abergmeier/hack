@@ -321,6 +321,11 @@ int main() {
 
 	r->run();
 	// Runs till window is closed
+
+	// Make sure callbacks are cleaned up
+	r->getInputmanager().registerCallbacks( nullptr,
+	                                        nullptr,
+	                                        nullptr );
 	r = nullptr;
 }
 
