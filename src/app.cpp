@@ -153,14 +153,15 @@ namespace {
 		};
 	}
 
-	std::function<void(bool)> getAvatarAttackHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  std::shared_ptr<hack::logic::Weapon> sharedWeapon) {
-		return [sharedAvatar,sharedWeapon](bool attacking) {
+	std::function<void(bool)> getAvatarAttackHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar,  std::shared_ptr<hack::logic::Weapon> sharedWeapon, hack::state::States& states ) {
+		return [sharedAvatar,sharedWeapon, &states](bool attacking) {
 			if (attacking) {
 				attack = 1;
 			} else {
 				attack = 0;
 			}
 			updateWeaponPosition(*sharedAvatar, *sharedWeapon);
+			states.Commit( *sharedWeapon );
 		};
 	}
 }
@@ -316,7 +317,7 @@ int main() {
 
 	r->getInputmanager().registerCallbacks( getAvatarMoveHandler  ( sharedAvatar, sharedWeapon ,objects, *states ),
 											getMouseMoveHandler   ( sharedAvatar, sharedWeapon ,objects, *states ),
-											getAvatarAttackHandler( sharedAvatar, sharedWeapon ) );
+											getAvatarAttackHandler( sharedAvatar, sharedWeapon, *states ) );
 
 	r->run();
 	// Runs till window is closed
