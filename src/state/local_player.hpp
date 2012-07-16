@@ -16,7 +16,7 @@ namespace hack {
 namespace state {
 
 class LocalPlayer : public hack::logic::Player {
-	std::string _uuid;
+	const std::string _uuid;
 	static const std::string NAME;
 public:
 	LocalPlayer();
