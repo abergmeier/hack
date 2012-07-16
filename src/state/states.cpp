@@ -37,9 +37,10 @@ States::~States() {
 
 void States::Commit( const Serializable& object ) {
 
-	std::stringstream stream;
+	std::ostringstream stream;
 	object.Serialize( stream );
 
+	std::lock_guard<std::mutex> lock( _output.mutex );
 	std::weak_ptr<hack::logic::Player> weakPlayer;
 	_output.queue.push_back( std::make_pair( weakPlayer, stream.str() ) );
 }
@@ -59,6 +60,7 @@ void States::CommitTo( const Serializable& object, std::shared_ptr<hack::logic::
 	object.Serialize( stream );
 	stream.flush();
 
+	std::lock_guard<std::mutex> lock( _output.mutex );
 	_output.queue.push_back( std::make_pair(  player , stream.str() ) );
 }
 
