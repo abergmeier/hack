@@ -152,7 +152,7 @@ void States::ExecuteWorker() {
 	_isRunning = true;
 
 	while( _ExecuteWorker() ) {
-
+		std::lock_guard<std::mutex> lock( _input.mutex );
 		if( _input.queue.empty() )
 			// If there is nothing to do - do not spam
 			// the CPU
