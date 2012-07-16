@@ -103,8 +103,6 @@ namespace {
 
 	vector2<int> lastMousePosition;
 
-	static const auto ASYNC_POLICY = std::launch::async;
-
 	std::function<void(int x, int y)> getAvatarMoveHandler( std::shared_ptr<hack::logic::Avatar> sharedAvatar, std::shared_ptr<hack::logic::Weapon> sharedWeapon,  hack::logic::Objects &obj, hack::state::States& states ) {
 		auto& localMousePosition = lastMousePosition;
 		return [&localMousePosition, sharedAvatar, sharedWeapon, &states, &obj]( int x, int y ) {
