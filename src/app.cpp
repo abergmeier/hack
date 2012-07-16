@@ -204,6 +204,7 @@ int main() {
 	auto sharedAvatar = [&]() -> std::shared_ptr<Avatar> {
 		// Create our player representation
 		auto sharedAvatar = std::make_shared<Avatar>( sharedLocalPlayer->GetUUID() );
+		std::srand( time(0) );
 		sharedAvatar->setX( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_WIDTH) );
 		sharedAvatar->setY( static_cast<int>(std::rand() / static_cast<float>(RAND_MAX) * WINDOW_HEIGHT) );
 		objects.Register( sharedAvatar );
