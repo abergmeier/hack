@@ -238,7 +238,7 @@ bool Objects::movementCheck(const hack::logic::Avatar &avatar, const vector2<int
 			float dy = static_cast<float>(avatar.getY() - e.second->getY());
 			float length = std::sqrt(dy * dy + dy * dy);
 	
-			return length < avatar.getRadius()*2;
+			return length > avatar.getRadius()*2;
 		}
 	}
 	//nothing in the way, can move on
