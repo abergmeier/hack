@@ -55,7 +55,7 @@ private:
 	inputmanager *input;
 
 	//map of entites and their assigned assets
-	std::map<hack::logic::entity*,asset*> entities;
+	std::map<hack::logic::entity*, std::unique_ptr<asset>> entities;
 
 	//assetmanager, so that assets can be created
 	assetmanager am;

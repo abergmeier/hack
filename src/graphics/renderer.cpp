@@ -240,8 +240,7 @@ void renderer::run() {
 
 void renderer::renderAll() {
 	//iterate over all registered entities
-	map<entity*,asset*>::iterator iter;
-	for(iter = entities.begin(); iter != entities.end(); iter++) {
+	for(auto iter = entities.begin(); iter != entities.end(); iter++) {
 		//set position and rotation of entity
 		iter->second->setPosition(static_cast<float>(iter->first->getX()), static_cast<float>(iter->first->getY()));
 		iter->second->setRotation(iter->first->getAngle());
@@ -258,10 +257,11 @@ void renderer::insert(const value_type& value ) {
 
 	auto& typeName = e->ClassName();
 
-	entities[e.get()] = am.get(typeName.c_str());
-	entities[e.get()]->setPosition(static_cast<float>(e->getX()),static_cast<float>(e->getY()));
-	entities[e.get()]->setRotation(e->getAngle());
-	entities[e.get()]->setSize(static_cast<float>(e->getWidth()),static_cast<float>(e->getHeight()));
+	auto newAsset = am.get(typeName);
+	newAsset.setPosition(static_cast<float>(e->getX()),static_cast<float>(e->getY()));
+	newAsset.setRotation(e->getAngle());
+	newAsset.setSize(static_cast<float>(e->getWidth()),static_cast<float>(e->getHeight()));
+	entities[e.get()] = std::unique_ptr<asset>( new asset( std::move(newAsset) ) );
 }
 
 

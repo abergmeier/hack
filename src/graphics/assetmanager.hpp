@@ -30,10 +30,10 @@ public:
 	~assetmanager(void);
 
 	//generator for assets through a given name
-	asset* get(const char *);
+	asset get( const std::string& );
 private:
 	//map of names with textures
-	std::map<const char*,std::shared_ptr<sf::Texture>> textureMap;
+	std::map<std::string, std::shared_ptr<sf::Texture>> textureMap;
 
 	//initializing function, texture registration goes here
 	void init();
@@ -42,10 +42,10 @@ private:
 	int numPlayer;
 
 	//vector with the names of the colored player sprites
-	std::vector<const char*> avatar_names;
+	std::vector<std::string> avatar_names;
 
 	//function to register textures
-	void addTexture(const char* name, const char* path);
+	void addTexture(const std::string& name, const std::string& path);
 };
 
 }

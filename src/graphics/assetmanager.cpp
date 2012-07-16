@@ -46,27 +46,26 @@ void assetmanager::init() {
 	addTexture(avatar_names.back(),"resources/avatar-yellow.png");
 
 	//fallback texture if too many players
-	addTexture(Avatar::NAME.c_str(),"resources/stone.png");
+	addTexture(Avatar::NAME, "resources/stone.png");
 	
 	//stone texture
-	addTexture(Stone::NAME.c_str(),"resources/stone.png");
+	addTexture(Stone::NAME, "resources/stone.png");
 
 	//weapon texture
-	addTexture(Weapon::NAME.c_str(),"resources/weapon.png");
+	addTexture(Weapon::NAME, "resources/weapon.png");
 }
 
-void assetmanager::addTexture(const char* name, const char* path) {
-	std::shared_ptr<Texture> tex(new Texture());
+void assetmanager::addTexture(const std::string& name, const std::string& path) {
+	auto tex = std::make_shared<Texture>();
 	tex->loadFromFile(path);
 	textureMap[name] = tex;
 }
 
-asset* assetmanager::get(const char* name) {
+asset assetmanager::get(const std::string& name) {
 	//if a avatar texture is asked for, return on of the colored of, if not or too many players registered return
 	//the designated texture of the name given
-	if(name == Avatar::NAME.c_str() && numPlayer < 8) 
-	{
-		return new asset(textureMap[avatar_names.at(numPlayer++)]);
-	}
-	return new asset(textureMap[name]);
+	if(name == Avatar::NAME && numPlayer < 8)
+		return asset(textureMap[avatar_names.at(numPlayer++)]);
+
+	return asset(textureMap[name]);
 }
