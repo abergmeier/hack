@@ -25,7 +25,7 @@ namespace {
 States::States( std::weak_ptr<hack::net::Network> network) :
 	_network( network )
 {
-	worker = [this]() {
+	worker = [&]() {
 		auto worker = std::bind(&hack::state::States::ExecuteWorker, std::ref(*this));
 		return std::async(ASYNC_POLICY, worker);
 	}();
