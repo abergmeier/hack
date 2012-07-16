@@ -145,8 +145,6 @@ bool States::_ExecuteWorker() {
 
 void States::ExecuteWorker() {
 
-	static const std::chrono::milliseconds SLEEP_DURATION( 5 );
-
 	DEBUG.LOG_ENTRY( "[Worker] Start..." );
 
 	_isRunning = true;
@@ -168,6 +166,7 @@ void States::ExecuteWorker() {
 		if( queueEmpty ) {
 			// If there is nothing to do - do not spam
 			// the CPU
+			static const std::chrono::milliseconds SLEEP_DURATION( 5 );
 			std::this_thread::sleep_for( SLEEP_DURATION );
 		}
 	}
