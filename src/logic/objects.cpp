@@ -236,7 +236,7 @@ bool Objects::movementCheck(const hack::logic::Avatar &avatar, const vector2<int
 		} else if (e.second->ClassName() == hack::logic::Avatar::NAME) {
 			float dx = static_cast<float>(possibleChange[0] - e.second->getX());
 			float dy = static_cast<float>(possibleChange[1] - e.second->getY());
-			float length = std::sqrt(dy * dy + dy * dy);
+			float length = std::sqrt(dy * dy + dx * dx);
 	
 			return length > avatar.getRadius()*2;
 		}

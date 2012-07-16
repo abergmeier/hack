@@ -81,7 +81,9 @@ public:
 		}
 	};
 
+	//checks whether the avatar is allowed to move or not via collision detection
 	bool movementCheck(const hack::logic::Avatar &avatar, const vector2<int>& possibleChange);
+	//checks if a player gets hit by a weapon or not
 	bool attackCheck(const hack::logic::Weapon &weapon);
 private:
 	typedef value_type                                                   key_type;
