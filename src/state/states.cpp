@@ -39,6 +39,7 @@ void States::Commit( const Serializable& object ) {
 
 	std::ostringstream stream;
 	object.Serialize( stream );
+	stream.flush();
 
 	std::weak_ptr<hack::logic::Player> weakPlayer;
 	std::lock_guard<std::mutex> lock( _output.mutex );
@@ -55,8 +56,7 @@ void States::CommitTo( const Serializable& object, std::shared_ptr<hack::logic::
 
 	// Only send if it Player is remote
 
-	std::stringstream stream;
-	stream.flush();
+	std::ostringstream stream;
 	object.Serialize( stream );
 	stream.flush();
 
