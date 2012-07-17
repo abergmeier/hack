@@ -451,10 +451,6 @@ void Network::HandleUnsent() {
 		if( sharedPeer ) {
 			auto& socket = sharedPeer->GetSocket();
 
-			DEBUG.LOG_ENTRY( std::stringstream() << "Sending packet to "
-			                 << socket.address().host().toString() << ':'
-			                 << socket.address().port() );
-
 			SendPacket( socket, element.packet );
 		} else
 			SendPacket( element.packet );
@@ -575,6 +571,9 @@ std::string Network::GetIPAddress() const {
 
 void Network::SendPacket( StreamSocket& socket, const packet_type& packet ) {
 	socket.sendBytes( packet.data(), packet.length() * sizeof(packet_type::value_type) );
+	DEBUG.LOG_ENTRY( std::stringstream() << "Sending packet to "
+	                 << socket.address().host().toString() << ':'
+	                 << socket.address().port() );
 }
 
 void Network::SendPacket( const packet_type& packet ) {
