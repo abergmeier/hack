@@ -59,15 +59,16 @@ namespace {
 
 void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>& ) {
 	try {
+
 		// No sense in doing anything
 		if( _socket.available() <= 0 )
 			return;
 
 		const size_t bytesAvailable = _socket.available();
 
-		_input.resize( _input.length() + bytesAvailable );
-
-		_socket.receiveBytes( &_input.front(), bytesAvailable );
+		const auto oldLength = _input.length();
+		_input.resize( oldLength + bytesAvailable, '\0' );
+		_socket.receiveBytes( (&_input.front()) + oldLength, bytesAvailable );
 
 		//DEBUG.LOG_ENTRY( std::string("BUFFER: ") + _input );
 	} catch( const Poco::Exception& e ) {
