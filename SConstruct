@@ -18,13 +18,4 @@ Mkdir('build')
 program = env.Program('build/hack', sources)
 env.Default(program)
 
-#os.environ['LD_LIBRARY_PATH'] = os.environ["LD_LIBRARY_PATH"] + 'libs/sfml/lib'
-#, env=os.environ['LD_	LIBRARY_PATH'])
-
-#def runHack():
-#	subprocess.Popen('LD_LIBRARY_PATH=libs/sfml/lib:$LD_LIBRARY_PATH build/hack')
-	
-#Alias('run', Command(runHack))
-
-
 
