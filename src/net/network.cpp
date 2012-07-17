@@ -13,7 +13,7 @@
 
 using namespace hack::net;
 
-const unsigned int Network::MAX_PACKET_LENGTH = 10;
+const unsigned int Network::MAX_PACKET_LENGTH_DIGITS = 10;
 
 namespace {
 	struct Debug : public hack::Debug {
@@ -79,7 +79,7 @@ void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>
 	//
 
 	// We need to be able to read the length + 1
-	while( _input.length() >= MAX_PACKET_LENGTH + 1 ) {
+	while( _input.length() >= MAX_PACKET_LENGTH_DIGITS + 1 ) {
 		std::istringstream stream( _input );
 
 		auto position = stream.tellg();
@@ -105,7 +105,7 @@ void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>
 			break;
 		}
 
-		_input.erase( 0, MAX_PACKET_LENGTH + 1 + packetSize );
+		_input.erase( 0, MAX_PACKET_LENGTH_DIGITS + 1 + packetSize );
 
 		// Validate length of buffer - prevents accidental
 		// access to unallocated memory

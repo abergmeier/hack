@@ -128,7 +128,7 @@ private:
 
 	friend class PeerWrapper;
 
-	static const unsigned int MAX_PACKET_LENGTH;
+	static const unsigned int MAX_PACKET_LENGTH_DIGITS;
 
 	template <typename T>
 	static packet_type _createPacket(const T& buffer) {
@@ -136,7 +136,7 @@ private:
 		Poco::UInt32 length = buffer.length();
 		// 10 chars should be the max output since 4.294.967.295 is
 		// the max value
-		stream << std::setw(MAX_PACKET_LENGTH) << std::setfill('0') << length << '\n' << buffer;
+		stream << std::setw(MAX_PACKET_LENGTH_DIGITS) << std::setfill('0') << length << '\n' << buffer;
 		return stream.str();
 	}
 
