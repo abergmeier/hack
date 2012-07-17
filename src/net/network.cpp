@@ -198,9 +198,9 @@ Network::PeerWrapper::~PeerWrapper() {
 }
 
 Network::Network( std::string uuid, const std::set<Registration::Element>& registrations ) :
+	_ipAddress(findActiveNetworkInterface().address().toString()),
 	_reactor(),
-	uuid  (uuid),
-	_ipAddress(findActiveNetworkInterface().address().toString())
+	uuid  (uuid)
 {
 	try {
 		static const Poco::UInt32 START_PORT = 50123;
