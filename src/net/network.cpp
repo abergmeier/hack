@@ -290,7 +290,7 @@ Network::Address::Address( const std::string& host, Poco::UInt16 port, std::stri
 
 Network::Address::Address( const SocketAddress& address, std::string uuid) :
 	SocketAddress( address ),
-	uuid         ( uuid )
+	uuid         ( std::move(uuid) )
 {
 }
 
