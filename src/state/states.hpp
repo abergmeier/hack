@@ -47,7 +47,7 @@ public:
 	void CommitTo( const Serializable& object, std::shared_ptr<hack::logic::Player> player);
 
 	void SetDeserializer( std::function<void(std::istream&)> );
-	void ReceiveFrom( std::string&& serialized, hack::logic::Player& player );
+	void ReceiveFrom( std::string serialized, hack::logic::Player& player );
 
 	void ExecuteWorker() override;
 protected:

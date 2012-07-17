@@ -86,10 +86,10 @@ bool States::PassToNetwork( const std::string& data, hack::logic::Player& player
 	return true;
 }
 
-void States::ReceiveFrom( std::string&& serialized, hack::logic::Player& player ) {
+void States::ReceiveFrom( std::string serialized, hack::logic::Player& ) {
 	std::lock_guard<std::mutex> lock( _input.mutex );
 	// Push to the front queue
-	_input.queue.push_back( serialized );
+	_input.queue.push_back( std::move(serialized) );
 }
 
 void States::ProcessInput() {
