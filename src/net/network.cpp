@@ -453,11 +453,9 @@ void Network::HandleUnsent() {
 
 		auto sharedPeer = element.peer.lock();
 
-		if( sharedPeer ) {
-			auto& socket = sharedPeer->GetSocket();
-
-			SendPacket( socket, element.packet );
-		} else
+		if( sharedPeer )
+			SendPacket( sharedPeer->GetSocket(), element.packet );
+		else
 			SendPacket( element.packet );
 	}
 }
