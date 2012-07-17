@@ -153,6 +153,8 @@ void States::ExecuteWorker() {
 
 	while( _ExecuteWorker() ) {
 
+		// Value would simply be input.empty() && output.empty()
+		// but sadly we have to handle mutexes
 		bool queueEmpty;
 
 		{
@@ -160,7 +162,7 @@ void States::ExecuteWorker() {
 			queueEmpty = _input.queue.empty();
 		}
 
-		if( !queueEmpty ) {
+		if( queueEmpty ) {
 			std::lock_guard<std::mutex> lock( _output.mutex );
 			queueEmpty = _output.queue.empty();
 		}
