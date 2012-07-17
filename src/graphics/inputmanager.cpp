@@ -5,10 +5,10 @@ using namespace std;
 using namespace hack::graphics;
 
 inputmanager::inputmanager(RenderWindow* window)
-	: window(window), focus(true)
+	: moveCallback(), rotateCallback(), attackCallback(), retractCallback(),
+	  window(window), focus(true)
 {
 }
-
 
 inputmanager::~inputmanager(void)
 {
@@ -84,9 +84,11 @@ void inputmanager::handleKeys() {
 
 	//attack on space key, also execute the attack callback with false to retract the weapon
 	if(keys[Keyboard::Space] && attackCallback && !attacking) {
+		retractCallback = std::ref(attackCallback);
 		attackCallback(true);
-	} else if(!keys[Keyboard::Space] && attackCallback && !attacking) {
-		attackCallback(false);
+	} else if(!keys[Keyboard::Space] && retractCallback && !attacking) {
+		retractCallback(false);
+		retractCallback = nullptr;
 	}
 
 }
@@ -97,3 +99,4 @@ void inputmanager::registerCallbacks(std::function<void(int,int)> position,std::
 	rotateCallback = rotation;
 	attackCallback = attack;
 }
+

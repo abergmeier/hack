@@ -36,6 +36,7 @@ private:
 	std::function<void(int,int)> moveCallback;
 	std::function<void(int,int)> rotateCallback;
 	std::function<void(bool)> attackCallback;
+	std::function<void(bool)> retractCallback;
 
 	//processes the inputs and executes their callbacks if they are registered
 	void handleKeys();
@@ -58,7 +59,6 @@ private:
 }
 
 #endif // !_INPUTMANAGER_HPP_
-
 
 
 
