@@ -168,19 +168,13 @@ private:
 
 		// All known addresses of other peers
 		std::set<Address> unconnected;
-#if 0
-		//
-		std::map<StreamSocket, std::string> awaitingConnection;
-#endif
+
 		// Not fully connected peers, that miss the handshake
 		// Use this special, mostly small or empty map for performance purposes.
 		std::map<StreamSocket, std::string> awaitingHandshake;
 
 		// All peers which are connected
 		std::map<Address, std::shared_ptr<Peer>> connected;
-#if 0
-		void AbortWait( const StreamSocket& socket );
-#endif
 	};
 
 	struct Acceptor : public Poco::Net::SocketAcceptor<PeerWrapper> {

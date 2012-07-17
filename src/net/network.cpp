@@ -371,13 +371,6 @@ std::shared_ptr<Network::Peer> Network::CreatePeer( StreamSocket& socket, Socket
 	_connectCallback( sharedPeer );
 	return sharedPeer;
 }
-#if 0
-void Network::Peers::AbortWait( const StreamSocket& socket ) {
-	std::lock_guard<std::recursive_mutex> lock( this->lock );
-	awaitingConnection.erase( socket );
-	awaitingHandshake .erase( socket );
-}
-#endif
 
 StreamSocket& Network::Peer::GetSocket() {
 	return _socket;
@@ -508,54 +501,6 @@ std::shared_ptr<Network::Peer> Network::FinishHandshake( StreamSocket& socket, S
 
 	return CreatePeer( socket, reactor, otherUuid, connectedFunc );
 }
-
-#if 0
-void Network::OnReceive() {
-	const auto peerHost = GetIPAddress( *event.peer );
-	const auto peerPort = event.peer->address.port;
-	DEBUG.LOG_ENTRY( std::stringstream() << "Packet received." << std::endl
-					  << "\tLength: " << event.packet->dataLength
-					  << "\tFrom: " << peerHost << ":" << peerPort);
-	{
-		std::lock_guard<std::recursive_mutex> lock( _peers.lock );
-		bool isFullyConnected = [&]() -> bool {
-			// Check whether this is the first packet after
-			// starting the connection AKA Handshake
-			auto it = _peers.awaitingHandshake.begin();
-
-			for( ; it != _peers.awaitingHandshake.end(); ++it ) {
-				if( it->first->address.host == event.peer->address.host
-				 && it->first->address.port == peerPort ) {
-					break;
-				}
-			}
-
-			if( it == _peers.awaitingHandshake.end() )
-				return true;
-
-			_peers.awaitingHandshake.erase( it );
-			return false;
-		}();
-
-		if( isFullyConnected ) {
-			// Handshake was already done,
-			// continue with normal processing
-			auto peer = extractPeer();
-			peer->Receive( *event.packet );
-			DEBUG.LOG_ENTRY(std::stringstream() << "Received packet from " << peerHost << ':' << peerPort);
-		} else {
-			// Received Handshake
-
-			// Peer sent UUID
-			CreatePeer( *event.peer, Peers::ExtractUUID( event.packet ) );
-			DEBUG.LOG_ENTRY(std::stringstream() << "Received handshake from " << peerHost << ':' << peerPort);
-		}
-	}
-
-	// Clean up the packet now that we're done using it.
-	enet_packet_destroy(event.packet);
-}
-#endif
 
 void Network::OnDisconnect( StreamSocket& socket ) {
 	auto peerHost = socket.address().host();
