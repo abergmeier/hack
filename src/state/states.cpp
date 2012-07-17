@@ -86,12 +86,6 @@ bool States::PassToNetwork( const std::string& data, hack::logic::Player& player
 	return true;
 }
 
-#if 0
-void States::SetNetwork( std::weak_ptr<hack::net::Network> network ) {
-	_network = network;
-}
-#endif
-
 void States::ReceiveFrom( std::string&& serialized, hack::logic::Player& player ) {
 	std::lock_guard<std::mutex> lock( _input.mutex );
 	// Push to the front queue
