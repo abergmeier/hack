@@ -442,7 +442,11 @@ void Network::HandleUnsent() {
 
 	{
 		std::lock_guard<std::recursive_mutex> lock( _queues.lock );
-		outputQueue.swap( _queues.output );
+
+		if( _queues.output.empty() )
+			return;
+
+		_queues.output.swap(outputQueue);
 	}
 
 	for( auto& element : outputQueue ) {
