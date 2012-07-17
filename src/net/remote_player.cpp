@@ -4,8 +4,20 @@
 #include "../include.hpp"
 #include <string.h>
 #include "../state/states.hpp"
+#include "../debug.hpp"
 
 using namespace hack::net;
+
+namespace {
+	struct Debug : public hack::Debug {
+		const std::string& GetCategory() const override {
+			static const std::string CATEGORY = "RemotePlayer";
+			return CATEGORY;
+		}
+	};
+
+	const Debug DEBUG;
+}
 
 const std::string RemotePlayer::NAME("RemotePlayer");
 
