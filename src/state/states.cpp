@@ -40,8 +40,8 @@ void States::Commit( const Serializable& object ) {
 	std::ostringstream stream;
 	object.Serialize( stream );
 
-	std::lock_guard<std::mutex> lock( _output.mutex );
 	std::weak_ptr<hack::logic::Player> weakPlayer;
+	std::lock_guard<std::mutex> lock( _output.mutex );
 	_output.queue.push_back( std::make_pair( weakPlayer, stream.str() ) );
 }
 
