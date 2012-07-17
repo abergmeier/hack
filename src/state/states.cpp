@@ -97,6 +97,10 @@ void States::ProcessInput() {
 
 	{
 		std::lock_guard<std::mutex> lock( _input.mutex );
+
+		if( _input.queue.empty() )
+			return;
+
 		// Save elements in the backup queue so that the
 		// front queue is accessible again
 		_input.queue.swap( input_queue );
@@ -114,6 +118,10 @@ void States::ProcessOutput() {
 
 	{
 		std::lock_guard<std::mutex> lock( _output.mutex );
+
+		if( _output.queue.empty() )
+			return;
+
 		// Save elements in the backup queue so that the
 		// front queue is accessible again
 		_output.queue.swap( output_queue );
