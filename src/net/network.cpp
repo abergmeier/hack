@@ -81,32 +81,36 @@ void Network::PeerWrapper::OnReadable( const Poco::AutoPtr<ReadableNotification>
 
 	// We need to be able to read the length + 1
 	while( _input.length() >= MAX_PACKET_LENGTH_DIGITS + 1 ) {
-		std::istringstream stream( _input );
+		auto buffer = [&]() {
+			std::istringstream stream( _input );
 
-		auto position = stream.tellg();
+			Poco::UInt32 packetSize;
+			stream >> packetSize;
 
-		Poco::UInt32 packetSize;
-		stream >> packetSize;
+			if( packetSize == 0 ) {
+				// No size or invalid string
+				return std::string();
+			}
 
-		if( packetSize == 0 ) {
-			// No size or invalid string
-			stream.seekg( position );
+			// Skip seperator
+			char extracted = stream.get();
+
+			// Use std::string directly as buffer
+			std::string buffer(packetSize, '\0');
+			stream.read( &buffer.front(), buffer.length() );
+
+			if( !stream ) {
+				// Read was not successfull
+				buffer.clear();
+			}
+
+			return buffer;
+		}();
+
+		if( buffer.empty() )
 			break;
-		}
 
-		// Skip seperator
-		char extracted = stream.get();
-
-		// Use std::string directly as buffer
-		std::string buffer(packetSize, '\0');
-		stream.read( &buffer.front(), buffer.length() );
-
-		if( !stream ) {
-			stream.seekg( position );
-			break;
-		}
-
-		_input.erase( 0, MAX_PACKET_LENGTH_DIGITS + 1 + packetSize );
+		_input.erase( 0, MAX_PACKET_LENGTH_DIGITS + 1 + buffer.length() );
 
 		// Validate length of buffer - prevents accidental
 		// access to unallocated memory
